@@ -82,21 +82,8 @@ class FakePlayerInst
             let targetPlayer = mc.getPlayer(this._syncXuid);
             if(targetPlayer)
             {
-                // sync body rotation
-                fp.simulateSetBodyRotation(targetPlayer.direction.yaw);
-
-                // sync look at
-                let targetEntity = targetPlayer.getEntityFromViewVector();
-                if(targetEntity)
-                    fp.simulateLookAt(targetEntity);
-                else
-                {
-                    let targetBlock = targetPlayer.getBlockFromViewVector();
-                    if(targetBlock)
-                        fp.simulateLookAt(targetBlock);
-                }
-
                 // sync move
+                let isMoving = false;
                 if(!this._lastSyncPlayerPos)
                     this._lastSyncPlayerPos = targetPlayer.pos;
                 else
@@ -110,18 +97,46 @@ class FakePlayerInst
                         this._pos.z = newPos.z;
                         this._pos.dimid = newPos.dimid;
                         fp.teleport(newPos);
+                        this._lastSyncPlayerPos = newPos;
+                        isMoving = true;
                     }
                     else
                     {
-                        this._pos.x += newPos.x - oldPos.x;     // dx
-                        this._pos.y += newPos.y - oldPos.y;     // dy
-                        this._pos.z += newPos.z - oldPos.z;     // dz
-                        this._pos.dimid = newPos.dimid;
-                        let newTarget = new FloatPos(this._pos.x, this._pos.y, this._pos.z, this._pos.dimid);
-                        //logger.debug(`Goto ${newTarget}`);
-                        fp.simulateMoveTo(newTarget);
+                        let dx = newPos.x - oldPos.x;
+                        let dy = newPos.y - oldPos.y;
+                        let dz = newPos.z - oldPos.z;
+                        if(Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1 && Math.abs(dz) < 0.1)
+                            fp.simulateStopMoving();        // if distance too short, do not move
+                        else
+                        {
+                            this._pos.x += dx;
+                            this._pos.y += dy;
+                            this._pos.z += dz;
+                            this._pos.dimid = newPos.dimid;
+                            let newTarget = new FloatPos(this._pos.x, this._pos.y, this._pos.z, this._pos.dimid);
+                            //logger.debug(`Goto ${newTarget}`);
+                            fp.simulateMoveTo(newTarget);
+                            this._lastSyncPlayerPos = newPos;
+                            isMoving = true;
+                        }
                     }
-                    this._lastSyncPlayerPos = newPos;
+                }
+
+                // if not moving, sync others
+                if(!isMoving)
+                {
+                    // sync body rotation
+                    fp.simulateSetBodyRotation(targetPlayer.direction.yaw);
+                    // sync look at
+                    let targetEntity = targetPlayer.getEntityFromViewVector();
+                    if(targetEntity)
+                        fp.simulateLookAt(targetEntity);
+                    else
+                    {
+                        let targetBlock = targetPlayer.getBlockFromViewVector();
+                        if(targetBlock)
+                            fp.simulateLookAt(targetBlock);
+                    }
                 }
             }
         }
@@ -744,6 +759,10 @@ class FakePlayerManager
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         fp.stopSync();
+
+        let pl = fp.getPlayer();
+        if(pl)
+            pl.simulateStopMoving();
 
         if(fpName in FakePlayerManager.needTickFpList)
             delete FakePlayerManager.needTickFpList[fpName];
