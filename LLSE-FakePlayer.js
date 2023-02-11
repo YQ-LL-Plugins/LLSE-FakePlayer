@@ -643,7 +643,7 @@ class FakePlayerManager
         let inventory = pl.getInventory();
         let item = inventory.getItem(slotId);
         if(item.isNull())
-            return `Slot ${slotId} is null`;
+            return `Slot ${slotId} has no item to drop`;
         // spawn dropped item at 2 blocks away
         if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(pl.pos, pl.direction, 2)))
             return `Fail to drop item`;
