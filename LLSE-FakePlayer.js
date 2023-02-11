@@ -34,51 +34,57 @@ class FakePlayerInst
 ///////// private
     tickLoop()
     {
+        let pl = this.getPlayer();
+        if(!pl)
+            return;
+
         // operation
         if(this._operation != "")
         {
-            if(Date.now() - this._lastOpTime >= this._interval)
+            let nowTimestamp = Date.now();
+            switch(this._operation)
             {
-                let pl = null;
-                switch(this._operation)
+            case "attack":      // short operation
+                if(nowTimestamp - this._opLastTime >= this._opInterval)
                 {
-                case "attack":
-                    pl = this.getPlayer();
-                    if(pl)
-                        pl.simulateAttack();
-                    break;
-                case "destroy":
-                    pl = this.getPlayer();
-                    if(pl)
-                        pl.simulateDestroy();
-                    break;
-                case "interact":
-                    pl = this.getPlayer();
-                    if(pl)
-                        pl.simulateInteract();
-                    break;
-                case "useitem":
-                    pl = this.getPlayer();
-                    if(pl)
-                        pl.simulateUseItem();
-                    break;
+                    this._opLastTime = nowTimestamp;
+                    pl.simulateAttack();
                 }
-
-                if(this._maxTimes > 0)
+                break;
+            case "destroy":      // short operation
+                if(nowTimestamp - this._opLastTime >= this._opInterval)
                 {
-                    --this.maxTimes;
-                    if(this.maxTimes == 0)
-                        this.setOperation("");
+                    this._opLastTime = nowTimestamp;
+                    pl.simulateDestroy();
                 }
+                break;
+            case "interact":      // short operation
+                if(nowTimestamp - this._opLastTime >= this._opInterval)
+                {
+                    this._opLastTime = nowTimestamp;
+                    pl.simulateInteract();
+                }
+                break;
+            case "useitem":      // long operation
+                if(nowTimestamp - this._opLastTime >= this._opInterval)
+                {
+                    this._opLastTime = nowTimestamp;
+                    pl.simulateUseItem();
+                }
+                break;
+            }
+            // check max times
+            if(this._opMaxTimes > 0)
+            {
+                --this._opMaxTimes;
+                if(this._opMaxTimes == 0)
+                    this.setOperation("");
             }
         }
 
         // sync
         if(this._syncXuid != "")
         {
-            let fp = this.getPlayer();
-            if(!fp)
-                return;
             let targetPlayer = mc.getPlayer(this._syncXuid);
             if(targetPlayer)
             {
@@ -96,7 +102,7 @@ class FakePlayerInst
                         this._pos.y = newPos.y;
                         this._pos.z = newPos.z;
                         this._pos.dimid = newPos.dimid;
-                        fp.teleport(newPos);
+                        pl.teleport(newPos);
                         this._lastSyncPlayerPos = newPos;
                         isMoving = true;
                     }
@@ -106,7 +112,7 @@ class FakePlayerInst
                         let dy = newPos.y - oldPos.y;
                         let dz = newPos.z - oldPos.z;
                         if(Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1 && Math.abs(dz) < 0.1)
-                            fp.simulateStopMoving();        // if distance too short, do not move
+                            pl.simulateStopMoving();        // if distance too short, do not move
                         else
                         {
                             this._pos.x += dx;
@@ -115,7 +121,7 @@ class FakePlayerInst
                             this._pos.dimid = newPos.dimid;
                             let newTarget = new FloatPos(this._pos.x, this._pos.y, this._pos.z, this._pos.dimid);
                             //logger.debug(`Goto ${newTarget}`);
-                            fp.simulateMoveTo(newTarget);
+                            pl.simulateMoveTo(newTarget);
                             this._lastSyncPlayerPos = newPos;
                             isMoving = true;
                         }
@@ -126,16 +132,16 @@ class FakePlayerInst
                 if(!isMoving)
                 {
                     // sync body rotation
-                    fp.simulateSetBodyRotation(targetPlayer.direction.yaw);
+                    pl.simulateSetBodyRotation(targetPlayer.direction.yaw);
                     // sync look at
                     let targetEntity = targetPlayer.getEntityFromViewVector();
                     if(targetEntity)
-                        fp.simulateLookAt(targetEntity);
+                        pl.simulateLookAt(targetEntity);
                     else
                     {
                         let targetBlock = targetPlayer.getBlockFromViewVector();
                         if(targetBlock)
-                            fp.simulateLookAt(targetBlock);
+                            pl.simulateLookAt(targetBlock);
                     }
                 }
             }
@@ -143,24 +149,28 @@ class FakePlayerInst
     }
 
 ///////// public
-    constructor(name, pos, operation = "", interval = 1000, maxTimes = 1, syncXuid = "", isOnline = false)
+    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isOnline = false)
     {
         this._name = name;
         this._pos = pos;
-        this._operation = operation;
-        this._interval = interval;
-        this._maxTimes = maxTimes;
-        this._syncXuid = syncXuid;
-        this._lastOpTime = Date.now();
         this._isOnline = isOnline;
 
+        this._operation = operation;
+        this._opInterval = opInterval;
+        this._opMaxTimes = opMaxTimes;
+        this._opLastTime = Date.now();
+        this._opLength = opLength;
+
+        this._syncXuid = syncXuid;
         this._lastSyncPlayerPos = null;
     }
     getAllInfo()
     {
-        return {name: this._name, pos: this._pos, operation: this._operation, 
-            interval: this._interval, maxTimes: this._maxTimes, syncXuid: this._syncXuid,
-            lastOpTime: this._lastOpTime, isOnline: this._isOnline};
+        return {
+            name: this._name, pos: this._pos, isOnline: this._isOnline,
+            operation: this._operation, opInterval: this._opInterval, opMaxTimes: this._opMaxTimes, 
+            opLegnth: this._opLength, syncXuid: this._syncXuid
+        };
     }
     getPlayer()
     {
@@ -206,11 +216,12 @@ class FakePlayerInst
     {
         return this._pos;
     }
-    setOperation(operation, interval = 1000, maxTimes = 0)
+    setOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
     {
         this._operation = operation;
-        this._interval = interval;
-        this._maxTimes = maxTimes;
+        this._opInterval = opInterval;
+        this._opMaxTimes = opMaxTimes;
+        this._opLength = opLength;
     }
     isNeedTick()
     {
@@ -425,7 +436,7 @@ class FakePlayerManager
         return [SUCCESS, fp.isOnline()];
     }
 
-    static setOperation(fpName, operation, interval, maxTimes)
+    static setShortOperation(fpName, operation, opInterval, opMaxTimes)
     {
         if(!(fpName in FakePlayerManager.fpList))
             return `§6${fpName}§r no found. Please create it first.`;
@@ -436,25 +447,34 @@ class FakePlayerManager
             fp.setOperation("");
             if(fpName in FakePlayerManager.needTickFpList)
                 delete FakePlayerManager.needTickFpList[fpName];
-            
-            // set current pos as pos
-            // let pl = fp.getPlayer()
-            // if(pl)
-            // {
-            //     let pos = pl.pos;
-            //     fp.setPos(pos.x, pos.y, pos.z, pos.dimid);
-            //     FakePlayerManager.saveFpData();
-            // }
         }
         else
         {
-            if(!interval)
-                interval = 1000;
-            if(!maxTimes)
-                maxTimes = 1;
-            fp.setOperation(operation, interval, maxTimes);
+            if(!opInterval)
+                opInterval = 1000;
+            if(!opMaxTimes)
+                opMaxTimes = 1;
+            fp.setOperation(operation, opInterval, opMaxTimes);
             FakePlayerManager.needTickFpList[fpName] = fp;
         }
+        FakePlayerManager.saveFpData();
+        return SUCCESS;
+    }
+
+    static setLongOperation(fpName, operation, opInterval, opMaxTimes, opLength)
+    {
+        if(!(fpName in FakePlayerManager.fpList))
+            return `§6${fpName}§r no found. Please create it first.`;
+        let fp = FakePlayerManager.fpList[fpName];
+
+        if(!opInterval)
+            opInterval = 1000;
+        if(!opMaxTimes)
+            opMaxTimes = 1;
+        if(!opLength)
+            opLength = 1000;
+        fp.setOperation(operation, opInterval, opMaxTimes, opLength);
+        FakePlayerManager.needTickFpList[fpName] = fp;
         FakePlayerManager.saveFpData();
         return SUCCESS;
     }
@@ -848,8 +868,8 @@ class FakePlayerManager
             {
                 let fpData = dataObj[fpName];
                 FakePlayerManager.fpList[fpName] = new FakePlayerInst(
-                    fpData._name, fpData._pos, fpData._operation, fpData._interval, 
-                    fpData._maxTimes, fpData._syncXuid, fpData._isOnline);
+                    fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
+                    fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline);
             }
             return true;
         }
@@ -1125,14 +1145,32 @@ function cmdCallback(_cmd, ori, out, res)
             }
         }
         break;
-    case "setop":
-        result = FakePlayerManager.setOperation(res.fpname, res.optype, res.interval, res.maxtimes);
-        if(result != SUCCESS)
+    case "operation":
+        if(res.optype)
         {
-            out.error("[FakePlayer] " + result);
-            break;
-        }  
-        out.success(`[FakePlayer] §6${res.fpname}§r is set to ${res.optype}`);
+            // short op type
+            result = FakePlayerManager.setShortOperation(res.fpname, res.optype, res.interval, res.maxtimes);
+            if(result != SUCCESS)
+            {
+                out.error("[FakePlayer] " + result);
+                break;
+            }  
+            if(res.optype != "clear")
+                out.success(`[FakePlayer] §6${res.fpname}§r set to ${res.optype}`);
+            else
+                out.success(`[FakePlayer] §6${res.fpname}§r operation cleared.`);
+        }
+        else
+        {
+            // long op type
+            result = FakePlayerManager.setLongOperation(res.fpname, res.longoptype, res.interval, res.maxtimes, res.length);
+            if(result != SUCCESS)
+            {
+                out.error("[FakePlayer] " + result);
+                break;
+            }  
+            out.success(`[FakePlayer] §6${res.fpname}§r set to ${res.optype}`);
+        }
         break;
     case "walkto":
         logger.debug(res.player);
@@ -1415,15 +1453,22 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.optional("fpname2", ParamType.SoftEnum, FpListSoftEnum.getName(), "fpname2");
     fpCmd.overload(["ListAction", "fpname2"]);
 
-    // fpc setop <fpname> <optype> [interval] [maxtimes]
-    fpCmd.setEnum("OperationAction", ["setop"]);
-    fpCmd.setEnum("OperationType", ["attack", "destroy", "interact", "useitem", "clear"]);
+    // fpc operation <fpname> attack/interact/clear [interval] [maxtimes]
+    fpCmd.setEnum("OperationAction", ["operation"]);
+    fpCmd.setEnum("ShortOperationType", ["attack", "interact", "clear"]);
     fpCmd.mandatory("action", ParamType.Enum, "OperationAction", "OperationAction", 1);
-    fpCmd.mandatory("optype", ParamType.Enum, "OperationType", "OperationType", 1);
+    fpCmd.mandatory("optype", ParamType.Enum, "ShortOperationType", "ShortOperationType", 1);
     fpCmd.optional("interval", ParamType.Int);
     fpCmd.optional("maxtimes", ParamType.Int);
-    fpCmd.overload(["OperationAction", "fpname", "OperationType", "interval", "maxtimes"]);
+    fpCmd.overload(["OperationAction", "fpname", "ShortOperationType", "interval", "maxtimes"]);
     // fpname 前面创建了
+
+    // fpc operation <fpname> useitem [length] [interval] [maxtimes]
+    fpCmd.setEnum("LongOperationType", ["useitem"]);
+    fpCmd.mandatory("longoptype", ParamType.Enum, "LongOperationType", "LongOperationType", 1);
+    fpCmd.optional("length", ParamType.Int);
+    fpCmd.overload(["OperationAction", "fpname", "LongOperationType", "length", "interval", "maxtimes"]);
+    // OperationAction, fpname, interval, maxtimes 前面创建了
 
     // fpc walkto/tp <fpname> <x> <y> <z>
     fpCmd.setEnum("PositionAction", ["walkto", "tp"]);
