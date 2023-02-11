@@ -81,16 +81,48 @@ class FakePlayerInst
                 return;
             let targetPlayer = mc.getPlayer(this._syncXuid);
             if(targetPlayer)
+            {
+                // sync body rotation
                 fp.simulateSetBodyRotation(targetPlayer.direction.yaw);
 
-            let targetEntity = targetPlayer.getEntityFromViewVector();
-            if(targetEntity)
-                fp.simulateLookAt(targetEntity);
-            else
-            {
-                let targetBlock = targetPlayer.getBlockFromViewVector();
-                if(targetBlock)
-                    fp.simulateLookAt(targetBlock);
+                // sync look at
+                let targetEntity = targetPlayer.getEntityFromViewVector();
+                if(targetEntity)
+                    fp.simulateLookAt(targetEntity);
+                else
+                {
+                    let targetBlock = targetPlayer.getBlockFromViewVector();
+                    if(targetBlock)
+                        fp.simulateLookAt(targetBlock);
+                }
+
+                // sync move
+                if(!this._lastSyncPlayerPos)
+                    this._lastSyncPlayerPos = targetPlayer.pos;
+                else
+                {
+                    let oldPos = this._lastSyncPlayerPos;
+                    let newPos = targetPlayer.pos;
+                    if(oldPos.dimid != newPos.dimid)
+                    {
+                        this._pos.x = newPos.x;
+                        this._pos.y = newPos.y;
+                        this._pos.z = newPos.z;
+                        this._pos.dimid = newPos.dimid;
+                        fp.teleport(newPos);
+                    }
+                    else
+                    {
+                        this._pos.x += newPos.x - oldPos.x;     // dx
+                        this._pos.y += newPos.y - oldPos.y;     // dy
+                        this._pos.z += newPos.z - oldPos.z;     // dz
+                        this._pos.dimid = newPos.dimid;
+                        let newTarget = new FloatPos(this._pos.x, this._pos.y, this._pos.z, this._pos.dimid);
+                        //logger.debug(`Goto ${newTarget}`);
+                        fp.simulateMoveTo(newTarget);
+                    }
+                    this._lastSyncPlayerPos = newPos;
+                }
             }
         }
     }
@@ -106,6 +138,8 @@ class FakePlayerInst
         this._syncXuid = syncXuid;
         this._lastOpTime = Date.now();
         this._isOnline = isOnline;
+
+        this._lastSyncPlayerPos = null;
     }
     getAllInfo()
     {
@@ -174,6 +208,7 @@ class FakePlayerInst
     stopSync()
     {
         this._syncXuid = "";
+        this._lastSyncPlayerPos = null;
     }
     isOnline()
     {
@@ -840,10 +875,7 @@ class FakePlayerManager
     // return true / false
     static deleteInventoryData(fpName)
     {
-        // if(!(fpName in FakePlayerManager.fpList))
-        //     return false;
-        let conf = new JsonConfigFile(_FP_INVENTORY_PATH);
-        return conf.delete(fpName);
+        return File.delete(_FP_INVENTORY_DIR + `${fpName}.snbt`);
     }
 
     static initialAutoOnline()
@@ -1266,7 +1298,7 @@ function cmdCallback(_cmd, ori, out, res)
         else
         {
             if(res.synctype == "start")
-                result = FakePlayerManager.startSync(res.fpname, ori.player.xuid);
+                result = FakePlayerManager.startSync(res.fpname, ori.player);
             else if (res.synctype == "stop")
                 result = FakePlayerManager.stopSync(res.fpname);
             else
