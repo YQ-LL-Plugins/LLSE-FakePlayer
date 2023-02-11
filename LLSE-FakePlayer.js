@@ -64,10 +64,10 @@ class FakePlayerInst
                     break;
                 }
 
-                if(maxTimes > 0)
+                if(this._maxTimes > 0)
                 {
-                    --maxTimes;
-                    if(maxTimes == 0)
+                    --this.maxTimes;
+                    if(this.maxTimes == 0)
                         this.setOperation("");
                 }
             }
@@ -208,7 +208,7 @@ class FakePlayerInst
     }
     setOperation(operation, interval = 1000, maxTimes = 0)
     {
-        this._operation = op;
+        this._operation = operation;
         this._interval = interval;
         this._maxTimes = maxTimes;
     }
@@ -1309,7 +1309,7 @@ function cmdCallback(_cmd, ori, out, res)
             out.error("[FakePlayer] " + result);
             break;
         }  
-        out.success(`[FakePlayer] Select slot changed`);
+        out.success(`[FakePlayer] Select slot changed to ${res.slotid}`);
         break;
     case "sync":
         if(!ori.player)
