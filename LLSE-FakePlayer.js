@@ -32,59 +32,94 @@ function IsValidDimId(dimid)
 class FakePlayerInst
 {
 ///////// private
+    static opCallback(thiz)
+    {
+        logger.debug("op start");
+        return function() {
+            if(thiz._operation == "" || !thiz._isOnline)
+                return;
+            let pl = thiz.getPlayer();
+            if(!pl)
+                return;
+
+            let isLongOperation = false;
+            switch(thiz._operation)
+            {
+            case "attack":
+                pl.simulateAttack();
+                break;
+            case "destroy":
+                pl.simulateDestroy();
+                break;
+            case "interact":
+                pl.simulateInteract();
+                break;
+            case "useitem":
+                isLongOperation = true;
+                pl.simulateUseItem();
+                break;
+            }
+
+            // next loop
+            if(isLongOperation)
+                thiz._opTimeTask = setTimeout(FakePlayerInst.opReachLength(thiz), thiz._opLength);
+            else
+            {
+                // check max times
+                if(thiz._opMaxTimes > 0)
+                {
+                    --thiz._opMaxTimes;
+                    if(thiz._opMaxTimes == 0)
+                    {
+                        thiz.clearOperation();
+                        return;
+                    }
+                }
+                thiz._opTimeTask = setTimeout(FakePlayerInst.opCallback(thiz), thiz._opInterval);
+            }
+        };
+    }
+
+    static opReachLength(thiz)
+    {
+        logger.debug("op reach length");
+        return function() {
+            if(thiz._operation == "" || !thiz._isOnline)
+                return;
+            let pl = thiz.getPlayer();
+            if(!pl)
+                return;
+
+            switch(thiz._operation)
+            {
+            case "useitem":
+                pl.simulateStopUsingItem();
+                break;
+            }
+
+            // check max times
+            if(thiz._opMaxTimes > 0)
+            {
+                --thiz._opMaxTimes;
+                if(thiz._opMaxTimes == 0)
+                {
+                    thiz.clearOperation();
+                    return;
+                }
+            }
+            thiz._opTimeTask = setTimeout(FakePlayerInst.opCallback(thiz), thiz._opInterval);
+        };
+    }
+
     tickLoop()
     {
-        let pl = this.getPlayer();
-        if(!pl)
-            return;
-
-        // operation
-        if(this._operation != "")
-        {
-            let nowTimestamp = Date.now();
-            switch(this._operation)
-            {
-            case "attack":      // short operation
-                if(nowTimestamp - this._opLastTime >= this._opInterval)
-                {
-                    this._opLastTime = nowTimestamp;
-                    pl.simulateAttack();
-                }
-                break;
-            case "destroy":      // short operation
-                if(nowTimestamp - this._opLastTime >= this._opInterval)
-                {
-                    this._opLastTime = nowTimestamp;
-                    pl.simulateDestroy();
-                }
-                break;
-            case "interact":      // short operation
-                if(nowTimestamp - this._opLastTime >= this._opInterval)
-                {
-                    this._opLastTime = nowTimestamp;
-                    pl.simulateInteract();
-                }
-                break;
-            case "useitem":      // long operation
-                if(nowTimestamp - this._opLastTime >= this._opInterval)
-                {
-                    this._opLastTime = nowTimestamp;
-                    pl.simulateUseItem();
-                }
-                break;
-            }
-            // check max times
-            if(this._opMaxTimes > 0)
-            {
-                --this._opMaxTimes;
-                if(this._opMaxTimes == 0)
-                    this.setOperation("");
-            }
-        }
-
         // sync
         if(this._syncXuid != "")
         {
+            let pl = this.getPlayer();
+            if(!pl)
+                return;
+
             let targetPlayer = mc.getPlayer(this._syncXuid);
             if(targetPlayer)
             {
@@ -158,11 +193,11 @@ class FakePlayerInst
         this._operation = operation;
         this._opInterval = opInterval;
         this._opMaxTimes = opMaxTimes;
-        this._opLastTime = Date.now();
         this._opLength = opLength;
+        this._opTimeTask = null;        // private
 
         this._syncXuid = syncXuid;
-        this._lastSyncPlayerPos = null;
+        this._lastSyncPlayerPos = null;     // private
     }
     getAllInfo()
     {
@@ -190,6 +225,8 @@ class FakePlayerInst
         if(!pl)
             return false;
         this._isOnline = true;
+        if(this._operation != "")
+            this.startOpLoop();
         return true;
     }
     offline()
@@ -203,6 +240,7 @@ class FakePlayerInst
         if(!success)
             return false;
         this._isOnline = false;
+        this.stopOpLoop();
         return true;
     }
     setPos(x, y, z, dimid)
@@ -216,16 +254,70 @@ class FakePlayerInst
     {
         return this._pos;
     }
-    setOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
+    updatePos()
     {
+        let pl = this.getPlayer();
+        if(pl)
+            this.setPos(pl.pos.x, pl.pos.y, pl.pos.z, pl.pos.dimid);
+    }
+    startOpLoop()
+    {
+        FakePlayerInst.opCallback(this)();        // operate once immediately
+    }
+    stopOpLoop()
+    {
+        if(this._opTimeTask)
+        {
+            clearInterval(this._opTimeTask);
+            this._opTimeTask = null;
+        }
+    }
+    setShortOperation(operation, opInterval = 1000, opMaxTimes = 1)
+    {
+        this.stopOpLoop();
+        this._operation = operation;
+        this._opInterval = opInterval;
+        this._opMaxTimes = opMaxTimes;
+        this.startOpLoop();
+        FakePlayerManager.saveFpData();
+    }
+    setLongOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
+    {
+        this.stopOpLoop();
         this._operation = operation;
         this._opInterval = opInterval;
         this._opMaxTimes = opMaxTimes;
         this._opLength = opLength;
+        this.startOpLoop();
+        FakePlayerManager.saveFpData();
+    }
+    clearOperation()
+    {
+        this.stopOpLoop();
+        let pl = this.getPlayer();
+        if(pl)
+        {
+            switch(this._operation)
+            {
+            case "attack":
+                break;
+            case "destroy":
+                pl.simulateStopDestroyingBlock();
+                break;
+            case "interact":
+                pl.simulateStopInteracting();
+                break;
+            case "useitem":
+                pl.simulateStopUsingItem();
+                break;
+            }
+        }
+        this._operation = "";
+        FakePlayerManager.saveFpData();
     }
     isNeedTick()
     {
-        return this._operation != "" || this._syncXuid != "";
+        return this._syncXuid != "";
     }
     startSync(targetXuid)
     {
@@ -444,9 +536,7 @@ class FakePlayerManager
 
         if(operation == "clear")
         {
-            fp.setOperation("");
-            if(fpName in FakePlayerManager.needTickFpList)
-                delete FakePlayerManager.needTickFpList[fpName];
+            fp.clearOperation();
         }
         else
         {
@@ -454,10 +544,8 @@ class FakePlayerManager
                 opInterval = 1000;
             if(!opMaxTimes)
                 opMaxTimes = 1;
-            fp.setOperation(operation, opInterval, opMaxTimes);
-            FakePlayerManager.needTickFpList[fpName] = fp;
+            fp.setShortOperation(operation, opInterval, opMaxTimes);
         }
-        FakePlayerManager.saveFpData();
         return SUCCESS;
     }
 
@@ -473,9 +561,7 @@ class FakePlayerManager
             opMaxTimes = 1;
         if(!opLength)
             opLength = 1000;
-        fp.setOperation(operation, opInterval, opMaxTimes, opLength);
-        FakePlayerManager.needTickFpList[fpName] = fp;
-        FakePlayerManager.saveFpData();
+        fp.setLongOperation(operation, opInterval, opMaxTimes, opLength);
         return SUCCESS;
     }
 
@@ -759,6 +845,8 @@ class FakePlayerManager
     {
         if(!player)
             return "Target player is invalid";
+        if(player.isSimulatedPlayer())
+            return "Cannot sync with a fakeplayer";
         if(!(fpName in FakePlayerManager.fpList))
             return `§6${fpName}§r no found. Please create it first.`;
         let fp = FakePlayerManager.fpList[fpName];
@@ -830,6 +918,7 @@ class FakePlayerManager
     // return true / false
     static saveFpData()
     {
+        updatePos();
         File.writeTo(_FP_DATA_PATH, JSON.stringify(FakePlayerManager.fpList, null, 4));
         return true;
     }
@@ -1155,10 +1244,10 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            if(res.optype != "clear")
-                out.success(`[FakePlayer] §6${res.fpname}§r set to ${res.optype}`);
-            else
+            if(res.optype == "clear")
                 out.success(`[FakePlayer] §6${res.fpname}§r operation cleared.`);
+            else
+                out.success(`[FakePlayer] §6${res.fpname}§r set to ${res.optype}`);
         }
         else
         {
@@ -1169,7 +1258,7 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] §6${res.fpname}§r set to ${res.optype}`);
+            out.success(`[FakePlayer] §6${res.fpname}§r set to ${res.longoptype}`);
         }
         break;
     case "walkto":
@@ -1445,7 +1534,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     // fpc remove <fpname>
     fpCmd.setEnum("RemoveAction", ["remove"]);
     fpCmd.mandatory("action", ParamType.Enum, "RemoveAction", "RemoveAction", 1);
-    fpCmd.overload(["RemoveAction", "fpname"]);     // fpname 前面创建了
+    fpCmd.overload(["RemoveAction", "fpname"]);     // fpname created before
 
     // fpc list [fpname]
     fpCmd.setEnum("ListAction", ["list"]);
@@ -1461,53 +1550,53 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.optional("interval", ParamType.Int);
     fpCmd.optional("maxtimes", ParamType.Int);
     fpCmd.overload(["OperationAction", "fpname", "ShortOperationType", "interval", "maxtimes"]);
-    // fpname 前面创建了
+    // fpname created before
 
     // fpc operation <fpname> useitem [length] [interval] [maxtimes]
     fpCmd.setEnum("LongOperationType", ["useitem"]);
     fpCmd.mandatory("longoptype", ParamType.Enum, "LongOperationType", "LongOperationType", 1);
     fpCmd.optional("length", ParamType.Int);
     fpCmd.overload(["OperationAction", "fpname", "LongOperationType", "length", "interval", "maxtimes"]);
-    // OperationAction, fpname, interval, maxtimes 前面创建了
+    // OperationAction, fpname, interval, maxtimes created before
 
     // fpc walkto/tp <fpname> <x> <y> <z>
     fpCmd.setEnum("PositionAction", ["walkto", "tp"]);
     fpCmd.mandatory("action", ParamType.Enum, "PositionAction", "PositionAction", 1);
     fpCmd.mandatory("targetpos", ParamType.Vec3);
-    fpCmd.overload(["PositionAction", "fpname", "targetpos"]);      // fpname 前面创建了
+    fpCmd.overload(["PositionAction", "fpname", "targetpos"]);      // fpname created before
 
     // fpc walkto/tp <fpname> <player>
     fpCmd.mandatory("player", ParamType.Player);
-    fpCmd.overload(["PositionAction", "fpname", "player"]);         // fpname 前面创建了
+    fpCmd.overload(["PositionAction", "fpname", "player"]);         // fpname created before
 
     // fpc give/getinventory <fpname> 
     fpCmd.setEnum("InventoryAction", ["give", "getinventory"]);
     fpCmd.mandatory("action", ParamType.Enum, "InventoryAction", "InventoryAction", 1);
-    fpCmd.overload(["InventoryAction", "fpname"]);      // fpname 前面创建了
+    fpCmd.overload(["InventoryAction", "fpname"]);      // fpname created before
 
     // fpc setselect <fpname> <slotid>
     fpCmd.setEnum("SetSelectAction", ["setselect"]);
     fpCmd.mandatory("action", ParamType.Enum, "SetSelectAction", "SetSelectAction", 1);
     fpCmd.mandatory("slotid", ParamType.Int);
-    fpCmd.overload(["SetSelectAction", "fpname", "slotid"]);          // fpname 前面创建了
+    fpCmd.overload(["SetSelectAction", "fpname", "slotid"]);          // fpname created before
 
     // fpc drop <fpname> [slotid]
     fpCmd.setEnum("DropAction", ["drop"]);
     fpCmd.mandatory("action", ParamType.Enum, "DropAction", "DropAction", 1);
     fpCmd.optional("slotid2", ParamType.Int);
-    fpCmd.overload(["DropAction", "fpname", "slotid2"]);        // fpname 前面创建了
+    fpCmd.overload(["DropAction", "fpname", "slotid2"]);        // fpname created before
 
     // fpc dropall <fpname>
     fpCmd.setEnum("DropAllAction", ["dropall"]);
     fpCmd.mandatory("action", ParamType.Enum, "DropAllAction", "DropAllAction", 1);
-    fpCmd.overload(["DropAllAction", "fpname"]);        // fpname 前面创建了
+    fpCmd.overload(["DropAllAction", "fpname"]);        // fpname created before
 
     // fpc sync <fpname> start/stop
     fpCmd.setEnum("SyncAction", ["sync"]);
     fpCmd.setEnum("SyncType", ["start", "stop"]);
     fpCmd.mandatory("action", ParamType.Enum, "SyncAction", "SyncAction", 1);
     fpCmd.mandatory("synctype", ParamType.Enum, "SyncType", "SyncType", 1);
-    fpCmd.overload(["SyncAction", "fpname", "synctype"]);       // fpname 前面创建了
+    fpCmd.overload(["SyncAction", "fpname", "synctype"]);       // fpname created before
 
     // fpc addadmin/removeadmin <name>
     fpCmd.setEnum("AdminAction", ["addadmin", "removeadmin"]);
