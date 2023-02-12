@@ -2,7 +2,7 @@
 /// <reference path="c:\Users\yqs11\Desktop\Projects\Game\Minecraft\LLSE-Aids-Library/dts/HelperLib-master/src/index.d.ts"/> 
 
 const _VER = [1,0,0];
-const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.ini";
+const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.json";
 const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
 
@@ -12,6 +12,8 @@ const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
 /////////////////////////////////////////////////////////////////////////////////////
 
 const _DEFAULT_PLAYER_SELECT_SLOT = 0;
+const SUCCESS = "";
+
 function CalcPosFromViewDirection(oldPos, nowDirection, distance)
 {
     let yaw = (nowDirection.yaw + 180) / 180 * Math.PI;
@@ -24,6 +26,139 @@ function IsValidDimId(dimid)
     return dimid % 1 == 0 && dimid >= 0 && dimid <= 2;
 }
 
+Array.prototype.removeByValue = function (val) {
+    for (var i = 0; i < this.length; i++) {
+        if (this[i] === val) {
+            this.splice(i, 1);
+            i--;
+        }
+    }
+    return this;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//                                   Config File                                   //
+/////////////////////////////////////////////////////////////////////////////////////
+let GlobalConf = null;
+
+function InitConfigFile()
+{
+    GlobalConf = new JsonConfigFile(_CONFIG_PATH);
+    GlobalConf.init("LogLevel", 4);
+    GlobalConf.init("OpIsAdmin", 1);
+    GlobalConf.init("AdminList", []);
+    GlobalConf.init("UserMode", "whitelist");
+    GlobalConf.init("UserAllowAction", ["online", "offline", "list", "getinventory", "help"]);
+    GlobalConf.init("UserList", []);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//                                   Perm Manager                                  //
+/////////////////////////////////////////////////////////////////////////////////////
+class PermManager
+{
+    static adminList = null;
+    static userList = null;
+    static userMode = null;
+    static userAllowAction = null;
+    static opIsAdmin = null;
+    static onlyConsoleAction = ["import", "addadmin", "removeadmin"];
+
+    static initPermManager()
+    {
+        PermManager.adminList = GlobalConf.get("AdminList", []);
+        PermManager.userList = GlobalConf.get("UserList", []);
+        PermManager.userMode = GlobalConf.get("UserMode", "whitelist");
+        if(PermManager.userMode != "whitelist" && PermManager.userMode != "blacklist")
+            PermManager.userMode = "whitelist";
+        PermManager.userAllowAction = GlobalConf.get("UserAllowAction", ["online", "offline", "list", "getinventory", "help"]);
+        PermManager.opIsAdmin = GlobalConf.get("OpIsAdmin", 1);
+    }
+
+    static isWhitelistMode() { return PermManager.userMode == "whitelist"; }
+
+    static checkPermission(origin, action)
+    {
+        // refuse only console actions
+        if((PermManager.onlyConsoleAction.includes(action)) && origin.type != 7)          // 7 is BDS console  
+        {   
+            // logger.debug("only can in console!");
+            return "This action can only be executed in server console.";
+        }
+
+        let pl = origin.player;
+        if(!pl)
+        {
+            //logger.debug("not player execute cmd, pass");
+            return SUCCESS;
+        }
+
+        // ensure is player executed below
+        let plName = pl.realName;
+        if(PermManager.adminList.includes(plName))         // is admin
+            return SUCCESS;
+        else if(PermManager.opIsAdmin && pl.isOP())     // is OP
+            return SUCCESS;
+        else if(PermManager.userList.includes(plName))
+        {
+            if(PermManager.userMode == "whitelist" && PermManager.userAllowAction.includes(action))        // in whitelist and allow
+                return SUCCESS;
+        }
+        else
+        {
+            // plName not in userList
+            if(PermManager.userMode == "blacklist" && PermManager.userAllowAction.includes(action))        // not in blacklist and allow
+                return SUCCESS;
+        }
+        return "You have no permission to do this action.";
+    }
+
+    static addAdmin(plName)
+    {
+        logger.debug("addAdmin: ", plName);
+        if(PermManager.adminList.includes(plName))
+            return `${plName} is already in admin list.`;
+        if(PermManager.userList.includes(plName))
+            logger.warn(`${plName} is removing from user ${PermManager.userMode}`);
+
+        PermManager.adminList.push(plName);
+        GlobalConf.set("AdminList", PermManager.adminList);
+        return SUCCESS;
+    }
+
+    static removeAdmin(plName)
+    {
+        if(!PermManager.adminList.includes(plName))
+            return `${plName} is not in admin list.`;
+        PermManager.adminList.removeByValue(plName);
+        GlobalConf.set("AdminList", PermManager.adminList);
+        return SUCCESS;
+    }
+
+    static addUserToList(plName)
+    {
+        if(PermManager.adminList.includes(plName))
+            return `${plName} is in admin list, and cannot be set twice.`;
+        if(PermManager.userList.includes(plName))
+            return `${plName} is already in user ${PermManager.userMode}.`;
+
+        PermManager.userList.push(plName);
+        GlobalConf.set("UserList", PermManager.userList);
+        return SUCCESS;
+    }
+
+    static removeUserFromList(plName)
+    {
+        if(!PermManager.userList.includes(plName))
+            return `${plName} is not in user ${PermManager.userMode}.`;
+        PermManager.userList.removeByValue(plName);
+        GlobalConf.set("UserList", PermManager.userList);
+        return SUCCESS;
+    }
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 //                            FakePlayer Instance Class                            //
@@ -34,7 +169,7 @@ class FakePlayerInst
 ///////// private
     static opCallback(thiz)
     {
-        logger.debug("op start");
+        //logger.debug("op start");
         return function() {
             if(thiz._operation == "" || !thiz._isOnline)
                 return;
@@ -82,7 +217,7 @@ class FakePlayerInst
 
     static opReachLength(thiz)
     {
-        logger.debug("op reach length");
+        //logger.debug("op reach length");
         return function() {
             if(thiz._operation == "" || !thiz._isOnline)
                 return;
@@ -378,34 +513,32 @@ class FakePlayerInst
 //                               FakePlayer Manager                                //
 /////////////////////////////////////////////////////////////////////////////////////
 
-const SUCCESS = "";
-
 class FakePlayerManager
 {
 //////// private
-    static fpList = {};
-    static needTickFpList = {}
+    static fpListObj = {};
+    static needTickFpListObj = {}
 
     static onTick()
     {
-        for(let key in FakePlayerManager.needTickFpList)
+        for(let key in FakePlayerManager.needTickFpListObj)
         {
-            FakePlayerManager.needTickFpList[key].tickLoop();
+            FakePlayerManager.needTickFpListObj[key].tickLoop();
         }
     }
 
 //////// public
     static online(fpName, failIfOnline = true)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOnline && fp.isOnline())
             return `§6${fpName}§r is online now`;
         if(!fp.online())
             return `Fail to online §6${fpName}§r`;
         if(fp.isNeedTick())
-            FakePlayerManager.needTickFpList[fpName] = fp;
+            FakePlayerManager.needTickFpListObj[fpName] = fp;
         FakePlayerManager.saveFpData(fpName);
         FakePlayerManager.loadInventoryData(fpName);
         return SUCCESS;
@@ -413,14 +546,14 @@ class FakePlayerManager
 
     static offline(fpName, failIfOffline = true)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOffline && !fp.isOnline())
             return `§6${fpName}§r is offline now`;
 
-        if(fpName in FakePlayerManager.needTickFpList)
-            delete FakePlayerManager.needTickFpList[fpName];
+        if(fpName in FakePlayerManager.needTickFpListObj)
+            delete FakePlayerManager.needTickFpListObj[fpName];
         if(!FakePlayerManager.saveInventoryData(fpName))
             logger.warn(`Fail to save inventory of ${fpName}`);
 
@@ -436,7 +569,7 @@ class FakePlayerManager
     {
         let resultStr = "";
         let successNames = [];
-        for(let fpName of Object.keys(FakePlayerManager.fpList))
+        for(let fpName of Object.keys(FakePlayerManager.fpListObj))
         {
             let res = FakePlayerManager.online(fpName, false);
             if(res != SUCCESS)
@@ -455,7 +588,7 @@ class FakePlayerManager
     {
         let resultStr = "";
         let successNames = [];
-        for(let fpName of Object.keys(FakePlayerManager.fpList))
+        for(let fpName of Object.keys(FakePlayerManager.fpListObj))
         {
             let res = FakePlayerManager.offline(fpName, false);
             if(res != SUCCESS)
@@ -471,9 +604,9 @@ class FakePlayerManager
 
     static createNew(fpName, x, y, z, dimid)
     {
-        if(fpName in FakePlayerManager.fpList)
+        if(fpName in FakePlayerManager.fpListObj)
             return `§6${fpName}§r exists. Use "/fpc online ${fpName}" to online it`;
-        FakePlayerManager.fpList[fpName] = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
+        FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
         FpListSoftEnum.add(fpName);
         FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
@@ -481,16 +614,16 @@ class FakePlayerManager
 
     static remove(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        if(FakePlayerManager.fpList[fpName].isOnline())
+        if(FakePlayerManager.fpListObj[fpName].isOnline())
         {
             FakePlayerManager.offline(fpName, false);
         }
-        delete FakePlayerManager.fpList[fpName];
+        delete FakePlayerManager.fpListObj[fpName];
 
-        if(fpName in FakePlayerManager.needTickFpList)
-            delete FakePlayerManager.needTickFpList[fpName];
+        if(fpName in FakePlayerManager.needTickFpListObj)
+            delete FakePlayerManager.needTickFpListObj[fpName];
         FpListSoftEnum.remove(fpName);
         FakePlayerManager.deleteFpData(fpName);
         FakePlayerManager.deleteInventoryData(fpName);
@@ -500,41 +633,41 @@ class FakePlayerManager
     // return [SUCCESS, ["aaa", "bbb", ...] ]
     static list()
     {
-        return [SUCCESS, Object.keys(FakePlayerManager.fpList)];
+        return [SUCCESS, Object.keys(FakePlayerManager.fpListObj)];
     }
 
     // return ["fail message", null] / [SUCCESS, {xxx:xxx, ...}]
     static getAllInfo(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return [`§6${fpName}§r no found. Please create it first.`, null];
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.getAllInfo()];
     }
 
     // return ["fail message", null] / [SUCCESS, {xxx:xxx, ...}]
     static getPosition(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return [`§6${fpName}§r no found. Please create it first.`, null];
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.getPos()];
     }
 
     // return ["fail message", null] / [SUCCESS, true / false]
     static isOnline(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return [`§6${fpName}§r no found. Please create it first.`, null];
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.isOnline()];
     }
 
     static setShortOperation(fpName, operation, opInterval, opMaxTimes)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
 
         if(operation == "clear")
         {
@@ -553,9 +686,9 @@ class FakePlayerManager
 
     static setLongOperation(fpName, operation, opInterval, opMaxTimes, opLength)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
 
         if(!opInterval)
             opInterval = 1000;
@@ -570,10 +703,10 @@ class FakePlayerManager
     // return ["fail reason", null] / [SUCCESS, {isFullPath:Boolean, path:Number[3][]} ]
     static walkToPos(fpName, pos)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return [`§6${fpName}§r no found. Please create it first.`, null];
         
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -598,9 +731,9 @@ class FakePlayerManager
     {
         if(!entity)
             return ["Target entity is invalid", null];
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return [`§6${fpName}§r no found. Please create it first.`, null];
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -622,9 +755,9 @@ class FakePlayerManager
 
     static teleportToPos(fpName, pos)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -642,9 +775,9 @@ class FakePlayerManager
     {
         if(!entity)
             return "Target entity is invalid";
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -663,9 +796,9 @@ class FakePlayerManager
     {
         if(!player)
             return "Target player is invalid";
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -705,9 +838,9 @@ class FakePlayerManager
     // / ["fail reason", null]
     static getInventory(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return [`§6${fpName}§r no found. Please create it first.`, null];
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -749,9 +882,9 @@ class FakePlayerManager
 
     static setSelectSlot(fpName, slotId)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -787,9 +920,9 @@ class FakePlayerManager
 
     static dropItem(fpName, slotId)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -814,9 +947,9 @@ class FakePlayerManager
 
     static dropAllItems(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         let pl = fp.getPlayer();
@@ -849,23 +982,23 @@ class FakePlayerManager
             return "Target player is invalid";
         if(player.isSimulatedPlayer())
             return "Cannot sync with a fakeplayer";
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         fp.startSync(player.xuid);
 
-        FakePlayerManager.needTickFpList[fpName] = fp;
+        FakePlayerManager.needTickFpListObj[fpName] = fp;
         FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
 
     static stopSync(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return `§6${fpName}§r is offline now`;
         fp.stopSync();
@@ -874,8 +1007,8 @@ class FakePlayerManager
         if(pl)
             pl.simulateStopMoving();
 
-        if(fpName in FakePlayerManager.needTickFpList)
-            delete FakePlayerManager.needTickFpList[fpName];
+        if(fpName in FakePlayerManager.needTickFpListObj)
+            delete FakePlayerManager.needTickFpListObj[fpName];
         FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
@@ -886,41 +1019,10 @@ class FakePlayerManager
         return [SUCCESS, "[LLSE-FakePlayer Help]"];
     }
 
-    // User management
-    static addAdmin(name)
-    {
-
-    }
-
-    static removeAdmin(name)
-    {
-
-    }
-
-    static addUser(name)
-    {
-
-    }
-
-    static removeUser(name)
-    {
-        
-    }
-
-    static banUser(name)
-    {
-        
-    }
-
-    static unbanUser(name)
-    {
-        
-    }
-
     // return true / false
     static saveFpData(fpName, updatePos = true)
     {
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(updatePos)
             fp.updatePos();
         File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp, null, 4));
@@ -970,7 +1072,7 @@ class FakePlayerManager
                     return false; 
                 }
     
-                FakePlayerManager.fpList[fpName] = new FakePlayerInst(
+                FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(
                     fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
                     fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline);
             }
@@ -981,9 +1083,9 @@ class FakePlayerManager
     // return true / false
     static saveInventoryData(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return false;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.getPlayer())
             return false;
 
@@ -997,9 +1099,9 @@ class FakePlayerManager
     // return true / false
     static loadInventoryData(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return false;
-        let fp = FakePlayerManager.fpList[fpName];
+        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.getPlayer())
             return false;
 
@@ -1023,10 +1125,10 @@ class FakePlayerManager
     static initialAutoOnline()
     {
         let resultStr = "";
-        for(let fpName in FakePlayerManager.fpList)
+        for(let fpName in FakePlayerManager.fpListObj)
         {
             // if fp is online at shutdown, recover him
-            if(FakePlayerManager.fpList[fpName].isOnline())
+            if(FakePlayerManager.fpListObj[fpName].isOnline())
             {
                 let res = FakePlayerManager.online(fpName, false);
                 if(res != SUCCESS)
@@ -1039,9 +1141,9 @@ class FakePlayerManager
     // return Player / null
     static getPlayer(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpList))
+        if(!(fpName in FakePlayerManager.fpListObj))
             return null;
-        return FakePlayerManager.fpList[fpName].getPlayer();
+        return FakePlayerManager.fpListObj[fpName].getPlayer();
     }
 }
 
@@ -1084,6 +1186,14 @@ let FpListSoftEnum = null;
 
 function cmdCallback(_cmd, ori, out, res)
 {
+    let permRes = PermManager.checkPermission(ori, res.action);
+    if(permRes != SUCCESS)
+    {
+        out.error("[FakePlayer] " + permRes);
+        return;
+    }
+
+    // logger.debug("OriginType: ", ori.type);
     let result;
     switch(res.action)
     {
@@ -1190,7 +1300,7 @@ function cmdCallback(_cmd, ori, out, res)
         result = FakePlayerManager.teleportToPos(fpName, spawnPos);
         if(result != SUCCESS)
         {
-            out.error("[FakePlayer] §6${fpName}§r created, but " + result);
+            out.error(`[FakePlayer] §6${fpName}§r created, but ` + result);
             break;
         }
         out.success(`[FakePlayer] §6${fpName}§r created`);
@@ -1276,7 +1386,7 @@ function cmdCallback(_cmd, ori, out, res)
         }
         break;
     case "walkto":
-        logger.debug(res.player);
+        // logger.debug(res.player);
         if((res.player instanceof Array) && res.player != [])
         {
             let target = res.player[0];
@@ -1327,7 +1437,7 @@ function cmdCallback(_cmd, ori, out, res)
             out.error(`[FakePlayer] Bad target position`)
         break;
     case "tp":
-        logger.debug(res.player);
+        // logger.debug(res.player);
         if((res.player instanceof Array) && res.player != [])
         {
             let target = res.player[0];
@@ -1481,23 +1591,85 @@ function cmdCallback(_cmd, ori, out, res)
         break;
     
     case "addadmin":
-        out.success(`/fpc addadmin ${res.adminname}`);
+    {
+        let plName = res.adminname;
+        result = PermManager.addAdmin(plName);
+        if(result == SUCCESS)
+            out.success(`[FakePlayer] ${plName} added to admin list.`);
+        else
+            out.error("[FakePlayer] " + result);
         break;
+    }
     case "removeadmin":
-        out.success(`/fpc removeadmin ${res.adminname}`);
+    {
+        let plName = res.adminname;
+        result = PermManager.removeAdmin(plName);
+        if(result == SUCCESS)
+            out.success(`[FakePlayer] ${plName} removed from admin list.`);
+        else
+            out.error("[FakePlayer] " + result);
         break;
+    }
     case "adduser":
-        out.success(`/fpc adduser ${res.username}`);
+    {
+        if(!PermManager.isWhitelistMode())
+        {
+            out.error('[FakePlayer] User mode is set to blacklist. Please use "/fpc banuser <user>" or "/fpc unbanuser <user>".');
+            break;
+        }
+        let plName = res.username;
+        result = PermManager.addUserToList(plName);
+        if(result == SUCCESS)
+            out.success(`[FakePlayer] ${plName} added to user whitelist.`);
+        else
+            out.error("[FakePlayer] " + result);
         break;
+    }
     case "removeuser":
-        out.success(`/fpc removeuser ${res.username}`);
+    {
+        if(!PermManager.isWhitelistMode())
+        {
+            out.error('[FakePlayer] User mode is set to blacklist. Please use "/fpc banuser <user>" or "/fpc unbanuser <user>".');
+            break;
+        }
+        let plName = res.username;
+        result = PermManager.removeUserFromList(plName);
+        if(result == SUCCESS)
+            out.success(`[FakePlayer] ${plName} removed from user whitelist.`);
+        else
+            out.error("[FakePlayer] " + result);
         break;
+    }
     case "banuser":
-        out.success(`/fpc banuser ${res.username}`);
+    {
+        if(PermManager.isWhitelistMode())
+        {
+            out.error('[FakePlayer] User mode is set to whitelist. Please use "/fpc adduser <user>" or "/fpc removeuser <user>".');
+            break;
+        }
+        let plName = res.username;
+        result = PermManager.addUserToList(plName);
+        if(result == SUCCESS)
+            out.success(`[FakePlayer] ${plName} added to user blacklist.`);
+        else
+            out.error("[FakePlayer] " + result);
         break;
+    }
     case "unbanuser":
-        out.success(`/fpc unbanuser ${res.username}`);
+    {
+        if(PermManager.isWhitelistMode())
+        {
+            out.error('[FakePlayer] User mode is set to whitelist. Please use "/fpc adduser <user>" or "/fpc removeuser <user>".');
+            break;
+        }
+        let plName = res.username;
+        result = PermManager.removeUserFromList(plName);
+        if(result == SUCCESS)
+            out.success(`[FakePlayer] ${plName} removed from user blacklist.`);
+        else
+            out.error("[FakePlayer] " + result);
         break;
+    }
 
     case "import":
         out.success(`/fpc import ${res.filepath}`);
@@ -1510,7 +1682,6 @@ function cmdCallback(_cmd, ori, out, res)
     default:
         out.error(`[FakePlayer] Unknown action: ${res.action}`);
     }
-    return true;
 }
 
 
@@ -1524,7 +1695,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.setAlias("fpc");
 
     // create soft enum
-    FpListSoftEnum = new SoftEnumInst(fpCmd, "FakePlayerList", Object.keys(FakePlayerManager.fpList));
+    FpListSoftEnum = new SoftEnumInst(fpCmd, "FakePlayerList", Object.keys(FakePlayerManager.fpListObj));
 
     // fpc online/offline <fpname>
     fpCmd.setEnum("StatusAction", ["online", "offline"]);
@@ -1656,7 +1827,9 @@ function main()
         /* otherInformation */ {"Author": "yqs112358"}
     ); 
 
-    logger.setLogLevel(5);
+    InitConfigFile();
+    logger.setLogLevel(GlobalConf.get("LogLevel", 4));
+    PermManager.initPermManager();
     logger.info(`LLSE-FakePlayer ${_VER} 已加载，开发者：yqs112358`);
 
     FakePlayerManager.loadAllFpData();
@@ -1666,7 +1839,7 @@ function main()
     mc.listen("onServerStarted", () =>
     {
         // command registry
-        RegisterCmd("whitelist");
+        RegisterCmd(PermManager.userMode);
 
         // auto reconnect
         let res = FakePlayerManager.initialAutoOnline();
