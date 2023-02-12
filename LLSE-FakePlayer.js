@@ -540,8 +540,16 @@ class FakePlayerManager
         let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOnline && fp.isOnline())
             return `§6${fpName}§r is online now`;
+
         if(!fp.online())
             return `Fail to online §6${fpName}§r`;
+        // teleport to target pos
+        let targetPos = fp.getPos();
+        let result = FakePlayerManager.teleportToPos(fpName, new FloatPos(eval(targetPos.x), eval(targetPos.y), 
+            eval(targetPos.z),eval(targetPos.dimid)));
+        if(result != SUCCESS)
+            return `§6${fpName}§r created, but ` + result;
+
         if(fp.isNeedTick())
             FakePlayerManager.needTickFpListObj[fpName] = fp;
         FakePlayerManager.saveFpData(fpName);
@@ -613,7 +621,7 @@ class FakePlayerManager
             return `§6${fpName}§r exists. Use "/fpc online ${fpName}" to online it`;
         FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
         FpListSoftEnum.add(fpName);
-        FakePlayerManager.saveFpData(fpName);
+        FakePlayerManager.saveFpData(fpName, false);
         return SUCCESS;
     }
 
@@ -1298,14 +1306,6 @@ function cmdCallback(_cmd, ori, out, res)
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
-            break;
-        }
-
-        // teleport to target pos
-        result = FakePlayerManager.teleportToPos(fpName, spawnPos);
-        if(result != SUCCESS)
-        {
-            out.error(`[FakePlayer] §6${fpName}§r created, but ` + result);
             break;
         }
         out.success(`[FakePlayer] §6${fpName}§r created`);
