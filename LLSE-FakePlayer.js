@@ -1558,7 +1558,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
 
     // fpc operation <fpname> attack/interact/clear [interval] [maxtimes]
     fpCmd.setEnum("OperationAction", ["operation"]);
-    fpCmd.setEnum("ShortOperationType", ["attack", "interact", "clear"]);
+    fpCmd.setEnum("ShortOperationType", ["attack", "interact", /* "destroy", */ "clear"]);
     fpCmd.mandatory("action", ParamType.Enum, "OperationAction", "OperationAction", 1);
     fpCmd.mandatory("optype", ParamType.Enum, "ShortOperationType", "ShortOperationType", 1);
     fpCmd.optional("interval", ParamType.Int);
