@@ -6,6 +6,11 @@ const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.json";
 const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
 
+const _LLSE_HELP_TEXT = 
+     '[LLSE-FakePlayer] A strong fake-player plugin for LiteLoaderBDS'
+    +'- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer'
+    +'- Author: yqs112358';             //TODO            
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 //                                     Helpers                                     //
@@ -1016,7 +1021,7 @@ class FakePlayerManager
     // return ["SUCCESS", "Help text"]
     static getHelp()
     {
-        return [SUCCESS, "[LLSE-FakePlayer Help]"];
+        return [SUCCESS, _LLSE_HELP_TEXT];
     }
 
     // return true / false
