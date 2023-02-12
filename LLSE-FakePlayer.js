@@ -1312,14 +1312,36 @@ function cmdCallback(_cmd, ori, out, res)
         break;
     }
     case "remove":
-        result = FakePlayerManager.remove(res.fpname);
-        if(result != SUCCESS)
+    {
+        let fpName = res.fpname;
+        if(ori.player)
         {
-            out.error("[FakePlayer] " + result);
-            break;
-        }  
-        out.success(`[FakePlayer] §6${res.fpname}§r removed`);
+            // send confirm dialog
+            ori.player.sendModalForm("LLSE-FakePlayer Confirm Dialog", 
+                `Are you sure to delete fakeplayer §6${fpName}§r?\nAll his data will be deleted and cannot be recovered.`,
+                "Confirm", "Cancel", (pl, res) => 
+            {
+                if(!res)
+                    return;
+                let removeResult = FakePlayerManager.remove(fpName);
+                if(removeResult != SUCCESS)
+                    pl.tell("[FakePlayer] " + removeResult);
+                else
+                    pl.tell(`[FakePlayer] §6${fpName}§r is removed`);
+            });
+        }
+        else
+        {
+            result = FakePlayerManager.remove(fpName);
+            if(result != SUCCESS)
+            {
+                out.error("[FakePlayer] " + result);
+                break;
+            }  
+            out.success(`[FakePlayer] §6${fpName}§r is removed`);
+        }
         break;
+    }
     case "list":
         {
             let fpName = res.fpname2;
@@ -1677,7 +1699,7 @@ function cmdCallback(_cmd, ori, out, res)
     }
 
     case "import":
-        out.success(`/fpc import ${res.filepath}`);
+        out.success(`Target file: ${res.filepath}. Function not finished.`);
         break;
     case "help":
         result = FakePlayerManager.getHelp()[1];
