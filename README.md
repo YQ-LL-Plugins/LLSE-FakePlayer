@@ -31,39 +31,65 @@
 ### 假人行为控制
 
 - **执行特定操作**
-  /fpc operation <fpname> attack / interact [interval] [maxtimes]
-  /fpc operation <fpname> useitem [length] [interval] [maxtimes]
+
+  `/fpc operation <fpname> attack / interact [interval] [maxtimes]`
+
+  `/fpc operation <fpname> useitem [length] [interval] [maxtimes]`
+
 - **行走到目标位置**
-  /fpc walkto <fpname> <x> <y> <z>
-  /fpc walkto <fpname> <player>
+
+  `/fpc walkto <fpname> <x> <y> <z>`
+
+  `/fpc walkto <fpname> <player>`
+
 - **TP到目标位置**
-  /fpc tp <fpname> <x> <y> <z>
-  /fpc tp <fpname> <player>
+
+  `/fpc tp <fpname> <x> <y> <z>`
+
+  `/fpc tp <fpname> <player>`
+
 - **将手中物品给予假人**
-  /fpc give <fpname> 
+
+  `/fpc give <fpname> `
+
 - **查看假人物品栏**
-  /fpc getinventory <fpname> 
+
+  `/fpc getinventory <fpname> `
+
 - **选中物品栏某格子**
-  /fpc setselect <fpname> <slotid>
+
+  `/fpc setselect <fpname> <slotid>`
+
 - **扔出物品栏某格子物品**
-  /fpc drop <fpname> [slotid]
+
+  `/fpc drop <fpname> [slotid]`
+
 - **扔出物品栏中所有物品**
-  /fpc dropall <fpname>
+
+  `/fpc dropall <fpname>`
+
 - **和玩家同步行为（同步身体朝向、视角、同步移动等）**
-  /fpc sync <fpname> start / stop
+
+  `/fpc sync <fpname> start / stop`
 
 ### 系统权限管理
 
 管理员玩家可以执行几乎所有操作命令，用户玩家被限制为只能执行某些特定操作命令。具体限制详见配置文件
 
 - **新增假人管理员玩家（仅在控制台可以执行）**
-  /fpc addadmin / removeadmin <name>
+
+  `/fpc addadmin / removeadmin <name>`
+
 - **新增假人用户玩家**
-  /fpc adduser / removeuser / banuser / unbanuser <name>
+
+  `/fpc adduser / removeuser / banuser / unbanuser <name>`
 
 ### 其他命令
 
 - **从其他假人工具导入数据（功能尚未完成）**
-  /fpc import <path>
+
+  `/fpc import <path>`
+
 - **获取帮助信息**
-  /fpc help
+
+  `/fpc help`
