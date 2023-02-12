@@ -3,7 +3,7 @@
 
 const _VER = [1,0,0];
 const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.ini";
-const _FP_DATA_PATH = "./plugins/LLSE-FakePlayer/fpdata.json";
+const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
 
 
@@ -279,7 +279,7 @@ class FakePlayerInst
         this._opInterval = opInterval;
         this._opMaxTimes = opMaxTimes;
         this.startOpLoop();
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(this._name);
     }
     setLongOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
     {
@@ -289,7 +289,7 @@ class FakePlayerInst
         this._opMaxTimes = opMaxTimes;
         this._opLength = opLength;
         this.startOpLoop();
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(this._name);
     }
     clearOperation()
     {
@@ -313,7 +313,7 @@ class FakePlayerInst
             }
         }
         this._operation = "";
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(this._name);
     }
     isNeedTick()
     {
@@ -406,7 +406,7 @@ class FakePlayerManager
             return `Fail to online §6${fpName}§r`;
         if(fp.isNeedTick())
             FakePlayerManager.needTickFpList[fpName] = fp;
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName);
         FakePlayerManager.loadInventoryData(fpName);
         return SUCCESS;
     }
@@ -418,14 +418,16 @@ class FakePlayerManager
         let fp = FakePlayerManager.fpList[fpName];
         if(failIfOffline && !fp.isOnline())
             return `§6${fpName}§r is offline now`;
+
         if(fpName in FakePlayerManager.needTickFpList)
             delete FakePlayerManager.needTickFpList[fpName];
-        
         if(!FakePlayerManager.saveInventoryData(fpName))
             logger.warn(`Fail to save inventory of ${fpName}`);
+
+        fp.updatePos();
         if(!fp.offline())
             return `Fail to offline §6${fpName}§r`;
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName, false);
         return SUCCESS;
     }
 
@@ -473,7 +475,7 @@ class FakePlayerManager
             return `§6${fpName}§r exists. Use "/fpc online ${fpName}" to online it`;
         FakePlayerManager.fpList[fpName] = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
         FpListSoftEnum.add(fpName);
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
 
@@ -490,7 +492,7 @@ class FakePlayerManager
         if(fpName in FakePlayerManager.needTickFpList)
             delete FakePlayerManager.needTickFpList[fpName];
         FpListSoftEnum.remove(fpName);
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.deleteFpData(fpName);
         FakePlayerManager.deleteInventoryData(fpName);
         return SUCCESS;
     }
@@ -586,7 +588,7 @@ class FakePlayerManager
             let lastPathPos = res.path[res.path.length - 1];
             let dimid = fp.getPos().dimid;
             fp.setPos(lastPathPos[0], lastPathPos[1], lastPathPos[2], dimid);
-            FakePlayerManager.saveFpData();
+            FakePlayerManager.saveFpData(fpName);
         }
         return [SUCCESS, res];
     }
@@ -613,7 +615,7 @@ class FakePlayerManager
             let lastPathPos = res.path[res.path.length - 1];
             let dimid = fp.getPos().dimid;
             fp.setPos(lastPathPos[0], lastPathPos[1], lastPathPos[2], dimid);
-            FakePlayerManager.saveFpData();
+            FakePlayerManager.saveFpData(fpName);
         }
         return [SUCCESS, res];
     }
@@ -632,7 +634,7 @@ class FakePlayerManager
             return `Fail to teleport fakeplayer §6${fpName}§r`;
         
         fp.setPos(pos.x, pos.y, pos.z, pos.dimid);
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
 
@@ -653,7 +655,7 @@ class FakePlayerManager
             return `Fail to teleport fakeplayer §6${fpName}§r`;
         
         fp.setPos(pos.x, pos.y, pos.z, pos.dimid);
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
 
@@ -855,7 +857,7 @@ class FakePlayerManager
         fp.startSync(player.xuid);
 
         FakePlayerManager.needTickFpList[fpName] = fp;
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
 
@@ -874,7 +876,7 @@ class FakePlayerManager
 
         if(fpName in FakePlayerManager.needTickFpList)
             delete FakePlayerManager.needTickFpList[fpName];
-        FakePlayerManager.saveFpData();
+        FakePlayerManager.saveFpData(fpName);
         return SUCCESS;
     }
 
@@ -916,46 +918,58 @@ class FakePlayerManager
     }
 
     // return true / false
-    static saveFpData()
+    static saveFpData(fpName, updatePos = true)
     {
-        updatePos();
-        File.writeTo(_FP_DATA_PATH, JSON.stringify(FakePlayerManager.fpList, null, 4));
+        let fp = FakePlayerManager.fpList[fpName];
+        if(updatePos)
+            fp.updatePos();
+        File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp, null, 4));
         return true;
     }
 
     // return true / false
-    static loadFpData()
+    static deleteFpData(fpName)
     {
-        if(!File.exists(_FP_DATA_PATH))
+        return File.delete(_FP_DATA_DIR + `${fpName}.json`);
+    }
+
+    // return true / false
+    static loadAllFpData()
+    {
+        if(!File.exists(_FP_DATA_DIR))
         {
-            File.writeTo(_FP_DATA_PATH, "{}");
+            File.mkdir(_FP_DATA_DIR);
             return true;
         }
         else
         {
-            let jsonStr = File.readFrom(_FP_DATA_PATH);
-            if(jsonStr.length == 0)
+            let fileNamesArr = File.getFilesList(_FP_DATA_DIR);
+            for(let fileName of fileNamesArr)
             {
-                File.writeTo(_FP_DATA_PATH, "{}");
-                return true;
-            }
+                let path = _FP_DATA_DIR + fileName;
+                if(File.checkIsDir(path) || !fileName.endsWith(".json"))
+                    continue;
+                let fpName = fileName.substring(0, fileName.length - 5);    // remove .json
 
-            let dataObj = null;
-            try
-            {
-                dataObj = JSON.parse(jsonStr);
-                // logger.debug("FpData: ", dataObj);
-                if(!(dataObj instanceof Object))
-                    return false;
-            }
-            catch(err) { 
-                logger.error("Error when parsing fakeplayer data record: " + err);
-                return false; 
-            }
-
-            for(let fpName in dataObj)
-            {
-                let fpData = dataObj[fpName];
+                let jsonStr = File.readFrom(path);
+                if(jsonStr.length == 0 || jsonStr == "{}")
+                    continue;
+                
+                let fpData = null;
+                try
+                {
+                    fpData = JSON.parse(jsonStr);
+                    // logger.debug(`${fpName}'s FpData: `, fpData);
+                    if(!(fpData instanceof Object))
+                        return false;
+                    if(fpName != fpData._name)
+                        throw Error("Bad fpdata file content");
+                }
+                catch(err) { 
+                    logger.error(`Error when parsing fakeplayer ${fpName}'s data record: ` + err);
+                    return false; 
+                }
+    
                 FakePlayerManager.fpList[fpName] = new FakePlayerInst(
                     fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
                     fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline);
@@ -1645,7 +1659,7 @@ function main()
     logger.setLogLevel(5);
     logger.info(`LLSE-FakePlayer ${_VER} 已加载，开发者：yqs112358`);
 
-    FakePlayerManager.loadFpData(_FP_DATA_PATH);
+    FakePlayerManager.loadAllFpData();
     //logger.debug("FpList: ", FakePlayerManager.fpList);
 
     mc.listen("onTick", FakePlayerManager.onTick);
