@@ -126,7 +126,11 @@ class PermManager
         if(PermManager.adminList.includes(plName))
             return `${plName} is already in admin list.`;
         if(PermManager.userList.includes(plName))
+        {
             logger.warn(`${plName} is removing from user ${PermManager.userMode}`);
+            PermManager.userList.removeByValue(plName);
+            GlobalConf.set("UserList", PermManager.userList);
+        }
 
         PermManager.adminList.push(plName);
         GlobalConf.set("AdminList", PermManager.adminList);
