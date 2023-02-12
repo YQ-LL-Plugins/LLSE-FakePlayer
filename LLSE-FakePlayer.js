@@ -717,6 +717,14 @@ class FakePlayerManager
         return SUCCESS;
     }
 
+    static clearOperation(fpName)
+    {
+        if(!(fpName in FakePlayerManager.fpListObj))
+            return `§6${fpName}§r no found. Please create it first.`;
+        FakePlayerManager.fpListObj[fpName].clearOperation();
+        return SUCCESS;
+    }
+
     // return ["fail reason", null] / [SUCCESS, {isFullPath:Boolean, path:Number[3][]} ]
     static walkToPos(fpName, pos)
     {
@@ -1174,14 +1182,19 @@ ll.export(FakePlayerManager.offline, "_LLSE_FakePlayer_PLUGIN_", "offline");
 ll.export(FakePlayerManager.onlineAll, "_LLSE_FakePlayer_PLUGIN_", "onlineAll");
 ll.export(FakePlayerManager.offlineAll ,"_LLSE_FakePlayer_PLUGIN_", "offlineAll");
 ll.export(FakePlayerManager.createNew ,"_LLSE_FakePlayer_PLUGIN_", "createNew");
+ll.export(FakePlayerManager.remove ,"_LLSE_FakePlayer_PLUGIN_", "remove");
 ll.export(FakePlayerManager.list ,"_LLSE_FakePlayer_PLUGIN_", "list");
 ll.export(FakePlayerManager.getAllInfo ,"_LLSE_FakePlayer_PLUGIN_", "getAllInfo");
 ll.export(FakePlayerManager.getPosition ,"_LLSE_FakePlayer_PLUGIN_", "getPosition");
 ll.export(FakePlayerManager.isOnline ,"_LLSE_FakePlayer_PLUGIN_", "isOnline");
 ll.export(FakePlayerManager.setShortOperation ,"_LLSE_FakePlayer_PLUGIN_", "setShortOperation");
 ll.export(FakePlayerManager.setLongOperation ,"_LLSE_FakePlayer_PLUGIN_", "setLongOperation");
+ll.export(FakePlayerManager.clearOperation ,"_LLSE_FakePlayer_PLUGIN_", "clearOperation");
 ll.export(FakePlayerManager.walkToPos ,"_LLSE_FakePlayer_PLUGIN_", "walkToPos");
+ll.export(FakePlayerManager.walkToEntity ,"_LLSE_FakePlayer_PLUGIN_", "walkToEntity");
 ll.export(FakePlayerManager.teleportToPos ,"_LLSE_FakePlayer_PLUGIN_", "teleportToPos");
+ll.export(FakePlayerManager.teleportToEntity ,"_LLSE_FakePlayer_PLUGIN_", "teleportToEntity");
+ll.export(FakePlayerManager.giveItem ,"_LLSE_FakePlayer_PLUGIN_", "giveItem");
 ll.export(FakePlayerManager.getInventory ,"_LLSE_FakePlayer_PLUGIN_", "getInventory");
 ll.export(FakePlayerManager.setSelectSlot ,"_LLSE_FakePlayer_PLUGIN_", "setSelectSlot");
 ll.export(FakePlayerManager.dropItem ,"_LLSE_FakePlayer_PLUGIN_", "dropItem");
@@ -1419,7 +1432,10 @@ function cmdCallback(_cmd, ori, out, res)
         if(res.optype)
         {
             // short op type
-            result = FakePlayerManager.setShortOperation(res.fpname, res.optype, res.interval, res.maxtimes);
+            if(res.optype == "clear")
+                result = FakePlayerManager.clearOperation(res.fpname);
+            else
+                result = FakePlayerManager.setShortOperation(res.fpname, res.optype, res.interval, res.maxtimes);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
