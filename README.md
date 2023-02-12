@@ -9,15 +9,24 @@
 ### 假人管理
 
 - **假人上下线** 
-  /fpc online / offline <fpname>
+
+  `/fpc online / offline <fpname>`
+
 - **假人批量上下线** 
-  /fpc onlineall / offlineall
+
+  `/fpc onlineall / offlineall`
+
 - **创建假人**
-  /fpc create <name> [x] [y] [z] [dimid]
+
+  `/fpc create <name> [x] [y] [z] [dimid]`
+
 - **移除假人**
-  /fpc remove <fpname>
+
+  `/fpc remove <fpname>`
+
 - **列出所有假人 / 查看假人详细信息**
-  /fpc list [fpname]
+
+  `/fpc list [fpname]`
 
 ### 假人行为控制
 
