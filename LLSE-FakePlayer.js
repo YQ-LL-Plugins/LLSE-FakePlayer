@@ -1166,6 +1166,32 @@ class FakePlayerManager
 
 
 /////////////////////////////////////////////////////////////////////////////////////
+//                                   Export APIs                                   //
+/////////////////////////////////////////////////////////////////////////////////////
+
+ll.export(FakePlayerManager.online ,"_LLSE_FakePlayer_PLUGIN_", "online");
+ll.export(FakePlayerManager.offline, "_LLSE_FakePlayer_PLUGIN_", "offline");
+ll.export(FakePlayerManager.onlineAll, "_LLSE_FakePlayer_PLUGIN_", "onlineAll");
+ll.export(FakePlayerManager.offlineAll ,"_LLSE_FakePlayer_PLUGIN_", "offlineAll");
+ll.export(FakePlayerManager.createNew ,"_LLSE_FakePlayer_PLUGIN_", "createNew");
+ll.export(FakePlayerManager.list ,"_LLSE_FakePlayer_PLUGIN_", "list");
+ll.export(FakePlayerManager.getAllInfo ,"_LLSE_FakePlayer_PLUGIN_", "getAllInfo");
+ll.export(FakePlayerManager.getPosition ,"_LLSE_FakePlayer_PLUGIN_", "getPosition");
+ll.export(FakePlayerManager.isOnline ,"_LLSE_FakePlayer_PLUGIN_", "isOnline");
+ll.export(FakePlayerManager.setShortOperation ,"_LLSE_FakePlayer_PLUGIN_", "setShortOperation");
+ll.export(FakePlayerManager.setLongOperation ,"_LLSE_FakePlayer_PLUGIN_", "setLongOperation");
+ll.export(FakePlayerManager.walkToPos ,"_LLSE_FakePlayer_PLUGIN_", "walkToPos");
+ll.export(FakePlayerManager.teleportToPos ,"_LLSE_FakePlayer_PLUGIN_", "teleportToPos");
+ll.export(FakePlayerManager.getInventory ,"_LLSE_FakePlayer_PLUGIN_", "getInventory");
+ll.export(FakePlayerManager.setSelectSlot ,"_LLSE_FakePlayer_PLUGIN_", "setSelectSlot");
+ll.export(FakePlayerManager.dropItem ,"_LLSE_FakePlayer_PLUGIN_", "dropItem");
+ll.export(FakePlayerManager.dropAllItems ,"_LLSE_FakePlayer_PLUGIN_", "dropAllItems");
+ll.export(FakePlayerManager.getHelp ,"_LLSE_FakePlayer_PLUGIN_", "getHelp");
+ll.export(FakePlayerManager.saveFpData ,"_LLSE_FakePlayer_PLUGIN_", "saveFpData");
+ll.export(FakePlayerManager.saveInventoryData ,"_LLSE_FakePlayer_PLUGIN_", "saveInventoryData");
+
+
+/////////////////////////////////////////////////////////////////////////////////////
 //                                    Soft Enum                                    //
 /////////////////////////////////////////////////////////////////////////////////////
 
