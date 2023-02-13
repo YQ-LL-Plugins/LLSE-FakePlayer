@@ -732,7 +732,7 @@ class FakePlayerManager
             if(!opLength)
                 opLength = 1000;
 
-            if(_LONG_OPERATIONS_LIST.includes(operation))
+            if(FakePlayerManager._LONG_OPERATIONS_LIST.includes(operation))
                 fp.setLongOperation(operation, opInterval, opMaxTimes, opLength);
             else
                 fp.setShortOperation(operation, opInterval, opMaxTimes);

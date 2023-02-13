@@ -158,7 +158,8 @@
 目前已知有这些bug，等待修复：
 
 - sync只能二维寻路
-- selectslot后不马上显示，要重进
+- setselect后手中的物品不马上显示，要玩家重进游戏才能看到
+- operation时不会保持sync已经看向的头部朝向
 
 <br/><br/>
 
