@@ -1809,7 +1809,7 @@ function cmdCallback(_cmd, ori, out, res)
         if(!ori.player)
             out.error("[FakePlayer] Only players can use gui command");
         else
-            FpGuiForms.sendMainForm(ori.player);
+            FpGuiForms.sendMainMenu(ori.player);
         break;
     
     default:
@@ -2119,7 +2119,7 @@ class FpGuiForms
 
     //////// Main forms
     // main
-    static sendMainForm(player)
+    static sendMainMenu(player)
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer Main Menu", "§ePlease choose operation:§r");
         fm.addButton("FakePlayers List", "", (pl) => { FpGuiForms.sendFpListForm(pl); });
@@ -2128,10 +2128,10 @@ class FpGuiForms
         {
             fm.addButton("Quick Online/Offline", "", (pl) => { FpGuiForms.sendQuickOnOfflineForm(pl);});
         }
-        fm.addButton("Behavior Operations", "", (pl) => {});
+        fm.addButton("Behavior Operations", "", (pl) => { FpGuiForms.sendOperationSelectMenu(pl); });
         fm.addButton("Inventory Operations", "", (pl) => {});
         fm.addButton("Permissions Manage", "", (pl) => {});
-        fm.addButton("Help and About", "", (pl) => {});
+        fm.addButton("Help", "", (pl) => {});
         fm.send(player);
     }
 
@@ -2189,7 +2189,7 @@ class FpGuiForms
                         (pl) => {FpGuiForms.sendFpListForm(pl);});
             });
         }
-        fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendMainForm(pl); });
+        fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendMainMenu(pl); });
         fm.send(player);
     }
     
@@ -2307,7 +2307,7 @@ class FpGuiForms
                         if(removeResult != SUCCESS)
                             FpGuiForms.sendErrorForm(pl, removeResult, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                         else
-                            FpGuiForms.sendInfoForm(pl, `§6${fpName}§r is removed`, (pl) => {FpGuiForms.sendFpListForm(pl);});
+                            FpGuiForms.sendFpListForm(pl);
                     }, (pl)=>
                     {
                         FpGuiForms.sendFpInfoForm(pl, fpName);
@@ -2332,7 +2332,7 @@ class FpGuiForms
             fm.addSwitch(fpName, `${prefix}${fpName} - ${statusStr}§r`, isOnline ? true : false);
         });
         
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendMainForm(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendMainMenu(pl); });
         fm.setSubmitCallback((pl, resultObj) => 
         {
             let resultText = "";
@@ -2361,6 +2361,43 @@ class FpGuiForms
             });
             FpGuiForms.sendInfoForm(pl, resultText, (pl)=>{ FpGuiForms.sendQuickOnOfflineForm(pl); });
         });
+        fm.send(player);
+    }
+
+    // fakeplayer operation select menu
+    static sendOperationSelectMenu(player)
+    {
+        let fm = new BetterSimpleForm("LLSE-FakePlayer Operation Control");
+
+        let atLeastOneItem = false;
+        if(PermManager.hasPermission(player, "operation"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Do/Clear operations", "", (pl)=>{});
+        }
+        if(PermManager.hasPermission(player, "walkto"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Walk to position", "", (pl)=>{});
+            fm.addButton("Walk to player", "", (pl)=>{});
+        }
+        if(PermManager.hasPermission(player, "tp"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Teleport to position", "", (pl)=>{});
+            fm.addButton("Teleport to player", "", (pl)=>{});
+        }
+        if(PermManager.hasPermission(player, "sync"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Sync with player", "", (pl)=>{});
+        }
+        fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendMainMenu(pl); });
+
+        if(atLeastOneItem)
+            fm.setContent("§ePlease choose operation:§r");
+        else
+            fm.setContent("§eSorry, but you have no permission here.§r");
         fm.send(player);
     }
 }
