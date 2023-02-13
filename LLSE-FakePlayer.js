@@ -54,7 +54,7 @@ function InitConfigFile()
     GlobalConf.init("OpIsAdmin", 1);
     GlobalConf.init("AdminList", []);
     GlobalConf.init("UserMode", "whitelist");
-    GlobalConf.init("UserAllowAction", ["online", "offline", "list", "getinventory", "help"]);
+    GlobalConf.init("UserAllowAction", ["online", "offline", "list", "getinventory", "help", "gui"]);
     GlobalConf.init("UserList", []);
 }
 
@@ -84,7 +84,30 @@ class PermManager
 
     static isWhitelistMode() { return PermManager.userMode == "whitelist"; }
 
-    static checkPermission(origin, action)
+    // return true / false
+    static hasPermission(player, action)
+    {
+        let plName = player.realName;
+        if(PermManager.adminList.includes(plName))         // is admin
+            return true;
+        else if(PermManager.opIsAdmin && player.isOP())     // is OP
+            return true;
+        else if(PermManager.userList.includes(plName))
+        {
+            if(PermManager.userMode == "whitelist" && PermManager.userAllowAction.includes(action))        // in whitelist and allow
+                return true;
+        }
+        else
+        {
+            // plName not in userList
+            if(PermManager.userMode == "blacklist" && PermManager.userAllowAction.includes(action))        // not in blacklist and allow
+                return true;
+        }
+        return false;
+    }
+
+    // return SUCCESS / fail reason
+    static checkOriginPermission(origin, action)
     {
         // refuse only console actions
         if((PermManager.onlyConsoleAction.includes(action)) && origin.type != 7)          // 7 is BDS console  
@@ -101,23 +124,10 @@ class PermManager
         }
 
         // ensure is player executed below
-        let plName = pl.realName;
-        if(PermManager.adminList.includes(plName))         // is admin
+        if(PermManager.hasPermission(pl, action))
             return SUCCESS;
-        else if(PermManager.opIsAdmin && pl.isOP())     // is OP
-            return SUCCESS;
-        else if(PermManager.userList.includes(plName))
-        {
-            if(PermManager.userMode == "whitelist" && PermManager.userAllowAction.includes(action))        // in whitelist and allow
-                return SUCCESS;
-        }
         else
-        {
-            // plName not in userList
-            if(PermManager.userMode == "blacklist" && PermManager.userAllowAction.includes(action))        // not in blacklist and allow
-                return SUCCESS;
-        }
-        return "You have no permission to do this action.";
+            return "You have no permission to do this action.";
     }
 
     static addAdmin(plName)
@@ -527,6 +537,27 @@ class FakePlayerManager
 //////// private
     static fpListObj = {};
     static needTickFpListObj = {}
+
+    // return Player / null
+    static getPlayer(fpName)
+    {
+        if(!(fpName in FakePlayerManager.fpListObj))
+            return null;
+        return FakePlayerManager.fpListObj[fpName].getPlayer();
+    }
+
+    // return FpInstance / undefined
+    static getFpInstance(fpName)
+    {
+        return FakePlayerManager.fpListObj[fpName];
+    }
+
+    // callback(fpName, fpInst);
+    static forEachFp(callback)
+    {
+        for(let fpName in FakePlayerManager.fpListObj)
+            callback(fpName, FakePlayerManager.fpListObj[fpName]);
+    }
 
     static onTick()
     {
@@ -1185,14 +1216,6 @@ class FakePlayerManager
         }
         return resultStr == "" ? SUCCESS : resultStr.substring(0, resultStr.length - 1);
     }
-
-    // return Player / null
-    static getPlayer(fpName)
-    {
-        if(!(fpName in FakePlayerManager.fpListObj))
-            return null;
-        return FakePlayerManager.fpListObj[fpName].getPlayer();
-    }
 }
 
 
@@ -1264,7 +1287,7 @@ let FpListSoftEnum = null;
 
 function cmdCallback(_cmd, ori, out, res)
 {
-    let permRes = PermManager.checkPermission(ori, res.action);
+    let permRes = PermManager.checkOriginPermission(ori, res.action);
     if(permRes != SUCCESS)
     {
         out.error("[FakePlayer] " + permRes);
@@ -1382,17 +1405,18 @@ function cmdCallback(_cmd, ori, out, res)
         if(ori.player)
         {
             // send confirm dialog
-            ori.player.sendModalForm("LLSE-FakePlayer Confirm Dialog", 
+            FpGuiForms.sendAskForm(ori.player, 
                 `Are you sure to delete fakeplayer §6${fpName}§r?\nAll his data will be deleted and cannot be recovered.`,
-                "Confirm", "Cancel", (pl, res) => 
+                (pl)=>
             {
-                if(!res)
-                    return;
                 let removeResult = FakePlayerManager.remove(fpName);
                 if(removeResult != SUCCESS)
                     pl.tell("[FakePlayer] " + removeResult);
                 else
                     pl.tell(`[FakePlayer] §6${fpName}§r is removed`);
+            }, (pl)=>
+            {
+                pl.tell("[FakePlayer] Action cancelled.");
             });
         }
         else
@@ -1437,16 +1461,18 @@ function cmdCallback(_cmd, ori, out, res)
                 let resultData = FakePlayerManager.getAllInfo(fpName);
                 if(resultData[0] != SUCCESS)
                     out.error(`[FakePlayer] ` + resData[0]);
-
-                let result = resultData[1];
-                let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
-                let syncPlayerName = data.xuid2name(result.syncXuid);
-                out.success(`[FakePlayer] §6${fpName}§r:\n`
-                    + `- Position: ${posObj.toString()}\n`
-                    + `- Operation: ${result.operation ? result.operation : "None"}\n`
-                    + `- Sync Target Player: ${syncPlayerName ? syncPlayerName : "None"}\n`
-                    + `- Status: ${result.isOnline ? "Online" : "Offline"}`
-                );
+                elsed
+                {
+                    let result = resultData[1];
+                    let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
+                    let syncPlayerName = data.xuid2name(result.syncXuid);
+                    out.success(`[FakePlayer] §6${fpName}§r:\n`
+                        + `- Position: ${posObj.toString()}\n`
+                        + `- Operation: ${result.operation ? result.operation : "None"}\n`
+                        + `- Sync Target Player: ${syncPlayerName ? syncPlayerName : "None"}\n`
+                        + `- Status: ${result.isOnline ? "Online" : "Offline"}`
+                    );
+                }
             }
         }
         break;
@@ -1767,11 +1793,17 @@ function cmdCallback(_cmd, ori, out, res)
     }
 
     case "import":
-        out.success(`Target file: ${res.filepath}. Function not finished.`);
+        out.success(`[FakePlayer] Target file: ${res.filepath}. Function not finished.`);
         break;
     case "help":
         result = FakePlayerManager.getHelp()[1];
         out.success("[FakePlayer] " + result);
+        break;
+    case "gui":
+        if(!ori.player)
+            out.error("[FakePlayer] Only players can use gui command");
+        else
+            FpGuiForms.sendMainForm(ori.player);
         break;
     
     default:
@@ -1904,8 +1936,181 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.mandatory("action", ParamType.Enum, "HelpAction", "HelpAction", 1);
     fpCmd.overload(["HelpAction"]);
 
+    // fpc gui
+    fpCmd.setEnum("GuiAction", ["gui"]);
+    fpCmd.mandatory("action", ParamType.Enum, "GuiAction", "GuiAction", 1);
+    fpCmd.overload(["GuiAction"]);
+
     fpCmd.setCallback(cmdCallback);
     fpCmd.setup();
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+//                                      GUI                                        //
+/////////////////////////////////////////////////////////////////////////////////////
+
+// wrapper for SimpleForm for easier routing
+class BetterSimpleForm
+{
+    constructor(title = null, content = null)
+    {
+        this.fm = mc.newSimpleForm();
+        this.buttonCallbacks = [];
+        this.cancelCallback = function(pl) {};
+
+        if(title)
+            this.setTitle(title);
+        if(content)
+            this.setContent(content);
+    }
+    setTitle(title)
+    {
+        return this.fm.setTitle(title);
+    }
+    setContent(title)
+    {
+        return this.fm.setContent(title);
+    }
+    addButton(text, image = "", callback = function(pl){})
+    {
+        let res = this.fm.addButton(text, image);
+        this.buttonCallbacks.push(callback);
+        return res;
+    }
+    setCancelCallback(callback)
+    {
+        this.cancelCallback = callback;
+    }
+    send(player)
+    {
+        player.sendForm(this.fm, (function(buttonCallbacks, cancelCallback) {
+            return (pl, id) => {
+                if(id == null)
+                    cancelCallback(pl);
+                else if(buttonCallbacks[id])
+                    buttonCallbacks[id](pl);
+            }
+        })(this.buttonCallbacks, this.cancelCallback));
+    }
+}
+
+class FpGuiForms
+{
+    ////// Tool dialogs
+    static sendInfoForm(player, infoText, callback = function(pl){})
+    {
+        player.sendModalForm("LLSE-FakePlayer Info Dialog", 
+            infoText, "OK", "Close", (pl, res)=>{ callback(pl); });
+    }
+
+    static sendErrorForm(player, errMsg, callback = function(pl){})
+    {
+        player.sendModalForm("LLSE-FakePlayer Error Dialog", 
+            errMsg, "OK", "Close", (pl, res)=>{ callback(pl); });
+    }
+
+    static sendAskForm(player, askText, confirmCallback = function(pl){}, rejectCallback = function(pl){})
+    {
+        player.sendModalForm("LLSE-FakePlayer Confirm Dialog", askText, "Confirm", "Cancel", 
+            (pl, res) => {
+                if(res)
+                    confirmCallback(pl);
+                else 
+                    rejectCallback(pl);
+            });
+    }
+
+    //////// Main forms
+    static sendMainForm(player)
+    {
+        let fm = new BetterSimpleForm("LLSE-FakePlayer Main Menu");
+        fm.addButton("FakePlayers List", "", (pl) => { FpGuiForms.sendFpListForm(pl); });
+        fm.addButton("Quick Online/Offline", "", (pl) => {});
+        fm.addButton("Behavior Operations", "", (pl) => {});
+        fm.addButton("Inventory Operations", "", (pl) => {});
+        fm.addButton("Permissions Manage", "", (pl) => {});
+        fm.addButton("Help and About", "", (pl) => {});
+        fm.send(player);
+    }
+
+    static sendFpListForm(player)
+    {
+        let fm = new BetterSimpleForm("LLSE-FakePlayer FP-List Menu");
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            let statusStr = fp.isOnline() ? "§aOnline§r" : "§4Offline§r";
+            fm.addButton(`${fpName} - ${statusStr}`, "", (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
+        });
+        fm.addButton("Create a new fakeplayer", "", (pl) => {});
+        fm.addButton("Online all fakePlayers", "", (pl) => {});
+        fm.addButton("Offline all fakeplayers", "", (pl) => {});
+        fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendMainForm(pl); });
+        fm.send(player);
+    }
+
+    static sendFpInfoForm(player, fpName)
+    {
+        let resultData = FakePlayerManager.getAllInfo(fpName);
+        if(resultData[0] != SUCCESS)
+            FpGuiForms.sendErrorForm(player, resultData[0], (pl) => { FpGuiForms.sendFpListForm(pl); });
+        else
+        {
+            let result = resultData[1];
+            let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
+            let syncPlayerName = data.xuid2name(result.syncXuid);
+
+            let fm = new BetterSimpleForm("LLSE-FakePlayer Detail Info");
+            fm.setContent(`Infomation about §6${fpName}§r:\n`
+                + `- Position: ${posObj.toString()}\n`
+                + `- Operation: ${result.operation ? result.operation : "None"}\n`
+                + `- Sync Target Player: ${syncPlayerName ? syncPlayerName : "None"}\n`
+                + `- Status: ${result.isOnline ? "Online" : "Offline"}`
+            );
+            if(result.isOnline && PermManager.hasPermission(player, "offline"))
+            {
+                fm.addButton("Offline this fakeplayer", "", (pl) => {
+                    // offline fakeplayer
+                    let result = FakePlayerManager.offline(fpName);
+                    if(result == SUCCESS)
+                        FpGuiForms.sendInfoForm(pl, `§6${fpName}§r is offline`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                    else
+                        FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                });
+            }
+            else if (PermManager.hasPermission(player, "online"))
+            {
+                fm.addButton("Online this fakeplayer", "", (pl) => {
+                    // online fakeplayer
+                    let result = FakePlayerManager.online(fpName);
+                    if(result == SUCCESS)
+                        FpGuiForms.sendInfoForm(pl, `§6${fpName}§r is online`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                    else
+                        FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                });
+            }
+            if(PermManager.hasPermission(player, "remove"))
+            {
+                fm.addButton("Delete this fakeplayer", "", (pl)=> {
+                    // remove fakeplayer
+                    FpGuiForms.sendAskForm(player, 
+                        `Are you sure to delete fakeplayer §6${fpName}§r?\nAll his data will be deleted and cannot be recovered.`,
+                        (pl)=>
+                    {
+                        let removeResult = FakePlayerManager.remove(fpName);
+                        if(removeResult != SUCCESS)
+                            FpGuiForms.sendErrorForm(pl, removeResult, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                        else
+                            FpGuiForms.sendInfoForm(pl, `§6${fpName}§r is removed`, (pl) => {FpGuiForms.sendFpListForm(pl);});
+                    }, (pl)=>
+                    {
+                        FpGuiForms.sendFpInfoForm(pl, fpName);
+                    });
+                });
+            }
+            fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendFpListForm(pl); });
+            fm.send(player);
+        }
+    }
 }
 
 

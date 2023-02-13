@@ -8,6 +8,10 @@
 
 <br/>
 
+## GUI
+
+使用 `/fpc gui` 命令打开GUI管理界面进行管理
+
 ## 命令
 
 所有命令示例中，<>包括的为必选参数，[]包括的为可选参数
@@ -42,7 +46,9 @@
 
   `/fpc operation <fpname> useitem [length] [interval] [maxtimes]`
 
-  注意：interval表示执行间隔，length表示工作的长度（这里表示useitem右键按多久），两者单位均为ms（毫秒）
+  注意：operation的可选值：attack 攻击，interact 与方块互动，useitem 使用物品（destroy和place正在修复中）
+
+  interval表示执行间隔，length表示工作的长度（这里表示useitem右键按多久），两者单位均为ms（毫秒）
 
   maxtimes 为最大执行次数，如果设置为-1，表示无限次执行
 
@@ -140,7 +146,8 @@
         "offline",
         "list",
         "getinventory",
-        "help"
+        "help",
+        "gui"
     ],
     // 假人用户玩家列表（如果为白名单模式，则此处为玩家白名单，否则为玩家黑名单）
     "UserList": [
