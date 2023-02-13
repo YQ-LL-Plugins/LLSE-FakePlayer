@@ -651,6 +651,8 @@ class FakePlayerManager
         let successNames = [];
         for(let fpName of Object.keys(FakePlayerManager.fpListObj))
         {
+            if(FakePlayerManager.fpListObj[fpName].isOnline())
+                continue;
             let res = FakePlayerManager.online(fpName, false);
             if(res != SUCCESS)
                 resultStr += res + "\n";
@@ -670,6 +672,8 @@ class FakePlayerManager
         let successNames = [];
         for(let fpName of Object.keys(FakePlayerManager.fpListObj))
         {
+            if(!FakePlayerManager.fpListObj[fpName].isOnline())
+                continue;
             let res = FakePlayerManager.offline(fpName, false);
             if(res != SUCCESS)
                 resultStr += res + "\n"
@@ -1376,7 +1380,7 @@ function cmdCallback(_cmd, ori, out, res)
         else if(ori.player)
         {
             // createpos not set, but executed by player
-            spawnPos = CalcPosFromViewDirection(ori.player.pos, ori.player.direction, 2);
+            spawnPos = CalcPosFromViewDirection(ori.player.pos, ori.player.direction, 1);
         }
         else
         {
@@ -1384,12 +1388,14 @@ function cmdCallback(_cmd, ori, out, res)
             break;
         }
 
+        // create
         result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.dimid);
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
             break;
         }
+        // online
         result = FakePlayerManager.online(fpName);
         if(result != SUCCESS)
         {
@@ -1995,6 +2001,91 @@ class BetterSimpleForm
     }
 }
 
+// wrapper for SimpleForm for easier usage
+class BetterCustomFormResult
+{
+    constructor(idNameMap, dataArr)
+    {
+        this.results = {};
+        for(let i=0; i<idNameMap.length; ++i)
+            this.results[idNameMap[i]] = dataArr[i];
+    }
+    get(name)
+    {
+        return this.results[name];
+    }
+}
+
+class BetterCustomForm
+{
+    constructor(title = null)
+    {
+        this.fm = mc.newCustomForm();
+        this.idNameMap = [];
+        this.submitCallback = function(pl, resultObj) {};
+        this.cancelCallback = function(pl) {};
+
+        if(title)
+            this.setTitle(title);
+    }
+    setTitle(title)
+    {
+        return this.fm.setTitle(title);
+    }
+    addLabel(name, text)
+    {
+        idNameMap.push(name);
+        return this.fm.addLabel(text);
+    }
+    addInput(name, title, placeholder = undefined, def = undefined)
+    {
+        idNameMap.push(name);
+        return this.fm.addInput(title, placeholder, def);
+    }
+    addSwitch(name, title, def = undefined)
+    {
+        idNameMap.push(name);
+        return this.fm.addSwitch(title, def);
+    }
+    addDropdown(name, title, items, def = undefined)
+    {
+        idNameMap.push(name);
+        return this.fm.addDropdown(title, items, def);
+    }
+    addSlider(name, title, min, max, step = undefined, def = undefined)
+    {
+        idNameMap.push(name);
+        return this.fm.addSlider(title, min, max, step, def);
+    }
+    addStepSlider(name, title, items, def = undefined)
+    {
+        idNameMap.push(name);
+        return this.fm.addStepSlider(title, items, def);
+    }
+    setSubmitCallback(callback)
+    {
+        this.submitCallback = callback;
+    }
+    setCancelCallback(callback)
+    {
+        this.cancelCallback = callback;
+    }
+    send(player)
+    {
+        player.sendForm(this.fm, (pl, resultArr) =>
+        {
+            if(!resultArr)
+                this.cancelCallback(pl);
+            else
+            {
+                let resultObj = new BetterCustomFormResult(this.idNameMap, resultArr);
+                this.submitCallback(pl, resultObj);
+            }
+        });
+    }
+}
+
+
 class FpGuiForms
 {
     ////// Tool dialogs
@@ -2022,6 +2113,7 @@ class FpGuiForms
     }
 
     //////// Main forms
+    // main
     static sendMainForm(player)
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer Main Menu");
@@ -2034,6 +2126,7 @@ class FpGuiForms
         fm.send(player);
     }
 
+    // fake player list
     static sendFpListForm(player)
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer FP-List Menu");
@@ -2041,13 +2134,124 @@ class FpGuiForms
             let statusStr = fp.isOnline() ? "§aOnline§r" : "§4Offline§r";
             fm.addButton(`${fpName} - ${statusStr}`, "", (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
         });
-        fm.addButton("Create a new fakeplayer", "", (pl) => {});
-        fm.addButton("Online all fakePlayers", "", (pl) => {});
-        fm.addButton("Offline all fakeplayers", "", (pl) => {});
+        if(PermManager.hasPermission(player, "create"))
+        {
+            fm.addButton("Create a new fakeplayer", "", (pl) => {
+                FpGuiForms.sendCreateNewForm(player);
+            });
+        }
+        if(PermManager.hasPermission(player, "onlineall"))
+        {
+            fm.addButton("Online all fakePlayers", "", (pl) =>
+            {
+                let successNames = [];
+                let result = "";
+                [result, successNames] = FakePlayerManager.onlineAll();
+
+                let namesList = "";
+                for(let name of successNames)
+                    namesList += `§6${name}§r, `;
+                namesList = namesList.substring(0, namesList.length - 2);
+                if(result == SUCCESS)
+                    FpGuiForms.sendInfoForm(pl, "All fakeplayers are online:\n" + namesList, 
+                        (pl) => {FpGuiForms.sendFpListForm(pl);});
+                else
+                    FpGuiForms.sendInfoForm(pl, result + "\nThese fakeplayers are online now:\n" + namesList, 
+                        (pl) => {FpGuiForms.sendFpListForm(pl);});
+            });
+        }
+        if(PermManager.hasPermission(player, "offlineall"))
+        {
+            fm.addButton("Offline all fakeplayers", "", (pl) => 
+            {
+                let successNames = [];
+                let result = "";
+                [result, successNames] = FakePlayerManager.offlineAll();
+
+                let namesList = "";
+                for(let name of successNames)
+                    namesList += `§6${name}§r, `;
+                namesList = namesList.substring(0, namesList.length - 2);
+                if(result == SUCCESS)
+                    FpGuiForms.sendInfoForm(pl, "All fakeplayers are offline:\n" + namesList, 
+                        (pl) => {FpGuiForms.sendFpListForm(pl);});
+                else
+                    FpGuiForms.sendInfoForm(pl, result + "\nThese fakeplayers are offline now:\n" + namesList, 
+                        (pl) => {FpGuiForms.sendFpListForm(pl);});
+            });
+        }
         fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendMainForm(pl); });
         fm.send(player);
     }
+    
+    // create new fakeplayer
+    static sendCreateNewForm(player)
+    {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Create New Dialog");
+        fm.addLabel("label1", "New fakeplayer's name is required, but the coordinates can be left blank. \n"
+            + "If you give no coordinates or bad format given, the new fakeplayer will be created in front of you.");
+        fm.addInput("name", "Name:(§4*§r)", "new name");
+        fm.addInput("coords", "x,y,z:", "315,70,233");
 
+        let dimensionNames = ["Overworld", "Nether", "End"];
+        fm.addDropdown("dimname", "Dimension:", dimensionNames, dimensionNames[player.pos.dimid]);
+        
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendFpListForm(pl); })
+        fm.setSubmitCallback((pl, resultObj) => {
+            // get name
+            let fpName = resultObj.get("name");
+            if(fpName.length == 0)
+            {
+                FpGuiForms.sendErrorForm(pl, "Create failed. You must fill new fakeplayer's name.",
+                    (pl) => { FpGuiForms.sendFpListForm(pl); });
+            }
+
+            // get position
+            let spawnPos = new FloatPos(0, 32767, 0, 0);
+            let coords = resultObj.get("coords").split(",");
+            if(coords.length != 3)
+                spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
+            else
+            {
+                spawnPos.x = Number(coords[0]);
+                spawnPos.y = Number(coords[1]);
+                spawnPos.z = Number(coords[2]);
+                if(isNaN(spawnPos.x) || isNaN(spawnPos.y) || isNaN(spawnPos.z))
+                    spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
+                else
+                {
+                    let dimName = resultObj.get("dimname");
+                    if(dimName == dimensionNames[0])
+                        spawnPos.dimid = 0;
+                    else if(dimName == dimensionNames[1])
+                        spawnPos.dimid = 1;
+                    else if(dimName == dimensionNames[2])
+                        spawnPos.dimid = 2;
+                    else
+                        spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
+                }
+            }
+
+            // create
+            let result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.dimid);
+            if(result != SUCCESS)
+            {
+                FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpListForm(pl);});
+                return;
+            }
+            // online
+            result = FakePlayerManager.online(fpName);
+            if(result != SUCCESS)
+            {
+                FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpListForm(pl);});
+                return;
+            }
+            FpGuiForms.sendInfoForm(pl, `§6${fpName}§r created`, (pl) => {FpGuiForms.sendFpListForm(pl);});
+        });
+        fm.send(pl);
+    }
+
+    // get fakeplayer detailed info
     static sendFpInfoForm(player, fpName)
     {
         let resultData = FakePlayerManager.getAllInfo(fpName);
