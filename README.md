@@ -139,7 +139,7 @@
 }
 ```
 
-另外，位于`plugins\LLSE-FakePlayer\fpdata\`目录里面的每一个文件储存每一个假人的记录数据，位于`plugins\LLSE-FakePlayer\fpinventorys\`目录里面的每一个文件储存每一个假人的物品栏数据。不建议普通用户修改储存数据，任何一点错误的修改将导致插件无法正常工作。
+> 另外，位于`plugins\LLSE-FakePlayer\fpdata\`目录里面的每一个文件储存每一个假人的记录数据，位于`plugins\LLSE-FakePlayer\fpinventorys\`目录里面的每一个文件储存每一个假人的物品栏数据。不建议普通用户修改这两个位置的储存数据，任何一点错误的修改将导致插件无法正常工作。
 
 <br/><br/>
 
