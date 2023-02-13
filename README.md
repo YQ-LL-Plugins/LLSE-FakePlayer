@@ -6,6 +6,8 @@
 
 放置到`plugins`目录，开服即可
 
+<br/>
+
 ## 命令
 
 所有命令示例中，<>包括的为必选参数，[]包括的为可选参数
@@ -104,13 +106,13 @@
 
   `/fpc help`
 
-
+<br/>
 
 ## 配置文件
 
 位于`plugins\LLSE-FakePlayer\config.json`，样例配置文件如下：
 
-```json
+```json5
 {
     // 输出日志等级，默认为4，一般不用修改
     "LogLevel": 4,
@@ -139,7 +141,7 @@
 
 另外，位于`plugins\LLSE-FakePlayer\fpdata\`目录里面的每一个文件储存每一个假人的记录数据，位于`plugins\LLSE-FakePlayer\fpinventorys\`目录里面的每一个文件储存每一个假人的物品栏数据。不建议普通用户修改储存数据，任何一点错误的修改将导致插件无法正常工作。
 
-
+<br/><br/>
 
 ## 导出函数（开发者章节）
 
