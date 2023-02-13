@@ -680,7 +680,8 @@ class FakePlayerManager
         return [SUCCESS, fp.isOnline()];
     }
 
-    static setShortOperation(fpName, operation, opInterval, opMaxTimes)
+    static _LONG_OPERATIONS_LIST = ["useitem"];
+    static setOperation(fpName, operation, opInterval, opMaxTimes, opLength)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
             return `§6${fpName}§r no found. Please create it first.`;
@@ -696,24 +697,14 @@ class FakePlayerManager
                 opInterval = 1000;
             if(!opMaxTimes)
                 opMaxTimes = 1;
-            fp.setShortOperation(operation, opInterval, opMaxTimes);
+            if(!opLength)
+                opLength = 1000;
+
+            if(_LONG_OPERATIONS_LIST.includes(operation))
+                fp.setLongOperation(operation, opInterval, opMaxTimes, opLength);
+            else
+                fp.setShortOperation(operation, opInterval, opMaxTimes);
         }
-        return SUCCESS;
-    }
-
-    static setLongOperation(fpName, operation, opInterval, opMaxTimes, opLength)
-    {
-        if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r no found. Please create it first.`;
-        let fp = FakePlayerManager.fpListObj[fpName];
-
-        if(!opInterval)
-            opInterval = 1000;
-        if(!opMaxTimes)
-            opMaxTimes = 1;
-        if(!opLength)
-            opLength = 1000;
-        fp.setLongOperation(operation, opInterval, opMaxTimes, opLength);
         return SUCCESS;
     }
 
@@ -1187,8 +1178,7 @@ ll.export(FakePlayerManager.list ,"_LLSE_FakePlayer_PLUGIN_", "list");
 ll.export(FakePlayerManager.getAllInfo ,"_LLSE_FakePlayer_PLUGIN_", "getAllInfo");
 ll.export(FakePlayerManager.getPosition ,"_LLSE_FakePlayer_PLUGIN_", "getPosition");
 ll.export(FakePlayerManager.isOnline ,"_LLSE_FakePlayer_PLUGIN_", "isOnline");
-ll.export(FakePlayerManager.setShortOperation ,"_LLSE_FakePlayer_PLUGIN_", "setShortOperation");
-ll.export(FakePlayerManager.setLongOperation ,"_LLSE_FakePlayer_PLUGIN_", "setLongOperation");
+ll.export(FakePlayerManager.setOperation ,"_LLSE_FakePlayer_PLUGIN_", "setOperation");
 ll.export(FakePlayerManager.clearOperation ,"_LLSE_FakePlayer_PLUGIN_", "clearOperation");
 ll.export(FakePlayerManager.walkToPos ,"_LLSE_FakePlayer_PLUGIN_", "walkToPos");
 ll.export(FakePlayerManager.walkToEntity ,"_LLSE_FakePlayer_PLUGIN_", "walkToEntity");
@@ -1435,7 +1425,7 @@ function cmdCallback(_cmd, ori, out, res)
             if(res.optype == "clear")
                 result = FakePlayerManager.clearOperation(res.fpname);
             else
-                result = FakePlayerManager.setShortOperation(res.fpname, res.optype, res.interval, res.maxtimes);
+                result = FakePlayerManager.setOperation(res.fpname, res.optype, res.interval, res.maxtimes);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
@@ -1449,7 +1439,7 @@ function cmdCallback(_cmd, ori, out, res)
         else
         {
             // long op type
-            result = FakePlayerManager.setLongOperation(res.fpname, res.longoptype, res.interval, res.maxtimes, res.length);
+            result = FakePlayerManager.setOperation(res.fpname, res.longoptype, res.interval, res.maxtimes, res.length);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
@@ -1800,7 +1790,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.optional("fpname2", ParamType.SoftEnum, FpListSoftEnum.getName(), "fpname2");
     fpCmd.overload(["ListAction", "fpname2"]);
 
-    // fpc operation <fpname> attack/interact/clear [interval] [maxtimes]
+    // fpc operation <fpname> attack/interact/clear [interval] [maxtimes] (short operations)
     fpCmd.setEnum("OperationAction", ["operation"]);
     fpCmd.setEnum("ShortOperationType", ["attack", "interact", /* "destroy", */ "clear"]);
     fpCmd.mandatory("action", ParamType.Enum, "OperationAction", "OperationAction", 1);
@@ -1810,7 +1800,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.overload(["OperationAction", "fpname", "ShortOperationType", "interval", "maxtimes"]);
     // fpname created before
 
-    // fpc operation <fpname> useitem [length] [interval] [maxtimes]
+    // fpc operation <fpname> useitem [length] [interval] [maxtimes] (long operations)
     fpCmd.setEnum("LongOperationType", ["useitem"]);
     fpCmd.mandatory("longoptype", ParamType.Enum, "LongOperationType", "LongOperationType", 1);
     fpCmd.optional("length", ParamType.Int);
