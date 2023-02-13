@@ -42,7 +42,9 @@
 
   `/fpc operation <fpname> useitem [length] [interval] [maxtimes]`
 
-  注意：此处 interval 和 length 的单位均为ms（毫秒）；如果maxtimes设置为-1，表示无限次执行
+  注意：interval表示执行间隔，length表示工作的长度（这里表示useitem右键按多久），两者单位均为ms（毫秒）
+
+  maxtimes 为最大执行次数，如果设置为-1，表示无限次执行
 
 - **行走到目标位置**
 
@@ -69,6 +71,8 @@
 - **设置假人主手选中物品**
 
   `/fpc setselect <fpname> <slotid>`
+
+  此处slotid为`getinventory`操作返回的物品栏中的物品序号
 
 - **扔出物品栏某格子物品**
 
@@ -97,12 +101,16 @@
 - **新增假人用户玩家**
 
   `/fpc adduser / removeuser / banuser / unbanuser <name>`
+  
+  用户玩家的相关配置见下面配置文件部分
 
 ### 其他命令
 
-- **从其他假人工具导入数据（功能尚未完成）**
+- **从其他假人工具导入数据**
 
   `/fpc import <path>`
+
+  此功能尚未完成
 
 - **获取帮助信息**
 
@@ -142,6 +150,15 @@
 ```
 
 > 另外，位于`plugins\LLSE-FakePlayer\fpdata\`目录里面的每一个文件储存每一个假人的记录数据，位于`plugins\LLSE-FakePlayer\fpinventorys\`目录里面的每一个文件储存每一个假人的物品栏数据。不建议普通用户修改这两个位置的储存数据，任何一点错误的修改将导致插件无法正常工作。
+
+<br/>
+
+## 已知问题
+
+目前已知有这些bug，等待修复：
+
+- sync只能二维寻路
+- selectslot后不马上显示，要重进
 
 <br/><br/>
 
@@ -317,16 +334,16 @@
 - 返回值：如果成功返回`["", "帮助信息字符串"]`，如果失败返回`["错误原因字符串", null]`
 - 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "getHelp")`
 
-#### 保存假人数据到文件
+#### 刷新假人数据到文件
 
 - 函数原型：`function saveFpData(fpName:String, updatePos:Boolean) :Boolean`
-- 说明：使用非上述给出的 API 操作完成假人后，需要保存其数据到文件持久化。updatePos表示是否同时更新当前假人的坐标位置信息
+- 说明：如果使用非本项目导出的 API 操作假人（如直接tp等），则操作完成后需要保存其数据到文件持久化。updatePos表示是否同时更新当前假人的坐标位置信息
 - 返回值：如果成功返回`true`，如果失败返回`false`
 - 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "saveFpData")`
 
-#### 保存假人背包物品数据到文件
+#### 刷新假人背包物品数据到文件
 
 - 函数原型：`function saveInventoryData(fpName:String) :Boolean`
-- 说明：使用非上述给出的 API 操作完成假人物品栏后，需要保存其物品栏数据到文件持久化
+- 说明：如果使用非本项目导出的 API 操作假人的物品栏，则操作完成后需要保存其物品栏数据到文件持久化。
 - 返回值：如果成功返回`true`，如果失败返回`false`
 - 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "saveInventoryData")`
