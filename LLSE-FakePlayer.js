@@ -18,6 +18,8 @@ const _LLSE_HELP_TEXT =
 
 const _DEFAULT_PLAYER_SELECT_SLOT = 0;
 const SUCCESS = "";
+const _LONG_OPERATIONS_LIST = ["useitem"];
+const _SHORT_OPERATIONS_LIST = ["attack", "interact"/*, "destroy", "place" */, "clear"];
 
 function CalcPosFromViewDirection(oldPos, nowDirection, distance)
 {
@@ -26,9 +28,14 @@ function CalcPosFromViewDirection(oldPos, nowDirection, distance)
     return new FloatPos(oldPos.x + vector[0], oldPos.y, oldPos.z + vector[2], oldPos.dimid);
 }
 
+function IsNumberInt(num)
+{
+    return num % 1 == 0;
+}
+
 function IsValidDimId(dimid)
 {
-    return dimid % 1 == 0 && dimid >= 0 && dimid <= 2;
+    return IsNumberInt(dimid) && dimid >= 0 && dimid <= 2;
 }
 
 Array.prototype.removeByValue = function (val) {
@@ -747,7 +754,6 @@ class FakePlayerManager
         return [SUCCESS, fp.isOnline()];
     }
 
-    static _LONG_OPERATIONS_LIST = ["useitem"];
     static setOperation(fpName, operation, opInterval, opMaxTimes, opLength)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
@@ -767,7 +773,7 @@ class FakePlayerManager
             if(!opLength)
                 opLength = 1000;
 
-            if(FakePlayerManager._LONG_OPERATIONS_LIST.includes(operation))
+            if(_LONG_OPERATIONS_LIST.includes(operation))
                 fp.setLongOperation(operation, opInterval, opMaxTimes, opLength);
             else
                 fp.setShortOperation(operation, opInterval, opMaxTimes);
@@ -1862,7 +1868,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
 
     // fpc operation <fpname> attack/interact/clear [interval] [maxtimes] (short operations)
     fpCmd.setEnum("OperationAction", ["operation"]);
-    fpCmd.setEnum("ShortOperationType", ["attack", "interact", /* "destroy", */ "clear"]);
+    fpCmd.setEnum("ShortOperationType", _SHORT_OPERATIONS_LIST);
     fpCmd.mandatory("action", ParamType.Enum, "OperationAction", "OperationAction", 1);
     fpCmd.mandatory("optype", ParamType.Enum, "ShortOperationType", "ShortOperationType", 1);
     fpCmd.optional("interval", ParamType.Int);
@@ -1871,7 +1877,7 @@ function RegisterCmd(userMode)      // whitelist / blacklist
     // fpname created before
 
     // fpc operation <fpname> useitem [length] [interval] [maxtimes] (long operations)
-    fpCmd.setEnum("LongOperationType", ["useitem"]);
+    fpCmd.setEnum("LongOperationType", _LONG_OPERATIONS_LIST);
     fpCmd.mandatory("longoptype", ParamType.Enum, "LongOperationType", "LongOperationType", 1);
     fpCmd.optional("length", ParamType.Int);
     fpCmd.overload(["OperationAction", "fpname", "LongOperationType", "length", "interval", "maxtimes"]);
@@ -2373,7 +2379,7 @@ class FpGuiForms
         if(PermManager.hasPermission(player, "operation"))
         {
             atLeastOneItem = true;
-            fm.addButton("Do/Clear operations", "", (pl)=>{});
+            fm.addButton("Do/Clear operations", "", (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
         }
         if(PermManager.hasPermission(player, "walkto"))
         {
@@ -2400,6 +2406,74 @@ class FpGuiForms
             fm.setContent("§eSorry, but you have no permission here.§r");
         fm.send(player);
     }
+
+    // fakeplayer do/clear operation
+    static sendDoClearOpMenu(player)
+    {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Do/Clear Operation");
+        fm.addLabel("label1", "§eChoose operation and fill parameters:§r\n");
+
+        let fpsList = FakePlayerManager.list()[1];
+        let opsArr = _LONG_OPERATIONS_LIST.concat(_SHORT_OPERATIONS_LIST);
+        fm.addDropdown("fpName", "FakePlayer:", fpsList);
+        fm.addDropdown("operation", "Operation:", opsArr);
+        fm.addInput("interval", "Operation Interval(ms):", "1000");
+        fm.addInput("maxTimes", "Operation Max Times:", "3");
+        fm.addInput("length", "Operation Length(ms):", "500");
+        fm.addLabel("label2", 'Tips: Short operation like "attack" or "interact" do not need "Operation ength" parameter, and you can leave it blank.');
+
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setSubmitCallback((pl, resultObj)=>
+        {
+            let result = null;
+            let operation = opsArr[resultObj.get("operation")];
+            let fpName = fpsList[resultObj.get("fpName")];
+            
+            if(operation == "clear")
+            {
+                result = FakePlayerManager.clearOperation(fpName);
+                FpGuiForms.sendInfoForm(pl, `§6${res.fpname}§r operation cleared.`,
+                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                return;
+            }
+
+            // transform & check param format
+            let lengthStr = resultObj.get("length");
+            let length = Number(lengthStr);
+            if(_LONG_OPERATIONS_LIST.includes(operation) && (lengthStr.length == 0 || isNaN(length) || !IsNumberInt(length)))
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Bad format of paramater "length": ${resultObj.get("length")}`, 
+                    (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
+                return;
+            }
+
+            let intervalStr = resultObj.get("interval");
+            let interval = Number(intervalStr);
+            if(intervalStr.length == 0 || isNaN(interval) || !IsNumberInt(interval))
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Bad format of paramater "interval": ${resultObj.get("interval")}`, 
+                    (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
+                return;
+            }
+
+            let maxTimesStr = resultObj.get("maxTimes");
+            let maxTimes = Number(maxTimesStr);
+            if(maxTimesStr.length == 0 || isNaN(maxTimes) || !IsNumberInt(maxTimes))
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Bad format of paramater "maxTimes": ${resultObj.get("maxTimes")}`, 
+                    (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
+                return;
+            }
+
+            result = FakePlayerManager.setOperation(fpName, operation, interval, maxTimes, length);
+            if(result == SUCCESS)
+                FpGuiForms.sendInfoForm(pl, `§6${fpName}§r set to ${operation}.`,
+                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            else
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
+        });
+        fm.send(player);
+    }
 }
 
 
@@ -2419,7 +2493,7 @@ function main()
     InitConfigFile();
     logger.setLogLevel(GlobalConf.get("LogLevel", 4));
     PermManager.initPermManager();
-    logger.info(`LLSE-FakePlayer ${_VER} 已加载，开发者：yqs112358`);
+    logger.info(`LLSE-FakePlayer ${_VER} loaded. Author：yqs112358`);
 
     FakePlayerManager.loadAllFpData();
     //logger.debug("FpList: ", FakePlayerManager.fpList);
