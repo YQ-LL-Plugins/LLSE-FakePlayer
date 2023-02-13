@@ -536,6 +536,38 @@ class FakePlayerManager
         }
     }
 
+    static onPlayerDie(player, source)
+    {
+        if(!player)
+            return;
+        let fpName = player.realName;
+        if(fpName in FakePlayerManager.fpListObj)
+        {
+            logger.warn(`[FakePlayer] ${fpName} died. Respawning...`);
+            let fp = FakePlayerManager.fpListObj[fpName];
+            if(!fp.offline())
+                logger.warn(`[FakePlayer] Fail to recreate ${fpName}`);
+            else
+            {
+                setTimeout(()=>{
+                    if(!fp.online())
+                        logger.warn(`[FakePlayer] Fail to respawn ${fpName}`);
+                    else
+                    {
+                        // teleport to target pos
+                        let targetPos = fp.getPos();
+                        let result = FakePlayerManager.teleportToPos(fpName, new FloatPos(eval(targetPos.x), eval(targetPos.y), 
+                            eval(targetPos.z),eval(targetPos.dimid)));
+                        if(result != SUCCESS)
+                            logger.warn(`[FakePlayer] ${fpName} respawned, but ` + result);
+                        else
+                            logger.warn(`[FakePlayer] ${fpName} respawned.`);
+                    }
+                }, 500);
+            }
+        }
+    }
+
 //////// public
     static online(fpName, failIfOnline = true)
     {
@@ -1899,6 +1931,7 @@ function main()
     //logger.debug("FpList: ", FakePlayerManager.fpList);
 
     mc.listen("onTick", FakePlayerManager.onTick);
+    mc.listen("onPlayerDie", FakePlayerManager.onPlayerDie);
     mc.listen("onServerStarted", () =>
     {
         // command registry
