@@ -2181,40 +2181,41 @@ class FpGuiForms
     static sendMainMenu(player)
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer Main Menu", "§ePlease choose operation:§r");
-        fm.addButton("FakePlayers List", "", (pl) => { FpGuiForms.sendFpListForm(pl); });
+        fm.addButton("FakePlayers List", "textures/ui/FriendsDiversity", (pl) => { FpGuiForms.sendFpListForm(pl); });
 
         if(PermManager.hasPermission(player, "online") && PermManager.hasPermission(player, "offline"))
         {
-            fm.addButton("Quick Online/Offline", "", (pl) => { FpGuiForms.sendQuickOnOfflineForm(pl);});
+            fm.addButton("Quick Online/Offline", "textures/ui/move", (pl) => { FpGuiForms.sendQuickOnOfflineForm(pl);});
         }
-        fm.addButton("Select Operations", "", (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        fm.addButton("Select Operations", "textures/items/iron_pickaxe", (pl) => { FpGuiForms.sendOperationMenu(pl); });
         // if(PermManager.isAdmin(player))
         // {
-        //     fm.addButton("System Settings", "", (pl) => {});
+        //     fm.addButton("System Settings", "textures/ui/settings_glyph_color_2x", (pl) => {});
         // }
-        fm.addButton("Help", "", (pl) => {
+        fm.addButton("Help", "textures/ui/infobulb", (pl) => {
             FpGuiForms.sendInfoForm(pl, FakePlayerManager.getHelp()[1], (pl) => { FpGuiForms.sendMainMenu(pl); });
         });
+        fm.addButton("Close", "");
         fm.send(player);
     }
 
     // fake player list
     static sendFpListForm(player)
     {
-        let fm = new BetterSimpleForm("LLSE-FakePlayer FP-List Menu");
+        let fm = new BetterSimpleForm("LLSE-FakePlayer FP-List Menu", "§eOnline FakePlayers List:§r");
+        if(PermManager.hasPermission(player, "create"))
+        {
+            fm.addButton("Create a new fakeplayer", "textures/ui/color_plus", (pl) => {
+                FpGuiForms.sendCreateNewForm(player);
+            });
+        }
         FakePlayerManager.forEachFp((fpName, fp) => {
             let statusStr = fp.isOnline() ? "§aOnline§r" : "§4Offline§r";
             fm.addButton(`${fpName} - ${statusStr}`, "", (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
         });
-        if(PermManager.hasPermission(player, "create"))
-        {
-            fm.addButton("Create a new fakeplayer", "", (pl) => {
-                FpGuiForms.sendCreateNewForm(player);
-            });
-        }
         if(PermManager.hasPermission(player, "onlineall"))
         {
-            fm.addButton("Online all fakePlayers", "", (pl) =>
+            fm.addButton("Online all fakePlayers", "textures/ui/up_arrow", (pl) =>
             {
                 let successNames = [];
                 let result = "";
@@ -2235,7 +2236,7 @@ class FpGuiForms
         }
         if(PermManager.hasPermission(player, "offlineall"))
         {
-            fm.addButton("Offline all fakeplayers", "", (pl) => 
+            fm.addButton("Offline all fakeplayers", "textures/ui/down_arrow", (pl) => 
             {
                 let successNames = [];
                 let result = "";
@@ -2336,7 +2337,7 @@ class FpGuiForms
             );
             if(result.isOnline && PermManager.hasPermission(player, "offline"))
             {
-                fm.addButton("Offline this fakeplayer", "", (pl) => {
+                fm.addButton("Offline this fakeplayer", "textures/ui/down_arrow", (pl) => {
                     // offline fakeplayer
                     let result = FakePlayerManager.offline(fpName);
                     if(result == SUCCESS)
@@ -2348,7 +2349,7 @@ class FpGuiForms
             }
             else if (PermManager.hasPermission(player, "online"))
             {
-                fm.addButton("Online this fakeplayer", "", (pl) => {
+                fm.addButton("Online this fakeplayer", "textures/ui/up_arrow", (pl) => {
                     // online fakeplayer
                     let result = FakePlayerManager.online(fpName);
                     if(result == SUCCESS)
@@ -2360,7 +2361,7 @@ class FpGuiForms
             }
             if(PermManager.hasPermission(player, "remove"))
             {
-                fm.addButton("Delete this fakeplayer", "", (pl)=> {
+                fm.addButton("Delete this fakeplayer", "textures/ui/cancel", (pl)=> {
                     // remove fakeplayer
                     FpGuiForms.sendAskForm(player, 
                         `Are you sure to delete fakeplayer §6${fpName}§r?\nAll his data will be deleted and cannot be recovered.`,
@@ -2377,7 +2378,7 @@ class FpGuiForms
                     });
                 });
             }
-            fm.addButton("Inventory Operations", "", (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); })
+            fm.addButton("Inventory Operations", "textures/ui/inventory_icon", (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); })
             fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendFpListForm(pl); });
             fm.send(player);
         }
