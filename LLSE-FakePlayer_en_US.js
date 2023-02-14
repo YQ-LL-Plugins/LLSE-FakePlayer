@@ -830,7 +830,7 @@ class FakePlayerManager
         
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r is offline now`;
+            return [`§6${fpName}§r is offline now`, null];
         let pl = fp.getPlayer();
         if(!pl)
             return [`Fail to get fakeplayer §6${fpName}§r`, null];
@@ -1519,7 +1519,7 @@ function cmdCallback(_cmd, ori, out, res)
                         + `- Position: ${posObj.toString()}\n`
                         + `- Operation: ${result.operation ? result.operation : "None"}\n`
                         + `- Sync Target Player: ${syncPlayerName ? syncPlayerName : "None"}\n`
-                        + `- Status: ${result.isOnline ? "Online" : "Offline"}`
+                        + `- Status: ${result.isOnline ? "§a§lOnline§r" : "§c§lOffline§r"}`
                     );
                 }
             }
@@ -1867,8 +1867,7 @@ function cmdCallback(_cmd, ori, out, res)
 
 function RegisterCmd(userMode)      // whitelist / blacklist
 {
-    let fpCmd = mc.newCommand("fakeplayercontrol", "§6LLSE-FakePlayer Control§r", PermType.Any, 0x80);
-    fpCmd.setAlias("fpc");
+    let fpCmd = mc.newCommand("fpc", "§6LLSE-FakePlayer Control§r", PermType.Any, 0x80);
 
     // create soft enum
     FpListSoftEnum = new SoftEnumInst(fpCmd, "FakePlayerList", Object.keys(FakePlayerManager.fpListObj));
@@ -2202,7 +2201,7 @@ class FpGuiForms
     // fake player list
     static sendFpListForm(player)
     {
-        let fm = new BetterSimpleForm("LLSE-FakePlayer FP-List Menu", "§eOnline FakePlayers List:§r");
+        let fm = new BetterSimpleForm("LLSE-FakePlayer FP-List Menu", "§eFakePlayers List:§r");
         if(PermManager.hasPermission(player, "create"))
         {
             fm.addButton("Create a new fakeplayer", "textures/ui/color_plus", (pl) => {
@@ -2873,7 +2872,7 @@ class FpGuiForms
                         if(result != SUCCESS)
                             FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendInventoryMenu(pl, fpName); });
                         else
-                            FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r dropped item on main hand`, 
+                            FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r dropped all items`, 
                                 (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); });
                     },
                     (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
