@@ -20,6 +20,7 @@ const _DEFAULT_PLAYER_SELECT_SLOT = 0;
 const SUCCESS = "";
 const _LONG_OPERATIONS_LIST = ["useitem"];
 const _SHORT_OPERATIONS_LIST = ["attack", "interact"/*, "destroy", "place" */, "clear"];
+const _VALID_DIMENSION_NAMES = ["Overworld", "Nether", "End"];
 
 function CalcPosFromViewDirection(oldPos, nowDirection, distance)
 {
@@ -35,7 +36,7 @@ function IsNumberInt(num)
 
 function IsValidDimId(dimid)
 {
-    return IsNumberInt(dimid) && dimid >= 0 && dimid <= 2;
+    return IsNumberInt(dimid) && dimid >= 0 && dimid <= _VALID_DIMENSION_NAMES.length - 1;
 }
 
 Array.prototype.removeByValue = function (val) {
@@ -2132,16 +2133,16 @@ class BetterCustomForm
 class FpGuiForms
 {
     ////// Tool dialogs
-    static sendInfoForm(player, infoText, callback = function(pl){})
+    static sendSuccessForm(player, infoText, callback = function(pl){})
     {
         player.sendModalForm("LLSE-FakePlayer Info Dialog", 
-            infoText, "OK", "Close", (pl, res)=>{ callback(pl); });
+            "§a§lSuccess:§r\n" + infoText, "OK", "Close", (pl, res)=>{ callback(pl); });
     }
 
     static sendErrorForm(player, errMsg, callback = function(pl){})
     {
         player.sendModalForm("LLSE-FakePlayer Error Dialog", 
-            errMsg, "OK", "Close", (pl, res)=>{ callback(pl); });
+            "§c§lError:§r\n" + errMsg, "OK", "Close", (pl, res)=>{ callback(pl); });
     }
 
     static sendAskForm(player, askText, confirmCallback = function(pl){}, rejectCallback = function(pl){})
@@ -2200,10 +2201,11 @@ class FpGuiForms
                     namesList += `§6${name}§r, `;
                 namesList = namesList.substring(0, namesList.length - 2);
                 if(result == SUCCESS)
-                    FpGuiForms.sendInfoForm(pl, "All fakeplayers are online:\n" + namesList, 
+                    FpGuiForms.sendSuccessForm(pl, "All fakeplayers are online:\n" + namesList, 
                         (pl) => {FpGuiForms.sendFpListForm(pl);});
                 else
-                    FpGuiForms.sendInfoForm(pl, result + "\nThese fakeplayers are online now:\n" + namesList, 
+                    FpGuiForms.sendSuccessForm(pl, "Error occur during onlineall: " + result 
+                        + "\nThese fakeplayers are online now:\n" + namesList, 
                         (pl) => {FpGuiForms.sendFpListForm(pl);});
             });
         }
@@ -2220,10 +2222,11 @@ class FpGuiForms
                     namesList += `§6${name}§r, `;
                 namesList = namesList.substring(0, namesList.length - 2);
                 if(result == SUCCESS)
-                    FpGuiForms.sendInfoForm(pl, "All fakeplayers are offline:\n" + namesList, 
+                    FpGuiForms.sendSuccessForm(pl, "All fakeplayers are offline:\n" + namesList, 
                         (pl) => {FpGuiForms.sendFpListForm(pl);});
                 else
-                    FpGuiForms.sendInfoForm(pl, result + "\nThese fakeplayers are offline now:\n" + namesList, 
+                    FpGuiForms.sendSuccessForm(pl, "Error occur during offlineall: " + result 
+                        + "\nThese fakeplayers are offline now:\n" + namesList, 
                         (pl) => {FpGuiForms.sendFpListForm(pl);});
             });
         }
@@ -2238,7 +2241,7 @@ class FpGuiForms
         fm.addLabel("label1", "Tips: If you leave the coordinates blank, the new fakeplayer will be created in front of you.");
         fm.addInput("name", "Name:", "new name");
         fm.addInput("coords", "Coordinates: (x y z)", "315 70 233");
-        fm.addDropdown("dimid", "Dimension:", ["Overworld", "Nether", "End"], player.pos.dimid);
+        fm.addDropdown("dimid", "Dimension:", _VALID_DIMENSION_NAMES, player.pos.dimid);
         
         fm.setCancelCallback((pl)=>{ FpGuiForms.sendFpListForm(pl); })
         fm.setSubmitCallback((pl, resultObj) => {
@@ -2282,7 +2285,7 @@ class FpGuiForms
                 FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpListForm(pl);});
                 return;
             }
-            FpGuiForms.sendInfoForm(pl, `§6${fpName}§r created`, (pl) => {FpGuiForms.sendFpListForm(pl);});
+            FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r created`, (pl) => {FpGuiForms.sendFpListForm(pl);});
         });
         fm.send(player);
     }
@@ -2312,7 +2315,7 @@ class FpGuiForms
                     // offline fakeplayer
                     let result = FakePlayerManager.offline(fpName);
                     if(result == SUCCESS)
-                        FpGuiForms.sendInfoForm(pl, `§6${fpName}§r is offline`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                        FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r is offline`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                     else
                         FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                 });
@@ -2323,7 +2326,7 @@ class FpGuiForms
                     // online fakeplayer
                     let result = FakePlayerManager.online(fpName);
                     if(result == SUCCESS)
-                        FpGuiForms.sendInfoForm(pl, `§6${fpName}§r is online`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                        FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r is online`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                     else
                         FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                 });
@@ -2392,7 +2395,7 @@ class FpGuiForms
                         resultText += `§6${fpName}§r failed to online: ` + result + "\n";
                 }
             });
-            FpGuiForms.sendInfoForm(pl, resultText, (pl)=>{ FpGuiForms.sendQuickOnOfflineForm(pl); });
+            FpGuiForms.sendSuccessForm(pl, resultText, (pl)=>{ FpGuiForms.sendQuickOnOfflineForm(pl); });
         });
         fm.send(player);
     }
@@ -2459,7 +2462,7 @@ class FpGuiForms
             if(operation == "clear")
             {
                 result = FakePlayerManager.clearOperation(fpName);
-                FpGuiForms.sendInfoForm(pl, `§6${fpName}§r operation cleared.`,
+                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r operation cleared.`,
                     (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
                 return;
             }
@@ -2494,7 +2497,7 @@ class FpGuiForms
 
             result = FakePlayerManager.setOperation(fpName, operation, interval, maxTimes, length);
             if(result == SUCCESS)
-                FpGuiForms.sendInfoForm(pl, `§6${fpName}§r set to ${operation}.`,
+                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r set to ${operation}.`,
                     (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
             else
                 FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
@@ -2510,11 +2513,13 @@ class FpGuiForms
         let fpsList = FakePlayerManager.list()[1];
         fm.addDropdown("fpName", "FakePlayer:", fpsList);
         fm.addInput("position", "Target Position: (x y z)", "315 70 233");
+        fm.addDropdown("dimid", "Target Dimension:", _VALID_DIMENSION_NAMES, player.pos.dimid);
         
         fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>{
             let fpName = fpsList[resultObj.get("fpName")];
             let posObj = ParsePositionString(resultObj.get("position"));
+            let dimid = resultObj.get("dimid");
             if(!posObj)
             {
                 FpGuiForms.sendErrorForm(pl, `Error: Bad format of paramater "position": ${resultObj.get("position")}`, 
@@ -2525,7 +2530,7 @@ class FpGuiForms
             let result = "";
             let data = null;
             // logger.debug(targetPos);
-            let targetPos = new FloatPos(eval(posObj.x), eval(posObj.y), eval(posObj.z), eval(pl.pos.dimid));
+            let targetPos = new FloatPos(eval(posObj.x), eval(posObj.y), eval(posObj.z), dimid);
             [result, data] = FakePlayerManager.walkToPos(fpName, targetPos);
             if(result != SUCCESS)
             {
@@ -2545,7 +2550,7 @@ class FpGuiForms
                 resStr = `Cannot reach the target given. The path will end at ${lastPathPoint.toString()}.`
                     +` ${fpName} is walking to the end position...`;
             }
-            FpGuiForms.sendInfoForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            FpGuiForms.sendSuccessForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
         });
         fm.send(player);
     }
@@ -2600,7 +2605,7 @@ class FpGuiForms
                 resStr = `Cannot reach the target given. The path will end at ${lastPathPoint.toString()}.`
                     +` ${fpName} is walking to the end position...`;
             }
-            FpGuiForms.sendInfoForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            FpGuiForms.sendSuccessForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
         });
         fm.send(player);
     }
