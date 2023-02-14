@@ -2156,6 +2156,17 @@ class FpGuiForms
             });
     }
 
+    static sendSuccessMsg(player, infoText)
+    {
+        player.tell("[FakePlayer] §a§lSuccess§r\n" + infoText);
+    }
+
+    static sendErrorMsg(player, errMsg)
+    {
+        player.tell("[FakePlayer] §c§lError§r\n" + errMsg);
+    }
+
+
     //////// Main forms
     // main
     static sendMainMenu(player)
@@ -2285,7 +2296,8 @@ class FpGuiForms
                 FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpListForm(pl);});
                 return;
             }
-            FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r created`, (pl) => {FpGuiForms.sendFpListForm(pl);});
+            FpGuiForms.sendFpListForm(pl);
+            //FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r created`, (pl) => {FpGuiForms.sendFpListForm(pl);});
         });
         fm.send(player);
     }
@@ -2307,7 +2319,7 @@ class FpGuiForms
                 + `- Position: ${posObj.toString()}\n`
                 + `- Operation: ${result.operation ? result.operation : "None"}\n`
                 + `- Sync Target Player: ${syncPlayerName ? syncPlayerName : "None"}\n`
-                + `- Status: ${result.isOnline ? "Online" : "Offline"}`
+                + `- Status: ${result.isOnline ? "§a§lOnline§r" : "§c§lOffline§r"}`
             );
             if(result.isOnline && PermManager.hasPermission(player, "offline"))
             {
@@ -2315,7 +2327,8 @@ class FpGuiForms
                     // offline fakeplayer
                     let result = FakePlayerManager.offline(fpName);
                     if(result == SUCCESS)
-                        FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r is offline`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                        FpGuiForms.sendFpInfoForm(pl, fpName);
+                        //FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r is offline`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                     else
                         FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                 });
@@ -2326,7 +2339,8 @@ class FpGuiForms
                     // online fakeplayer
                     let result = FakePlayerManager.online(fpName);
                     if(result == SUCCESS)
-                        FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r is online`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
+                        FpGuiForms.sendFpInfoForm(pl, fpName);
+                        //FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r is online`, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                     else
                         FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                 });
@@ -2395,7 +2409,7 @@ class FpGuiForms
                         resultText += `§6${fpName}§r failed to online: ` + result + "\n";
                 }
             });
-            FpGuiForms.sendSuccessForm(pl, resultText, (pl)=>{ FpGuiForms.sendQuickOnOfflineForm(pl); });
+            FpGuiForms.sendSuccessMsg(pl, resultText);
         });
         fm.send(player);
     }
@@ -2462,8 +2476,7 @@ class FpGuiForms
             if(operation == "clear")
             {
                 result = FakePlayerManager.clearOperation(fpName);
-                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r operation cleared.`,
-                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendSuccessMsg(pl, `§6${fpName}§r operation cleared.`);
                 return;
             }
 
@@ -2497,8 +2510,7 @@ class FpGuiForms
 
             result = FakePlayerManager.setOperation(fpName, operation, interval, maxTimes, length);
             if(result == SUCCESS)
-                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r set to ${operation}.`,
-                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendSuccessMsg(pl, `§6${fpName}§r set to ${operation}.`);
             else
                 FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
         });
@@ -2534,7 +2546,7 @@ class FpGuiForms
             [result, data] = FakePlayerManager.walkToPos(fpName, targetPos);
             if(result != SUCCESS)
             {
-                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendWalkToPosForm(pl); });
                 return;
             }
             let resStr = "";
@@ -2550,7 +2562,7 @@ class FpGuiForms
                 resStr = `Cannot reach the target given. The path will end at ${lastPathPoint.toString()}.`
                     +` ${fpName} is walking to the end position...`;
             }
-            FpGuiForms.sendSuccessForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            FpGuiForms.sendSuccessMsg(pl, resStr);
         });
         fm.send(player);
     }
@@ -2589,7 +2601,7 @@ class FpGuiForms
             [result, data] = FakePlayerManager.walkToEntity(fpName, targetPlayer);
             if(result != SUCCESS)
             {
-                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendWalkToPlayerForm(pl); });
                 return;
             }
             let resStr = "";
@@ -2605,7 +2617,7 @@ class FpGuiForms
                 resStr = `Cannot reach the target given. The path will end at ${lastPathPoint.toString()}.`
                     +` ${fpName} is walking to the end position...`;
             }
-            FpGuiForms.sendSuccessForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            FpGuiForms.sendSuccessMsg(pl, resStr);
         });
         fm.send(player);
     }
@@ -2635,10 +2647,9 @@ class FpGuiForms
             let targetPos = new FloatPos(eval(posObj.x), eval(posObj.y), eval(posObj.z), dimid);
             let result = FakePlayerManager.teleportToPos(fpName, targetPos);
             if(result != SUCCESS)
-                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendTpToPosForm(pl); });
             else
-                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r teleported to ${targetPos.toString()}`,
-                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendSuccessMsg(pl, `§6${fpName}§r teleported to ${targetPos.toString()}`);
         });
         fm.send(player);
     }
@@ -2674,10 +2685,9 @@ class FpGuiForms
 
             let result = FakePlayerManager.teleportToEntity(fpName, targetPlayer);
             if(result != SUCCESS)
-                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
             else
-                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r teleported to ${plName}`,
-                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendSuccessMsg(pl, `§6${fpName}§r teleported to ${plName}`);
         });
         fm.send(player);
     }
@@ -2708,7 +2718,7 @@ class FpGuiForms
             let targetPlayer = mc.getPlayer(plName);
             if(!targetPlayer)
             {
-                FpGuiForms.sendErrorForm(pl, `Error: Player ${plName} no found`, (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
+                FpGuiForms.sendErrorForm(pl, `Error: Player ${plName} no found`, (pl)=>{ FpGuiForms.sendSyncForm(pl); });
                 return;
             }
             let isStart = resultObj.get("isStart");
@@ -2719,15 +2729,13 @@ class FpGuiForms
             else
                 result = FakePlayerManager.stopSync(fpName);
             if(result != SUCCESS)
-                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendSyncForm(pl); });
             else
             {
                 if(isStart)
-                    FpGuiForms.sendSuccessForm(pl, `Sync of §6${fpName}§r started. Use "/fpc sync stop" to stop.`,
-                        (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                    FpGuiForms.sendSuccessMsg(pl, `Sync of §6${fpName}§r started. Use "/fpc sync stop" to stop.`);
                 else
-                    FpGuiForms.sendSuccessForm(pl, `Sync of §6${fpName}§r stopped.`,
-                        (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                    FpGuiForms.sendSuccessMsg(pl, `Sync of §6${fpName}§r stopped.`);
             }
         });
         fm.send(player);
