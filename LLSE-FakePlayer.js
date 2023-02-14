@@ -7,8 +7,8 @@ const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
 
 const _LLSE_HELP_TEXT = 
-     '[LLSE-FakePlayer] A strong fake-player plugin for LiteLoaderBDS'
-    +'- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer'
+     '§e§l[LLSE-FakePlayer]§r\nA strong fake-player plugin for LiteLoaderBDS\n'
+    +'- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\n'
     +'- Author: yqs112358';             //TODO            
 
 
@@ -120,15 +120,19 @@ class PermManager
 
     static isWhitelistMode() { return PermManager.userMode == "whitelist"; }
 
+    static isAdmin(player)
+    {
+        return PermManager.adminList.includes(player.realName) || (PermManager.opIsAdmin && player.isOP());
+    }
+
     // return true / false
     static hasPermission(player, action)
     {
+        if(PermManager.isAdmin(player))
+            return true;
+        
         let plName = player.realName;
-        if(PermManager.adminList.includes(plName))         // is admin
-            return true;
-        else if(PermManager.opIsAdmin && player.isOP())     // is OP
-            return true;
-        else if(PermManager.userList.includes(plName))
+        if(PermManager.userList.includes(plName))
         {
             if(PermManager.userMode == "whitelist" && PermManager.userAllowAction.includes(action))        // in whitelist and allow
                 return true;
@@ -1842,7 +1846,7 @@ function cmdCallback(_cmd, ori, out, res)
         break;
     case "help":
         result = FakePlayerManager.getHelp()[1];
-        out.success("[FakePlayer] " + result);
+        out.success(result);
         break;
     case "gui":
         if(!ori.player)
@@ -2135,7 +2139,7 @@ class FpGuiForms
     ////// Tool dialogs
     static sendSuccessForm(player, infoText, callback = function(pl){})
     {
-        player.sendModalForm("LLSE-FakePlayer Info Dialog", 
+        player.sendModalForm("LLSE-FakePlayer Success Dialog", 
             "§a§lSuccess:§r\n" + infoText, "OK", "Close", (pl, res)=>{ callback(pl); });
     }
 
@@ -2143,6 +2147,11 @@ class FpGuiForms
     {
         player.sendModalForm("LLSE-FakePlayer Error Dialog", 
             "§c§lError:§r\n" + errMsg, "OK", "Close", (pl, res)=>{ callback(pl); });
+    }
+
+    static sendInfoForm(player, infoText, callback = function(pl){})
+    {
+        player.sendModalForm("LLSE-FakePlayer Info Dialog", infoText, "OK", "Close", (pl, res)=>{ callback(pl); });
     }
 
     static sendAskForm(player, askText, confirmCallback = function(pl){}, rejectCallback = function(pl){})
@@ -2178,10 +2187,14 @@ class FpGuiForms
         {
             fm.addButton("Quick Online/Offline", "", (pl) => { FpGuiForms.sendQuickOnOfflineForm(pl);});
         }
-        fm.addButton("Behavior Operations", "", (pl) => { FpGuiForms.sendOperationSelectMenu(pl); });
-        fm.addButton("Inventory Operations", "", (pl) => {});
-        fm.addButton("Permissions Manage", "", (pl) => {});
-        fm.addButton("Help", "", (pl) => {});
+        fm.addButton("Select Operations", "", (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        // if(PermManager.isAdmin(player))
+        // {
+        //     fm.addButton("System Settings", "", (pl) => {});
+        // }
+        fm.addButton("Help", "", (pl) => {
+            FpGuiForms.sendInfoForm(pl, FakePlayerManager.getHelp()[1], (pl) => { FpGuiForms.sendMainMenu(pl); });
+        });
         fm.send(player);
     }
 
@@ -2364,6 +2377,7 @@ class FpGuiForms
                     });
                 });
             }
+            fm.addButton("Inventory Operations", "", (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); })
             fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendFpListForm(pl); });
             fm.send(player);
         }
@@ -2415,9 +2429,9 @@ class FpGuiForms
     }
 
     // fakeplayer operation select menu
-    static sendOperationSelectMenu(player)
+    static sendOperationMenu(player)
     {
-        let fm = new BetterSimpleForm("LLSE-FakePlayer Operation Control");
+        let fm = new BetterSimpleForm("LLSE-FakePlayer Operation Menu");
 
         let atLeastOneItem = false;
         if(PermManager.hasPermission(player, "operation"))
@@ -2466,7 +2480,7 @@ class FpGuiForms
         fm.addInput("length", "Operation Length(ms):", "500");
         fm.addLabel("label2", 'Tips: Short operation like "attack" or "interact" do not need "Operation ength" parameter, and you can leave it blank.');
 
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>
         {
             let result = null;
@@ -2517,6 +2531,7 @@ class FpGuiForms
         fm.send(player);
     }
 
+    // fakeplayer walk to position
     static sendWalkToPosForm(player)
     {
         let fm = new BetterCustomForm("LLSE-FakePlayer Walk to Position");
@@ -2527,7 +2542,7 @@ class FpGuiForms
         fm.addInput("position", "Target Position: (x y z)", "315 70 233");
         fm.addDropdown("dimid", "Target Dimension:", _VALID_DIMENSION_NAMES, player.pos.dimid);
         
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>{
             let fpName = fpsList[resultObj.get("fpName")];
             let posObj = ParsePositionString(resultObj.get("position"));
@@ -2567,6 +2582,7 @@ class FpGuiForms
         fm.send(player);
     }
 
+    // fakeplayer walk to another player
     static sendWalkToPlayerForm(player)
     {
         let fm = new BetterCustomForm("LLSE-FakePlayer Walk to Player");
@@ -2585,7 +2601,7 @@ class FpGuiForms
         fm.addDropdown("fpName", "FakePlayer:", fpsList);
         fm.addDropdown("plName", "Target Player:", plNamesList, currentPlIndex);
         
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>{
             let fpName = fpsList[resultObj.get("fpName")];
             let plName = plNamesList[resultObj.get("plName")];
@@ -2622,6 +2638,7 @@ class FpGuiForms
         fm.send(player);
     }
 
+    // fakeplayer tp to position
     static sendTpToPosForm(player)
     {
         let fm = new BetterCustomForm("LLSE-FakePlayer Teleport to Position");
@@ -2632,7 +2649,7 @@ class FpGuiForms
         fm.addInput("position", "Target Position: (x y z)", "315 70 233");
         fm.addDropdown("dimid", "Target Dimension:", _VALID_DIMENSION_NAMES, player.pos.dimid);
         
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>{
             let fpName = fpsList[resultObj.get("fpName")];
             let posObj = ParsePositionString(resultObj.get("position"));
@@ -2654,6 +2671,7 @@ class FpGuiForms
         fm.send(player);
     }
 
+    // fakeplayer tp to another player
     static sendTpToPlayerForm(player)
     {
         let fm = new BetterCustomForm("LLSE-FakePlayer Teleport to Player");
@@ -2672,7 +2690,7 @@ class FpGuiForms
         fm.addDropdown("fpName", "FakePlayer:", fpsList);
         fm.addDropdown("plName", "Target Player:", plNamesList, currentPlIndex);
         
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>{
             let fpName = fpsList[resultObj.get("fpName")];
             let plName = plNamesList[resultObj.get("plName")];
@@ -2692,6 +2710,7 @@ class FpGuiForms
         fm.send(player);
     }
 
+    // fakeplayer sync with another player
     static sendSyncForm(player)
     {
         let fm = new BetterCustomForm("LLSE-FakePlayer Sync with Player");
@@ -2711,7 +2730,7 @@ class FpGuiForms
         fm.addSwitch("isStart", "Enable Sync with Player", false);
         fm.addDropdown("plName", "Sync Target Player:", plNamesList, currentPlIndex);
         
-        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationMenu(pl); });
         fm.setSubmitCallback((pl, resultObj)=>{
             let fpName = fpsList[resultObj.get("fpName")];
             let plName = plNamesList[resultObj.get("plName")];
@@ -2738,6 +2757,133 @@ class FpGuiForms
                     FpGuiForms.sendSuccessMsg(pl, `Sync of §6${fpName}§r stopped.`);
             }
         });
+        fm.send(player);
+    }
+
+    // fakeplayer inventory menu
+    static sendInventoryMenu(player, fpName)
+    {
+        let fm = new BetterSimpleForm("LLSE-FakePlayer Inventory Menu");
+
+        let atLeastOneItem = false;
+        if(PermManager.hasPermission(player, "getinventory"))
+        {
+            atLeastOneItem = true;
+            // getInventory
+            fm.addButton("Get his inventory", "", (pl)=>{ 
+                let result = "";
+                let data = null;
+                [result, data] = FakePlayerManager.getInventory(fpName);
+                if(result != SUCCESS)
+                {
+                    FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendInventoryMenu(pl, fpName); });
+                    return;
+                }
+                let resStr = `Inventory of §6${fpName}§r:\n`;
+
+                // hand
+                let item = data.Hand;
+                if(item)
+                    resStr += `§3[Hand]§r §6${item.name}§2[${item.count}]§r\n`;
+                else
+                    resStr += `§3[Hand]§r None\n`;
+                
+                // offhand
+                item = data.OffHand;
+                if(item)
+                    resStr += `§3[Offhand]§r §6${item.name}§2[${item.count}]§r\n`;
+                else
+                    resStr += `§3[Offhand]§r None\n`;
+                
+                // inventory
+                let inventoryStr = "";
+                for(let i=0; i<data.Inventory.length; ++i)
+                {
+                    let item = data.Inventory[i];
+                    if(item)
+                    {
+                        inventoryStr += `${i}: §6${item.name}§2[${item.count}]§r  `;
+                    }
+                }
+                if(inventoryStr == "")
+                    resStr += "§3[Inventory]§r None\n";
+                else
+                    resStr += "§3[Inventory]§r\n" + inventoryStr + "\n";
+                
+                // armor
+                let armorStr = "";
+                for(let i=0; i<data.Armor.length; ++i)
+                {
+                    let item = data.Armor[i];
+                    if(item)
+                    {
+                        armorStr += `${i}: §6${item.name}§2[${item.count}]§r  `;
+                    }
+                }
+                if(armorStr == "")
+                    resStr += "§3[Armor]§r None\n";
+                else
+                    resStr += "§3[Armor]§r\n" + armorStr + "\n";
+                
+                FpGuiForms.sendInfoForm(pl, resStr, (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); });
+            });
+        }
+        if(PermManager.hasPermission(player, "give"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Give item to him", "", (pl)=>{
+                FpGuiForms.sendAskForm(pl, `Give the item on your main hand to §6${fpName}§r?`, 
+                    (pl) =>
+                    {
+                        let result = FakePlayerManager.giveItem(fpName, pl);
+                        if(result != SUCCESS)
+                            FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendInventoryMenu(pl, fpName); });
+                        else
+                            FpGuiForms.sendSuccessForm(pl, `Item given to §6${fpName}§r`, (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); });
+                    },
+                    (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
+            });
+        }
+        if(PermManager.hasPermission(player, "drop"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Drop item on his hand", "", (pl)=>{
+                FpGuiForms.sendAskForm(pl, `Drop item on §6${fpName}§r's main hand?`, 
+                    (pl) =>
+                    {
+                        let result = FakePlayerManager.dropItem(fpName, _DEFAULT_PLAYER_SELECT_SLOT);
+                        if(result != SUCCESS)
+                            FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendInventoryMenu(pl, fpName); });
+                        else
+                            FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r dropped item on main hand`, 
+                                (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); });
+                    },
+                    (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
+            });
+        }
+        if(PermManager.hasPermission(player, "dropall"))
+        {
+            atLeastOneItem = true;
+            fm.addButton("Drop all his itmes out", "", (pl)=>{ 
+                FpGuiForms.sendAskForm(pl, `Drop all item in §6${fpName}§r's inventory?`, 
+                    (pl) =>
+                    {
+                        let result = FakePlayerManager.dropAllItems(fpName);
+                        if(result != SUCCESS)
+                            FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendInventoryMenu(pl, fpName); });
+                        else
+                            FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r dropped item on main hand`, 
+                                (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); });
+                    },
+                    (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
+            });
+        }
+        fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
+
+        if(atLeastOneItem)
+            fm.setContent(`§ePlease choose inventory operation for §6${fpName}§e:§r`);
+        else
+            fm.setContent("§eSorry, but you have no permission here.§r");
         fm.send(player);
     }
 }
