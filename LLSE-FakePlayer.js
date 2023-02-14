@@ -48,6 +48,34 @@ Array.prototype.removeByValue = function (val) {
     return this;
 }
 
+// parse "x y z", return {x:x, y:y, z:z} / null
+function ParsePositionString(posStr)
+{
+    if(posStr.length == 0)
+        return null;
+
+    if(posStr.startsWith("("))
+        posStr = posStr.substring(1);
+    if(posStr.endsWith(")"))
+        posStr = posStr.substring(0, posStr.length - 1);
+
+    let splitter = '';
+    if(posStr.indexOf(" ") != -1)
+        splitter = " ";
+    else if(posStr.indexOf(",") != -1)
+        splitter = ",";
+    else
+        return null;
+    
+    let resArr = posStr.split(splitter);
+    if(resArr.length != 3 || resArr[0].length == 0 || resArr[1].length == 0 || resArr[2].length == 0)
+        return null;
+    let [x,y,z] = [Number(resArr[0]), Number(resArr[1]), Number(resArr[2])];
+    if(isNaN(x) || isNaN(y) || isNaN(z))
+        return null;
+    return {"x":x, "y":y, "z":z};
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 //                                   Config File                                   //
@@ -2221,24 +2249,19 @@ class FpGuiForms
 
             // get position
             let spawnPos = new FloatPos(0, 32767, 0, 0);
-            let coords = resultObj.get("coords").split(",");
-            if(coords.length != 3)
+            let coords = ParsePositionString(resultObj.get("coords"));
+            let dimid = resultObj.get("dimid");
+
+            if(!coords || !IsValidDimId(dimid))     // bad format
+            {
                 spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
+            }
             else
             {
-                spawnPos.x = Number(coords[0]);
-                spawnPos.y = Number(coords[1]);
-                spawnPos.z = Number(coords[2]);
-                if(isNaN(spawnPos.x) || isNaN(spawnPos.y) || isNaN(spawnPos.z))
-                    spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
-                else
-                {
-                    let dimid = resultObj.get("dimid");
-                    if(IsValidDimId(dimid))
-                        spawnPos.dimid = dimid;
-                    else
-                        spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
-                }
+                spawnPos.x = coords.x;
+                spawnPos.y = coords.y;
+                spawnPos.z = coords.z;
+                spawnPos.dimid = dimid;
             }
 
             // create
@@ -2384,8 +2407,8 @@ class FpGuiForms
         if(PermManager.hasPermission(player, "walkto"))
         {
             atLeastOneItem = true;
-            fm.addButton("Walk to position", "", (pl)=>{});
-            fm.addButton("Walk to player", "", (pl)=>{});
+            fm.addButton("Walk to position", "", (pl)=>{ FpGuiForms.sendWalkToPosForm(pl); });
+            fm.addButton("Walk to player", "", (pl)=>{ FpGuiForms.sendWalkToPlayerForm(pl); });
         }
         if(PermManager.hasPermission(player, "tp"))
         {
@@ -2473,6 +2496,59 @@ class FpGuiForms
                 FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
         });
         fm.send(player);
+    }
+
+    static sendWalkToPosForm(player)
+    {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Walk to Position");
+        fm.addLabel("label1", "§eChoose target position:§r\n");
+
+        let fpsList = FakePlayerManager.list()[1];
+        fm.addDropdown("fpName", "FakePlayer:", fpsList);
+        fm.addInput("position", "Target Position: (x y z)", "315 70 233");
+        
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setSubmitCallback((pl, resultObj)=>{
+            let fpName = fpsList[resultObj.get("fpName")];
+            let posObj = ParsePositionString(resultObj.get("position"));
+            if(!posObj)
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Bad format of paramater "position": ${resultObj.get("position")}`, 
+                    (pl)=>{ FpGuiForms.sendWalkToPosForm(pl); });
+                return;
+            }
+
+            let result = "";
+            let data = null;
+            // logger.debug(targetPos);
+            let targetPos = new FloatPos(eval(posObj.x), eval(posObj.y), eval(posObj.z), eval(pl.pos.dimid));
+            [result, data] = FakePlayerManager.walkToPos(fpName, targetPos);
+            if(result != SUCCESS)
+            {
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                return;
+            }
+            let resStr = "";
+            if(data.isFullPath || data.path.length == 0)
+                resStr = `Target set. ${fpName} is walking to target position ${targetPos.toString()}.`;
+            else
+            {
+                let fpPos = FakePlayerManager.getPosition(res.fpname)[1];
+                let dimid = fpPos ? fpPos.dimid : pl.pos.dimid;        // if cannot get dimid, guess that is pl's dimid
+
+                let lastData = data.path[data.path.length - 1];
+                let lastPathPoint = new IntPos(eval(lastData[0]), eval(lastData[1]), eval(lastData[2]), dimid);
+                resStr = `Cannot reach the target given. The path will end at ${lastPathPoint.toString()}.`
+                    +` ${fpName} is walking to the end position...`;
+            }
+            FpGuiForms.sendInfoForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        });
+        fm.send(player);
+    }
+
+    static sendWalkToPlayerForm(player)
+    {
+
     }
 }
 
