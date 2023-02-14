@@ -2420,13 +2420,13 @@ class FpGuiForms
         if(PermManager.hasPermission(player, "tp"))
         {
             atLeastOneItem = true;
-            fm.addButton("Teleport to position", "", (pl)=>{});
-            fm.addButton("Teleport to player", "", (pl)=>{});
+            fm.addButton("Teleport to position", "", (pl)=>{ FpGuiForms.sendTpToPosForm(pl); });
+            fm.addButton("Teleport to player", "", (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
         }
         if(PermManager.hasPermission(player, "sync"))
         {
             atLeastOneItem = true;
-            fm.addButton("Sync with player", "", (pl)=>{});
+            fm.addButton("Sync with player", "", (pl)=>{ FpGuiForms.sendSyncForm(pl); });
         }
         fm.addButton("Back to previous menu", "", (pl) => { FpGuiForms.sendMainMenu(pl); });
 
@@ -2608,6 +2608,83 @@ class FpGuiForms
             FpGuiForms.sendSuccessForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
         });
         fm.send(player);
+    }
+
+    static sendTpToPosForm(player)
+    {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Teleport to Position");
+        fm.addLabel("label1", "§eChoose target position:§r\n");
+
+        let fpsList = FakePlayerManager.list()[1];
+        fm.addDropdown("fpName", "FakePlayer:", fpsList);
+        fm.addInput("position", "Target Position: (x y z)", "315 70 233");
+        fm.addDropdown("dimid", "Target Dimension:", _VALID_DIMENSION_NAMES, player.pos.dimid);
+        
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setSubmitCallback((pl, resultObj)=>{
+            let fpName = fpsList[resultObj.get("fpName")];
+            let posObj = ParsePositionString(resultObj.get("position"));
+            let dimid = resultObj.get("dimid");
+            if(!posObj)
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Bad format of paramater "position": ${resultObj.get("position")}`, 
+                    (pl)=>{ FpGuiForms.sendWalkToPosForm(pl); });
+                return;
+            }
+
+            let targetPos = new FloatPos(eval(posObj.x), eval(posObj.y), eval(posObj.z), dimid);
+            let result = FakePlayerManager.teleportToPos(fpName, targetPos);
+            if(result != SUCCESS)
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            else
+                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r teleported to ${targetPos.toString()}`,
+                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        });
+        fm.send(player);
+    }
+
+    static sendTpToPlayerForm(player)
+    {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Teleport to Player");
+        fm.addLabel("label1", "§eChoose target player:§r\n");
+
+        let fpsList = FakePlayerManager.list()[1];
+        let plsList = mc.getOnlinePlayers();
+        let plNamesList = [];
+        let currentPlIndex = 0;
+        for(let i = 0; i<plsList.length; ++i)
+        {
+            plNamesList.push(plsList[i].name);
+            if(plsList[i].name == player.name)
+                currentPlIndex = i;
+        }
+        fm.addDropdown("fpName", "FakePlayer:", fpsList);
+        fm.addDropdown("plName", "Target Player:", plNamesList, currentPlIndex);
+        
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setSubmitCallback((pl, resultObj)=>{
+            let fpName = fpsList[resultObj.get("fpName")];
+            let plName = plNamesList[resultObj.get("plName")];
+            let targetPlayer = mc.getPlayer(plName);
+            if(!targetPlayer)
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Player ${plName} no found`, (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
+                return;
+            }
+
+            let result = FakePlayerManager.teleportToEntity(fpName, targetPlayer);
+            if(result != SUCCESS)
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            else
+                FpGuiForms.sendSuccessForm(pl, `§6${fpName}§r teleported to ${plName}`,
+                    (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        });
+        fm.send(player);
+    }
+
+    static sendSyncForm(player)
+    {
+
     }
 }
 
