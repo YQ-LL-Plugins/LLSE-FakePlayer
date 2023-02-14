@@ -2684,7 +2684,53 @@ class FpGuiForms
 
     static sendSyncForm(player)
     {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Sync with Player");
+        fm.addLabel("label1", "§eChoose target player:§r\n");
 
+        let fpsList = FakePlayerManager.list()[1];
+        let plsList = mc.getOnlinePlayers();
+        let plNamesList = [];
+        let currentPlIndex = 0;
+        for(let i = 0; i<plsList.length; ++i)
+        {
+            plNamesList.push(plsList[i].name);
+            if(plsList[i].name == player.name)
+                currentPlIndex = i;
+        }
+        fm.addDropdown("fpName", "FakePlayer:", fpsList);
+        fm.addSwitch("isStart", "Enable Sync with Player", false);
+        fm.addDropdown("plName", "Sync Target Player:", plNamesList, currentPlIndex);
+        
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setSubmitCallback((pl, resultObj)=>{
+            let fpName = fpsList[resultObj.get("fpName")];
+            let plName = plNamesList[resultObj.get("plName")];
+            let targetPlayer = mc.getPlayer(plName);
+            if(!targetPlayer)
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Player ${plName} no found`, (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
+                return;
+            }
+            let isStart = resultObj.get("isStart");
+
+            let result = null;
+            if(isStart)
+                result = FakePlayerManager.startSync(fpName, targetPlayer);
+            else
+                result = FakePlayerManager.stopSync(fpName);
+            if(result != SUCCESS)
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            else
+            {
+                if(isStart)
+                    FpGuiForms.sendSuccessForm(pl, `Sync of §6${fpName}§r started. Use "/fpc sync stop" to stop.`,
+                        (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                else
+                    FpGuiForms.sendSuccessForm(pl, `Sync of §6${fpName}§r stopped.`,
+                        (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+            }
+        });
+        fm.send(player);
     }
 }
 
