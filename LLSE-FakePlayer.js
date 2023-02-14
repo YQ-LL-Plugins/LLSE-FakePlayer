@@ -829,6 +829,8 @@ class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return [`Fail to get fakeplayer §6${fpName}§r`, null];
+        if(pos.dimid != pl.pos.dimid)
+            return [`§6${fpName}§r is not in target dimension`, null];
         let res = pl.simulateNavigateTo(pos);
         if(!res)
             return [`Fail to navigate to target`, null];
@@ -856,6 +858,8 @@ class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return [`Fail to get fakeplayer §6${fpName}§r`, null];
+        if(pl.pos.dimid != entity.pos.dimid)
+            return [`§6${fpName}§r is not in target dimension`, null];
         let res = pl.simulateNavigateTo(entity.pos);
         if(!res)
             return [`Fail to navigate to target`, null];
@@ -2455,7 +2459,7 @@ class FpGuiForms
             if(operation == "clear")
             {
                 result = FakePlayerManager.clearOperation(fpName);
-                FpGuiForms.sendInfoForm(pl, `§6${res.fpname}§r operation cleared.`,
+                FpGuiForms.sendInfoForm(pl, `§6${fpName}§r operation cleared.`,
                     (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
                 return;
             }
@@ -2533,7 +2537,7 @@ class FpGuiForms
                 resStr = `Target set. ${fpName} is walking to target position ${targetPos.toString()}.`;
             else
             {
-                let fpPos = FakePlayerManager.getPosition(res.fpname)[1];
+                let fpPos = FakePlayerManager.getPosition(fpName)[1];
                 let dimid = fpPos ? fpPos.dimid : pl.pos.dimid;        // if cannot get dimid, guess that is pl's dimid
 
                 let lastData = data.path[data.path.length - 1];
@@ -2548,7 +2552,57 @@ class FpGuiForms
 
     static sendWalkToPlayerForm(player)
     {
+        let fm = new BetterCustomForm("LLSE-FakePlayer Walk to Player");
+        fm.addLabel("label1", "§eChoose target player:§r\n");
 
+        let fpsList = FakePlayerManager.list()[1];
+        let plsList = mc.getOnlinePlayers();
+        let plNamesList = [];
+        let currentPlIndex = 0;
+        for(let i = 0; i<plsList.length; ++i)
+        {
+            plNamesList.push(plsList[i].name);
+            if(plsList[i].name == player.name)
+                currentPlIndex = i;
+        }
+        fm.addDropdown("fpName", "FakePlayer:", fpsList);
+        fm.addDropdown("plName", "Target Player:", plNamesList, currentPlIndex);
+        
+        fm.setCancelCallback((pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        fm.setSubmitCallback((pl, resultObj)=>{
+            let fpName = fpsList[resultObj.get("fpName")];
+            let plName = plNamesList[resultObj.get("plName")];
+            let targetPlayer = mc.getPlayer(plName);
+            if(!targetPlayer)
+            {
+                FpGuiForms.sendErrorForm(pl, `Error: Player ${plName} no found`, (pl)=>{ FpGuiForms.sendWalkToPlayerForm(pl); });
+                return;
+            }
+
+            let result = "";
+            let data = null;
+            [result, data] = FakePlayerManager.walkToEntity(fpName, targetPlayer);
+            if(result != SUCCESS)
+            {
+                FpGuiForms.sendErrorForm(pl, result, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+                return;
+            }
+            let resStr = "";
+            if(data.isFullPath || data.path.length == 0)
+                resStr = `Target set. ${fpName} is walking to ${plName}.`;
+            else
+            {
+                let fpPos = FakePlayerManager.getPosition(fpName)[1];
+                let dimid = fpPos ? fpPos.dimid : targetPlayer.pos.dimid;        // if cannot get dimid, guess
+
+                let lastData = data.path[data.path.length - 1];
+                let lastPathPoint = new IntPos(eval(lastData[0]), eval(lastData[1]), eval(lastData[2]), dimid);
+                resStr = `Cannot reach the target given. The path will end at ${lastPathPoint.toString()}.`
+                    +` ${fpName} is walking to the end position...`;
+            }
+            FpGuiForms.sendInfoForm(pl, resStr, (pl)=>{ FpGuiForms.sendOperationSelectMenu(pl); });
+        });
+        fm.send(player);
     }
 }
 
