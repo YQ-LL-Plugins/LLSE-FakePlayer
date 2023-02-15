@@ -1,7 +1,7 @@
 //LiteLoaderScript Dev Helper
 /// <reference path="c:\Users\yqs11\Desktop\Projects\Game\Minecraft\LLSE-Aids-Library/dts/HelperLib-master/src/index.d.ts"/> 
 
-const _VER = [1,0,0];
+const _VER = [1, 0, 1];
 const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.json";
 const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
@@ -75,6 +75,17 @@ function ParsePositionString(posStr)
     if(isNaN(x) || isNaN(y) || isNaN(z))
         return null;
     return {"x":x, "y":y, "z":z};
+}
+
+function EntityGetFeetPos(entity)
+{
+    let feetPos = entity.feetPos;
+    if(!feetPos)
+    {
+        feetPos = entity.pos;
+        feetPos.y -= 1.62;
+    }
+    return feetPos;
 }
 
 
@@ -320,11 +331,11 @@ class FakePlayerInst
                 // sync move
                 let isMoving = false;
                 if(!this._lastSyncPlayerPos)
-                    this._lastSyncPlayerPos = targetPlayer.pos;
+                    this._lastSyncPlayerPos = EntityGetFeetPos(targetPlayer);
                 else
                 {
                     let oldPos = this._lastSyncPlayerPos;
-                    let newPos = targetPlayer.pos;
+                    let newPos = EntityGetFeetPos(targetPlayer);
                     if(oldPos.dimid != newPos.dimid)
                     {
                         this._pos.x = newPos.x;
@@ -452,7 +463,10 @@ class FakePlayerInst
     {
         let pl = this.getPlayer();
         if(pl)
-            this.setPos(pl.pos.x, pl.pos.y, pl.pos.z, pl.pos.dimid);
+        {
+            let pos = EntityGetFeetPos(pl);
+            this.setPos(pos.x, pos.y, pos.z, pos.dimid);
+        }
     }
     startOpLoop()
     {
@@ -659,7 +673,7 @@ class FakePlayerManager
 
         if(fp.isNeedTick())
             FakePlayerManager.needTickFpListObj[fpName] = fp;
-        FakePlayerManager.saveFpData(fpName);
+        FakePlayerManager.saveFpData(fpName, false);
         FakePlayerManager.loadInventoryData(fpName);
         return SUCCESS;
     }
@@ -865,7 +879,7 @@ class FakePlayerManager
             return [`Fail to get fakeplayer §6${fpName}§r`, null];
         if(pl.pos.dimid != entity.pos.dimid)
             return [`§6${fpName}§r is not in target dimension`, null];
-        let res = pl.simulateNavigateTo(entity.pos);
+        let res = pl.simulateNavigateTo(EntityGetFeetPos(entity));
         if(!res)
             return [`Fail to navigate to target`, null];
         
@@ -893,7 +907,7 @@ class FakePlayerManager
             return `Fail to teleport fakeplayer §6${fpName}§r`;
         
         fp.setPos(pos.x, pos.y, pos.z, pos.dimid);
-        FakePlayerManager.saveFpData(fpName);
+        FakePlayerManager.saveFpData(fpName, false);
         return SUCCESS;
     }
 
@@ -909,7 +923,7 @@ class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return `Fail to get fakeplayer §6${fpName}§r`;
-        let pos = entity.pos;
+        let pos = EntityGetFeetPos(entity);
         if(!pl.teleport(pos))
             return `Fail to teleport fakeplayer §6${fpName}§r`;
         
@@ -1062,7 +1076,7 @@ class FakePlayerManager
         if(item.isNull())
             return `Slot ${slotId} has no item to drop`;
         // spawn dropped item at 2 blocks away
-        if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(pl.pos, pl.direction, 2)))
+        if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(EntityGetFeetPos(pl), pl.direction, 2)))
             return `Fail to drop item`;
         if(!inventory.removeItem(slotId, item.count))
             return "Fail to remove item from fakeplayer's inventory";
@@ -1092,7 +1106,7 @@ class FakePlayerManager
             if(item.isNull())
                 continue;
             // spawn dropped item at 2 blocks away
-            if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(pl.pos, pl.direction, 2)))
+            if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(EntityGetFeetPos(pl), pl.direction, 2)))
                 resultStr += `Fail to drop item at slot ${slotId}\n`;
             if(!inventory.removeItem(slotId, item.count))
                 resultStr += `Fail to remove item from slot ${slotId}\n`;
@@ -1423,7 +1437,7 @@ function cmdCallback(_cmd, ori, out, res)
         else if(ori.player)
         {
             // createpos not set, but executed by player
-            spawnPos = CalcPosFromViewDirection(ori.player.pos, ori.player.direction, 1);
+            spawnPos = CalcPosFromViewDirection(EntityGetFeetPos(ori.player), ori.player.direction, 1);
         }
         else
         {
@@ -1433,6 +1447,7 @@ function cmdCallback(_cmd, ori, out, res)
 
         // create
         result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.dimid);
+        // logger.debug("SpawnPos: ", spawnPos.toString());
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
@@ -1510,7 +1525,7 @@ function cmdCallback(_cmd, ori, out, res)
                 let resultData = FakePlayerManager.getAllInfo(fpName);
                 if(resultData[0] != SUCCESS)
                     out.error(`[FakePlayer] ` + resData[0]);
-                elsed
+                else
                 {
                     let result = resultData[1];
                     let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
@@ -2285,7 +2300,7 @@ class FpGuiForms
 
             if(!coords || !IsValidDimId(dimid))     // bad format
             {
-                spawnPos = CalcPosFromViewDirection(pl.pos, pl.direction, 1);
+                spawnPos = CalcPosFromViewDirection(EntityGetFeetPos(pl), pl.direction, 1);
             }
             else
             {
