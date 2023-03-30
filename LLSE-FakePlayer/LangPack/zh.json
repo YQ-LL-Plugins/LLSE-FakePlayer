@@ -1,0 +1,160 @@
+{
+    "main": {
+        "welcome": "LLSE-FakePlayer {0} 已加载。作者：yqs112358",
+        "autoreconnect": {
+            "error": "重新连接时出现错误："
+        }
+    },
+    "dimension": {
+        "name": {
+            "mainworld": "主世界",
+            "nether": "下界",
+            "end": "末地"
+        }
+    },
+    "permManager": {
+        "error": {
+            "onlyConsoleAction": "此操作只能在服务端控制台中执行",
+            "noAccess": "你没有权限执行此操作",
+            "alreadyInAdminList": "{0} 已在管理员列表中",
+            "notInAdminList": "{0} 不在管理员列表中",
+            "setAdminTwice": "{0} 已在管理员列表中，不能被设置两次",
+            "alreadyInList": "{0} 已经在 {1} 列表中",
+            "notInList": "{0} 不在 {1} 列表中"
+        }
+    },
+    "fpManager": {
+        "consoleLog": {
+            "respawning": "{0} 死亡。正在重生...",
+            "error": {
+                "failToRecreate": "重新创建 {0} 失败",
+                "failToRespawn": "{0} 重生失败",
+                "respawnedBut": "{0} 已重生，不过{1}"
+            },
+            "respawned": "{0} 已重生",
+            "failToSaveInventory": "保存 {0} 的物品栏失败"
+        },
+        "resultText": {
+            "fpNoFound": "§6{0}§r未找到。请先创建此假人",
+            "online": {
+                "fail": "上线§6{0}§r失败",
+                "success": "§6{0}§r已上线",
+                "successBut": "§6{0}§r已创建，不过{1}"
+            },
+            "offline": {
+                "success": "§6{0}§r已下线",
+                "fail": "§6{0}§r下线失败"
+            },
+            "fpExists": "§6{0}§r已存在。请使用命令\"/fpc online {0}\"上线假人",
+            "fpNotOnline": "§6{0}§r并不在线",
+            "fpFailToGet": "获取假人§6{0}§r失败",
+            "fpNotInTargetDimension": "§6{0}§r不在目标维度中",
+            "fpFailToNavigate": "目标导航失败",
+            "invalidTargetEntity": "目标实体无效",
+            "invalidSourcePlayer": "来源玩家无效",
+            "fpFailToTransport": "传送§6{0}§r失败",
+            "fpFailToGiveItem": "未能成功将物品给予§6{0}§r",
+            "failToSpaceForNewItem": "为新物品腾出空间失败：{0}",
+            "failToRemoveOldItem": "移除§6{0}§r的旧物品失败",
+            "failToSetNewItem": "设置§6{0}§r的新物品失败",
+            "dropItem": {
+                "slotIsEmpty": "槽位{0}为空",
+                "fail": "丢出物品失败",
+                "failToRemoveOld": "移除槽位{0}的旧物品失败",
+                "failToDropOld": "丢弃槽位{0}的物品失败"
+            },
+            "invalidTargetPlayer": "目标玩家无效",
+            "sync": {
+                "withAnotherFp": "无法与另一个假人进行sync同步"
+            },
+            "helpText": "§e§l[LLSE-FakePlayer]§r\\nLiteLoaderBDS平台强大的假人插件\\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\\n- 作者: yqs112358"
+        }
+    },
+    "command": {
+        "resultText": {
+            "online": "§6{0}§r已上线",
+            "offline": "§6{0}§r已下线",
+            "onlineAll": {
+                "partlySuccess": "有部分假人发生错误：{0}\\n这些假人已经成功上线：",
+                "allSuccess": "所有假人上线成功："
+            },
+            "offlineAll": {
+                "allSuccess": "所有假人下线成功：",
+                "partlySuccess": "有部分假人发生错误：{0}\\n这些假人已经成功下线："
+            },
+            "create": {
+                "fail": {
+                    "notValidDimId": "{0}不是一个有效的维度ID",
+                    "needValidDimId": "无法创建，你必须传入一个有效的维度ID",
+                    "needValidPosition": "无法创建，你必须传入一个有效的坐标"
+                },
+                "success": "§6{0}§r已创建"
+            },
+            "remove": {
+                "ask": "你确定要删除假人§6{0}§r吗？\\n他所有的数据将被清除，且无法恢复。",
+                "success": "§6{0}§r已删除",
+                "cancelled": "动作已取消"
+            },
+            "list": {
+                "has": "共有{0}个假人:",
+                "none": "共有0个假人。",
+                "specificInfo": {
+                    "none": "无",
+                    "online": "§a§l在线§r",
+                    "offline": "§c§l离线§r"
+                }
+            },
+            "operation": {
+                "clear": "§6{0}§r执行操作已清除",
+                "setTo": "§6{0}§r被设置为执行：{1}"
+            },
+            "walkto": {
+                "targetSet": "目标已设置。正在走向{0}...",
+                "cannotReach": "无法到达预定目标。路径将在{0}终止。正在走向路径终止位置...",
+                "invalidTarget": "目标位置无效"
+            },
+            "tp": {
+                "success": "§6{0}§r已被传送到{1}"
+            },
+            "give": {
+                "invalidSource": "只有玩家才能执行此操作！",
+                "success": "物品已被给予§6{0}§r"
+            },
+            "inventory": {
+                "title": "§6{0}§r的物品栏:",
+                "mainHand": {
+                    "item": "§3[主手]§r §6{0}§2[{1}]§r"
+                },
+                "offHand": {
+                    "item": "§3[副手]§r §6{0}§2[{1}]§r",
+                    "empty": "§3[副手]§r 空"
+                },
+                "inventory": {
+                    "empty": "§3[物品栏]§r 空",
+                    "prefix": "§3[物品栏]§r"
+                },
+                "armor": {
+                    "empty": "§3[盔甲栏]§r 空",
+                    "prefix": "§3[盔甲栏]§r"
+                }
+            },
+            "mainHand": {
+                "empty": "§3[主手]§r 空"
+            },
+            "drop": {
+                "success": "§6{0}§r已丢出物品"
+            },
+            "dropAll": {
+                "success": "§6{0}§r已丢出背包中所有物品"
+            },
+            "setselect": {
+                "success": "选中槽位已切换"
+            },
+            "sync": {
+                "unknownAction": "未知操作: {0}",
+                "start": "§6{0}§r的玩家同步已开始。使用命令\"/fpc sync stop\"停止玩家同步。",
+                "stop": "§6{0}§r的玩家同步已停止。"
+            }
+        }
+    }
+}

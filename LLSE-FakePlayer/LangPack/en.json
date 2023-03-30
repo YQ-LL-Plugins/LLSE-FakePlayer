@@ -1,0 +1,160 @@
+{
+    "main": {
+        "welcome": "LLSE-FakePlayer {0} loaded. Author: yqs112358",
+        "autoreconnect": {
+            "error": "Some errors occur at auto-reconnect:"
+        }
+    },
+    "dimension": {
+        "name": {
+            "mainworld": "Overworld",
+            "nether": "Nether",
+            "end": "The End"
+        }
+    },
+    "permManager": {
+        "error": {
+            "onlyConsoleAction": "This action can only be executed in server console",
+            "noAccess": "You have no permission to do this action",
+            "alreadyInAdminList": "{0} is already in admin list",
+            "notInAdminList": "{0} is not in admin list",
+            "setAdminTwice": "{0} is in admin list, and cannot be set twice",
+            "alreadyInList": "{0} is already in user {1}",
+            "notInList": "{0} is not in user {1}"
+        }
+    },
+    "fpManager": {
+        "consoleLog": {
+            "respawning": "{0} died. Respawning...",
+            "error": {
+                "failToRecreate": "Fail to re-create {0}",
+                "failToRespawn": "Fail to respawn {0}",
+                "respawnedBut": "{0} respawned, but {1}"
+            },
+            "respawned": "{0} respawned",
+            "failToSaveInventory": "保存 {0} 的物品栏失败"
+        },
+        "resultText": {
+            "fpNoFound": "§6{0}§r no found. Please create it first.",
+            "online": {
+                "fail": "Fail to online §6{0}§r",
+                "success": "§6{0}§r is online now",
+                "successBut": "`§6{0}§r created, but {1}"
+            },
+            "offline": {
+                "success": "§6{0}§r is offline now",
+                "fail": "Fail to offline §6{0}§r"
+            },
+            "fpExists": "§6{0}§r exists. Use \"/fpc online {0}\" to online it",
+            "fpNotOnline": "{0} is not online",
+            "fpFailToGet": "Fail to get fakeplayer §6{0}§r",
+            "fpNotInTargetDimension": "§6{0}§r is not in target dimension",
+            "fpFailToNavigate": "Fail to navigate to target",
+            "invalidTargetEntity": "Target entity is invalid",
+            "invalidSourcePlayer": "Target player is invalid",
+            "fpFailToTransport": "Fail to teleport fakeplayer §6{0}§r",
+            "fpFailToGiveItem": "Fail to give item to §6{0}§r",
+            "failToSpaceForNewItem": "Fail to make space for new item: {0}",
+            "failToRemoveOldItem": "Fail to remove old item of §6{0}§r",
+            "failToSetNewItem": "Fail to set new item of §6{0}§r",
+            "dropItem": {
+                "slotIsEmpty": "Slot {0} is empty",
+                "fail": "Fail to drop item",
+                "failToRemoveOld": "Fail to remove item from slot {0}",
+                "failToDropOld": "Fail to drop item at slot {0}"
+            },
+            "invalidTargetPlayer": "Target player is invalid",
+            "sync": {
+                "withAnotherFp": "Cannot sync with another fakeplayer"
+            },
+            "helpText": "§e§l[LLSE-FakePlayer]§r\\nA strong fake-player plugin for LiteLoaderBDS\\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\\n- Author: yqs112358"
+        }
+    },
+    "command": {
+        "resultText": {
+            "online": "§6{0}§r is online",
+            "offline": "§6{0}§r is offline",
+            "onlineAll": {
+                "partlySuccess": "Some fakeplayers failed with error: {0}\\nThese fakeplayers are online now:",
+                "allSuccess": "All fakeplayers are online:"
+            },
+            "offlineAll": {
+                "allSuccess": "All fakeplayers are offline:",
+                "partlySuccess": "Some fakeplayers failed with error: {0}\\nThese fakeplayers are offline now:"
+            },
+            "create": {
+                "fail": {
+                    "notValidDimId": "{0} is not a valid dimension id",
+                    "needValidDimId": "Fail to create. You must give a valid dimension ID",
+                    "needValidPosition": "Fail to create. You must give a valid position"
+                },
+                "success": "§6{0}§r created"
+            },
+            "remove": {
+                "ask": "Are you sure to delete fakeplayer §6{0}§r?\\nAll his data will be deleted and cannot be recovered",
+                "success": "§6{0}§r is removed",
+                "cancelled": "Action cancelled"
+            },
+            "list": {
+                "has": "{0} fakeplayers in all:",
+                "none": "No fakeplayers now.",
+                "specificInfo": {
+                    "none": "None",
+                    "online": "§a§lOnline§r",
+                    "offline": "§c§lOffline§r"
+                }
+            },
+            "operation": {
+                "clear": "§6{0}§r operation cleared",
+                "setTo": "§6{0}§r set to: {1}"
+            },
+            "walkto": {
+                "targetSet": "Target set. Walking to target {0}...",
+                "cannotReach": "Cannot reach the target given. The path will end at {0}. Walking to the end position...",
+                "invalidTarget": "Bad target position"
+            },
+            "tp": {
+                "success": "§6{0}§r teleported to {1}"
+            },
+            "give": {
+                "invalidSource": "Only players can do this action!",
+                "success": "Item given to §6{0}§r"
+            },
+            "inventory": {
+                "title": "Inventory of §6{0}§r:",
+                "mainHand": {
+                    "item": "§3[Hand]§r §6{0}§2[{1}]§r"
+                },
+                "offHand": {
+                    "item": "§3[Offhand]§r §6{0}§2[{1}]§r",
+                    "empty": "§3[Offhand]§r 空"
+                },
+                "inventory": {
+                    "empty": "§3[Inventory]§r 空",
+                    "prefix": "§3[Inventory]§r"
+                },
+                "armor": {
+                    "empty": "§3[Armor]§r 空",
+                    "prefix": "§3[Armor]§r"
+                }
+            },
+            "mainHand": {
+                "empty": "§3[Hand]§r 空"
+            },
+            "drop": {
+                "success": "§6{0}§r dropped item"
+            },
+            "dropAll": {
+                "success": "§6{0}§r dropped all items"
+            },
+            "setselect": {
+                "success": "Selected slot changed"
+            },
+            "sync": {
+                "unknownAction": "Unknown action: {0}",
+                "start": "Sync of §6{0}§r started. Use \"/fpc sync stop\" to stop.",
+                "stop": "Sync of §6{0}§r stopped."
+            }
+        }
+    }
+}

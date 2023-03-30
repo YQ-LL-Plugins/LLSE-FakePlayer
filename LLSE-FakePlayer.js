@@ -1,15 +1,13 @@
 //LiteLoaderScript Dev Helper
-/// <reference path="c:\Users\yqs11\Desktop\Projects\Game\Minecraft\LLSE-Aids-Library/dts/HelperLib-master/src/index.d.ts"/> 
+/// <reference path="c:\Users\yq\Desktop\BAK\LLSE-Aids-Library/dts/HelperLib-master/src/index.d.ts"/> 
 
 const _VER = [1, 0, 1];
 const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.json";
 const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
+const _I18N_DIR = "./plugins/LLSE-FakePlayer/LangPack";
 
-const _LLSE_HELP_TEXT = 
-     '§e§l[LLSE-FakePlayer]§r\nLiteLoaderBDS平台强大的假人插件\n'
-    +'- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\n'
-    +'- 作者: yqs112358';             //TODO            
+i18n.load(_I18N_DIR);
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -20,7 +18,11 @@ const _DEFAULT_PLAYER_SELECT_SLOT = 0;
 const SUCCESS = "";
 const _LONG_OPERATIONS_LIST = ["useitem"];
 const _SHORT_OPERATIONS_LIST = ["attack", "interact"/*, "destroy", "place" */, "clear"];
-const _VALID_DIMENSION_NAMES = ["主世界", "下界", "末地"];
+const _VALID_DIMENSION_NAMES = [
+    i18n.tr("dimension.name.mainworld"), 
+    i18n.tr("dimension.name.nether"), 
+    i18n.tr("dimension.name.end")
+];
 
 function CalcPosFromViewDirection(oldPos, nowDirection, distance)
 {
@@ -164,7 +166,7 @@ class PermManager
         if((PermManager.onlyConsoleAction.includes(action)) && origin.type != 7)          // 7 is BDS console  
         {   
             // logger.debug("only can in console!");
-            return "此操作只能在服务端控制台中执行";
+            return i18n.tr("permManager.error.onlyConsoleAction");
         }
 
         let pl = origin.player;
@@ -178,14 +180,14 @@ class PermManager
         if(PermManager.hasPermission(pl, action))
             return SUCCESS;
         else
-            return "你没有权限执行此操作";
+            return i18n.tr("permManager.error.noAccess");
     }
 
     static addAdmin(plName)
     {
         logger.debug("addAdmin: ", plName);
         if(PermManager.adminList.includes(plName))
-            return `${plName} 已在管理员列表中`;
+            return i18n.tr("permManager.error.alreadyInAdminList", plName);
         if(PermManager.userList.includes(plName))
         {
             logger.warn(`${plName} is removing from user ${PermManager.userMode}`);
@@ -201,7 +203,7 @@ class PermManager
     static removeAdmin(plName)
     {
         if(!PermManager.adminList.includes(plName))
-            return `${plName} 不在管理员列表中`;
+            return i18n.tr("permManager.error.notInAdminList", plName);
         PermManager.adminList.removeByValue(plName);
         GlobalConf.set("AdminList", PermManager.adminList);
         return SUCCESS;
@@ -210,9 +212,9 @@ class PermManager
     static addUserToList(plName)
     {
         if(PermManager.adminList.includes(plName))
-            return `${plName}已在管理员列表中，不能被设置两次`;
+            return i18n.tr("permManager.error.setAdminTwice", plName);
         if(PermManager.userList.includes(plName))
-            return `${plName}已经在${PermManager.userMode}列表中`;
+            return i18n.tr("permManager.error.alreadyInList", plName, PermManager.userMode);
 
         PermManager.userList.push(plName);
         GlobalConf.set("UserList", PermManager.userList);
@@ -222,7 +224,7 @@ class PermManager
     static removeUserFromList(plName)
     {
         if(!PermManager.userList.includes(plName))
-            return `${plName}不在${PermManager.userMode}列表中`;
+            return i18n.tr("permManager.error.notInList", plName, PermManager.userMode);
         PermManager.userList.removeByValue(plName);
         GlobalConf.set("UserList", PermManager.userList);
         return SUCCESS;
@@ -628,15 +630,15 @@ class FakePlayerManager
         let fpName = player.realName;
         if(fpName in FakePlayerManager.fpListObj)
         {
-            logger.warn(`[FakePlayer] ${fpName}死亡。正在重生...`);
+            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawning", fpName));
             let fp = FakePlayerManager.fpListObj[fpName];
             if(!fp.offline())
-                logger.warn(`[FakePlayer] 重新创建${fpName}失败`);
+                logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRecreate", fpName));
             else
             {
                 setTimeout(()=>{
                     if(!fp.online())
-                        logger.warn(`[FakePlayer] ${fpName}重生失败`);
+                        logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRespawn", fpName));
                     else
                     {
                         // teleport to target pos
@@ -644,9 +646,9 @@ class FakePlayerManager
                         let result = FakePlayerManager.teleportToPos(fpName, new FloatPos(eval(targetPos.x), eval(targetPos.y), 
                             eval(targetPos.z),eval(targetPos.dimid)));
                         if(result != SUCCESS)
-                            logger.warn(`[FakePlayer] ${fpName}已重生，不过` + result);
+                            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.respawnedBut", fpName, result));
                         else
-                            logger.warn(`[FakePlayer] ${fpName}已重生`);
+                            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawned", fpName));
                     }
                 }, 500);
             }
@@ -657,19 +659,19 @@ class FakePlayerManager
     static online(fpName, failIfOnline = true)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOnline && fp.isOnline())
-            return `§6${fpName}§r已上线`;
+            return i18n.tr("fpManager.resultText.online.success", fpName);
 
         if(!fp.online())
-            return `上线§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.online.fail", fpName);
         // teleport to target pos
         let targetPos = fp.getPos();
         let result = FakePlayerManager.teleportToPos(fpName, new FloatPos(eval(targetPos.x), eval(targetPos.y), 
             eval(targetPos.z),eval(targetPos.dimid)));
         if(result != SUCCESS)
-            return `§6${fpName}§r已创建，不过` + result;
+            return i18n.tr("fpManager.resultText.online.successBut", fpName, result);
 
         if(fp.isNeedTick())
             FakePlayerManager.needTickFpListObj[fpName] = fp;
@@ -681,19 +683,19 @@ class FakePlayerManager
     static offline(fpName, failIfOffline = true)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOffline && !fp.isOnline())
-            return `§6${fpName}§r已下线`;
+            return i18n.tr("fpManager.resultText.offline.success", fpName);
 
         if(fpName in FakePlayerManager.needTickFpListObj)
             delete FakePlayerManager.needTickFpListObj[fpName];
         if(!FakePlayerManager.saveInventoryData(fpName))
-            logger.warn(`保存${fpName}的物品栏失败`);
+            logger.warn(i18n.tr("fpManager.consoleLog.failToSaveInventory", fpName));
 
         fp.updatePos();
         if(!fp.offline())
-            return `§6${fpName}§r下线失败`;
+            return i18n.tr("fpManager.resultText.offline.fail", fpName);
         FakePlayerManager.saveFpData(fpName, false);
         return SUCCESS;
     }
@@ -743,8 +745,9 @@ class FakePlayerManager
     static createNew(fpName, x, y, z, dimid)
     {
         if(fpName in FakePlayerManager.fpListObj)
-            return `§6${fpName}§r已存在。请使用命令"/fpc online ${fpName}"上线假人`;
-        FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
+            return i18n.tr("fpManager.resultText.fpExists", fpName);
+        FakePlayerManager.fpListObj[fpName] 
+            = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
         FpListSoftEnum.add(fpName);
         FakePlayerManager.saveFpData(fpName, false);
         return SUCCESS;
@@ -753,7 +756,7 @@ class FakePlayerManager
     static remove(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         if(FakePlayerManager.fpListObj[fpName].isOnline())
         {
             FakePlayerManager.offline(fpName, false);
@@ -778,7 +781,7 @@ class FakePlayerManager
     static getAllInfo(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return [`§6${fpName}§r未找到。请先创建此假人`, null];
+            return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
         let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.getAllInfo()];
     }
@@ -787,7 +790,7 @@ class FakePlayerManager
     static getPosition(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return [`§6${fpName}§r未找到。请先创建此假人`, null];
+            return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
         let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.getPos()];
     }
@@ -796,7 +799,7 @@ class FakePlayerManager
     static isOnline(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return [`§6${fpName}§r未找到。请先创建此假人`, null];
+            return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
         let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.isOnline()];
     }
@@ -804,7 +807,7 @@ class FakePlayerManager
     static setOperation(fpName, operation, opInterval, opMaxTimes, opLength)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
 
         if(operation == "clear")
@@ -831,7 +834,7 @@ class FakePlayerManager
     static clearOperation(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         FakePlayerManager.fpListObj[fpName].clearOperation();
         return SUCCESS;
     }
@@ -840,19 +843,19 @@ class FakePlayerManager
     static walkToPos(fpName, pos)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return [`§6${fpName}§r未找到。请先创建此假人`, null];
+            return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
         
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return [`§6${fpName}§r并不在线`, null];
+            return [i18n.tr("fpManager.resultText.fpNotOnline", fpName), null];
         let pl = fp.getPlayer();
         if(!pl)
-            return [`获取假人§6${fpName}§r失败`, null];
+            return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
         if(pos.dimid != pl.pos.dimid)
-            return [`§6${fpName}§r不在目标维度中`, null];
+            return [i18n.tr("fpManager.resultText.fpNotInTargetDimension", fpName), null];
         let res = pl.simulateNavigateTo(pos);
         if(!res)
-            return [`目标导航失败`, null];
+            return [i18n.tr("fpManager.resultText.fpFailToNavigate", fpName), null];
         
         if(res.path.length > 0)
         {
@@ -868,20 +871,20 @@ class FakePlayerManager
     static walkToEntity(fpName, entity)
     {
         if(!entity)
-            return ["目标实体无效", null];
+            return [i18n.tr("fpManager.resultText.invalidTargetEntity", fpName), null];
         if(!(fpName in FakePlayerManager.fpListObj))
-            return [`§6${fpName}§r未找到。请先创建此假人`, null];
+            return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return [`获取假人§6${fpName}§r失败`, null];
+            return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
         if(pl.pos.dimid != entity.pos.dimid)
-            return [`§6${fpName}§r不在目标维度中`, null];
+            return [i18n.tr("fpManager.resultText.fpNotInTargetDimension", fpName), null];
         let res = pl.simulateNavigateTo(EntityGetFeetPos(entity));
         if(!res)
-            return [`目标导航失败`, null];
+            return [i18n.tr("fpManager.resultText.fpFailToNavigate", fpName), null];
         
         if(res.path.length > 0)
         {
@@ -896,15 +899,15 @@ class FakePlayerManager
     static teleportToPos(fpName, pos)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return `获取假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
         if(!pl.teleport(pos))
-            return `传送§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToTransport", fpName);
         
         fp.setPos(pos.x, pos.y, pos.z, pos.dimid);
         FakePlayerManager.saveFpData(fpName, false);
@@ -914,18 +917,18 @@ class FakePlayerManager
     static teleportToEntity(fpName, entity)
     {
         if(!entity)
-            return "目标实体无效";
+            return i18n.tr("fpManager.resultText.invalidTargetEntity", fpName);
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return `获取假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
         let pos = EntityGetFeetPos(entity);
         if(!pl.teleport(pos))
-            return `传送假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToTransport", fpName);
         
         fp.setPos(pos.x, pos.y, pos.z, pos.dimid);
         FakePlayerManager.saveFpData(fpName);
@@ -935,15 +938,15 @@ class FakePlayerManager
     static giveItem(fpName, player)
     {
         if(!player)
-            return "来源玩家无效";
+            return i18n.tr("fpManager.resultText.invalidSourcePlayer", fpName);
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return `获取假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
 
         let itemOld = player.getHand();
         if(itemOld.isNull())
@@ -954,22 +957,22 @@ class FakePlayerManager
         if(inventory.hasRoomFor(itemNew))
         {
             if(!inventory.addItem(itemNew))
-                return `未能成功将物品给予§6${fpName}§r`;
+                return i18n.tr("fpManager.resultText.fpFailToGiveItem", fpName);
         }
         else
         {
             // drop out hand first
             result = FakePlayerManager.dropItem(fpName, _DEFAULT_PLAYER_SELECT_SLOT);
             if(result != SUCCESS)
-                return "为新物品腾出空间失败：" + result;
+                return i18n.tr("fpManager.resultText.failToSpaceForNewItem", result);
             if(!inventory.addItem(itemNew))
-                return `未能成功将物品给予§6${fpName}§r`;
+                return i18n.tr("fpManager.resultText.fpFailToGiveItem", fpName);
         }
         itemOld.setNull();
         player.refreshItems();
         pl.refreshItems();
         if(!FakePlayerManager.saveInventoryData(fpName))
-            logger.warn(`Fail to save inventory of ${fpName}`);
+            logger.warn(i18n.tr("fpManager.consoleLog.failToSaveInventory", fpName));
         return SUCCESS;
     }
 
@@ -979,13 +982,13 @@ class FakePlayerManager
     static getInventory(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return [`§6${fpName}§r未找到。请先创建此假人`, null];
+            return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return [`获取假人§6${fpName}§r失败`, null];
+            return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
         let res = {Hand: null, OffHand: null, Inventory: [], Armor: []};
 
         // hand
@@ -1023,13 +1026,13 @@ class FakePlayerManager
     static setSelectSlot(fpName, slotId)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return `获取假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
 
         // Assuming that selected slotid defaults to 0
         let oldSlotId = _DEFAULT_PLAYER_SELECT_SLOT;
@@ -1042,59 +1045,59 @@ class FakePlayerManager
         if(itemNew.isNull())
         {
             if(!itemOld.setNull())
-                return `移除§6${fpName}§r的旧物品失败`;
+                return i18n.tr("fpManager.resultText.failToRemoveOldItem", fpName);
         }
         else
         {
             let itemOldClone = itemOld.clone();
             if(!inventory.setItem(oldSlotId, itemNew.clone()))
-                return `移除§6${fpName}§r的旧物品失败`;
+                return i18n.tr("fpManager.resultText.failToRemoveOldItem", fpName);
             if(!inventory.setItem(slotId, itemOldClone))
-                return `设置§6${fpName}§r的新物品失败`;
+                return i18n.tr("fpManager.resultText.failToSetNewItem", fpName);
         }
         pl.refreshItems();
         if(!FakePlayerManager.saveInventoryData(fpName))
-            logger.warn(`Fail to save inventory of ${fpName}`);
+            logger.warn(i18n.tr("fpManager.consoleLog.failToSaveInventory", fpName));
         return SUCCESS;
     }
 
     static dropItem(fpName, slotId)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return `获取假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
 
         if(!slotId)
             slotId = _DEFAULT_PLAYER_SELECT_SLOT;
         let inventory = pl.getInventory();
         let item = inventory.getItem(slotId);
         if(item.isNull())
-            return `槽位${slotId}为空`;
+            return i18n.tr("fpManager.resultText.dropItem.slotIsEmpty", slotId);
         // spawn dropped item at 2 blocks away
         if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(EntityGetFeetPos(pl), pl.direction, 2)))
-            return `丢出物品失败`;
+            return i18n.tr("fpManager.resultText.dropItem.fail");
         if(!inventory.removeItem(slotId, item.count))
-            return "假人物品栏移除旧物品失败";
+            return i18n.tr("fpManager.resultText.dropItem.failToRemoveOld", slotId);
         if(!FakePlayerManager.saveInventoryData(fpName))
-            logger.warn(`Fail to save inventory of ${fpName}`);
+            logger.warn(i18n.tr("fpManager.consoleLog.failToSaveInventory", fpName));
         return SUCCESS;
     }
 
     static dropAllItems(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
         if(!pl)
-            return `获取假人§6${fpName}§r失败`;
+            return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
         
         let inventory = pl.getInventory();
         let size = inventory.size;
@@ -1107,26 +1110,26 @@ class FakePlayerManager
                 continue;
             // spawn dropped item at 2 blocks away
             if(!mc.spawnItem(item.clone(), CalcPosFromViewDirection(EntityGetFeetPos(pl), pl.direction, 2)))
-                resultStr += `丢弃槽位${slotId}的物品失败\n`;
+                resultStr += i18n.tr("fpManager.resultText.dropItem.failToDropOld", slotId) + "\n";
             if(!inventory.removeItem(slotId, item.count))
-                resultStr += `移除槽位${slotId}的旧物品失败\n`;
+                resultStr += i18n.tr("fpManager.resultText.dropItem.failToRemoveOld", slotId) + "\n";
         }
         if(!FakePlayerManager.saveInventoryData(fpName))
-            logger.warn(`Fail to save inventory of ${fpName}`);
+            logger.warn(i18n.tr("fpManager.consoleLog.failToSaveInventory", fpName));
         return resultStr == "" ? SUCCESS : resultStr.substring(0, resultStr.length - 1);
     }
 
     static startSync(fpName, player)
     {
         if(!player)
-            return "目标玩家无效";
+            return i18n.tr("fpManager.resultText.invalidTargetPlayer");
         if(player.isSimulatedPlayer())
-            return "无法与另一个家人进行sync同步";
+            return i18n.tr("fpManager.resultText.sync.withAnotherFp");
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         fp.startSync(player.xuid);
 
         FakePlayerManager.needTickFpListObj[fpName] = fp;
@@ -1137,10 +1140,10 @@ class FakePlayerManager
     static stopSync(fpName)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
-            return `§6${fpName}§r未找到。请先创建此假人`;
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
         let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return `§6${fpName}§r并不在线`;
+            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         fp.stopSync();
 
         let pl = fp.getPlayer();
@@ -1156,7 +1159,8 @@ class FakePlayerManager
     // return ["SUCCESS", "Help text"]
     static getHelp()
     {
-        return [SUCCESS, _LLSE_HELP_TEXT];
+        let textRaw = i18n.tr("fpManager.resultText.helpText");
+        return [SUCCESS, textRaw.replaceAll("\\n", "\n")];
     }
 
     // return true / false
@@ -1362,14 +1366,14 @@ function cmdCallback(_cmd, ori, out, res)
     case "online":
         result = FakePlayerManager.online(res.fpname);
         if (result == SUCCESS)
-            out.success(`[FakePlayer] §6${res.fpname}§r已上线`);
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.online", res.fpname));
         else
             out.error("[FakePlayer] " + result);
         break;
     case "offline":
         result = FakePlayerManager.offline(res.fpname);
         if(result == SUCCESS)
-            out.success(`[FakePlayer] §6${res.fpname}§r已下线`);
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.offline", res.fpname));
         else
             out.error("[FakePlayer] " + result)
         break;
@@ -1383,9 +1387,11 @@ function cmdCallback(_cmd, ori, out, res)
                 namesList += `§6${name}§r, `;
             namesList = namesList.substring(0, namesList.length - 2);
             if(result == SUCCESS)
-                out.success("[FakePlayer] 所有假人上线成功:\n" + namesList);
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.onlineAll.allSuccess") 
+                    + "\n" + namesList);
             else
-                out.error("[FakePlayer] 有部分假人发生错误：" + result + "\n这些假人已经成功上线:\n" + namesList);
+                out.error("[FakePlayer] " + i18n.tr("command.resultText.onlineAll.partlySuccess", result)
+                    + "\n" + namesList)
             break;
         }
     case "offlineall":
@@ -1398,9 +1404,11 @@ function cmdCallback(_cmd, ori, out, res)
                 namesList += `§6${name}§r, `;
             namesList = namesList.substring(0, namesList.length - 2);
             if(result == SUCCESS)
-                out.success("[FakePlayer] 所有假人下线成功:\n" + namesList);
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.offlineAll.allSuccess") 
+                    + "\n" + namesList);
             else
-                out.error("[FakePlayer] 有部分假人发生错误：" + result + "\n这些假人已经成功下线:\n" + namesList);
+                out.error("[FakePlayer] " + i18n.tr("command.resultText.offlineAll.partlySuccess", result)
+                    + "\n" + namesList)
             break;
         }
 
@@ -1421,7 +1429,7 @@ function cmdCallback(_cmd, ori, out, res)
                 // createdimid is set
                 if(!IsValidDimId(dimid))
                 {
-                    out.error(`[FakePlayer] ${dimid}不是一个有效的维度ID`);
+                    out.error(`[FakePlayer] ` + i18n.tr("command.resultText.create.fail.notValidDimId", dimid));
                     break;
                 }
                 spawnPos.dimid = dimid;
@@ -1430,7 +1438,7 @@ function cmdCallback(_cmd, ori, out, res)
                 spawnPos.dimid = ori.player.pos.dimid;
             else
             {
-                out.error(`[FakePlayer] 无法创建，你必须传入一个有效的维度ID`);
+                out.error(`[FakePlayer] ` + i18n.tr("command.resultText.create.fail.needValidDimId"));
                 break;
             }
         }
@@ -1441,7 +1449,7 @@ function cmdCallback(_cmd, ori, out, res)
         }
         else
         {
-            out.error(`[FakePlayer] 无法创建，你必须传入一个有效的坐标`);
+            out.error(`[FakePlayer] ` + i18n.tr("command.resultText.create.fail.needValidPosition"));
             break;
         }
 
@@ -1460,7 +1468,7 @@ function cmdCallback(_cmd, ori, out, res)
             out.error("[FakePlayer] " + result);
             break;
         }
-        out.success(`[FakePlayer] §6${fpName}§r已创建`);
+        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.create.success", fpName));
         break;
     }
     case "remove":
@@ -1470,17 +1478,17 @@ function cmdCallback(_cmd, ori, out, res)
         {
             // send confirm dialog
             FpGuiForms.sendAskForm(ori.player, 
-                `你确定要删除假人§6${fpName}§r吗？\n他所有的数据将被清除，且无法恢复。`,
+                i18n.tr("command.resultText.remove.ask", fpName),
                 (pl)=>
             {
                 let removeResult = FakePlayerManager.remove(fpName);
                 if(removeResult != SUCCESS)
                     pl.tell("[FakePlayer] " + removeResult);
                 else
-                    pl.tell(`[FakePlayer] §6${fpName}§r已删除`);
+                    pl.tell(`[FakePlayer] ` + i18n.tr("command.resultText.remove.success", fpName));
             }, (pl)=>
             {
-                pl.tell("[FakePlayer] 动作已取消");
+                pl.tell("[FakePlayer] " + i18n.tr("command.resultText.remove.cancelled"));
             });
         }
         else
@@ -1491,7 +1499,7 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] §6${fpName}§r已删除`);
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.remove.success", fpName));
         }
         break;
     }
@@ -1514,10 +1522,10 @@ function cmdCallback(_cmd, ori, out, res)
                 if(namesStr.length > 0)
                 {
                     namesStr = namesStr.substring(0, namesStr.length - 2);
-                    out.success(`[FakePlayer] 共有${result.length}个假人:\n${namesStr}`);
+                    out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.has", result.length) + `\n${namesStr}`);
                 }
                 else
-                    out.success(`[FakePlayer] 共有0个假人。`);
+                    out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.none"));
             }
             else
             {
@@ -1530,12 +1538,14 @@ function cmdCallback(_cmd, ori, out, res)
                     let result = resultData[1];
                     let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
                     let syncPlayerName = data.xuid2name(result.syncXuid);
-                    out.success(`[FakePlayer] §6${fpName}§r:\n`
-                        + `- 坐标: ${posObj.toString()}\n`
-                        + `- 执行操作: ${result.operation ? result.operation : "无"}\n`
-                        + `- 同步玩家: ${syncPlayerName ? syncPlayerName : "无"}\n`
-                        + `- 状态: ${result.isOnline ? "§a§l在线§r" : "§c§l离线§r"}`
-                    );
+
+                    let operationStr = result.operation ? result.operation : i18n.tr("command.resultText.list.specificInfo.none");
+                    let syncStatusStr = syncPlayerName ? syncPlayerName : i18n.tr("command.resultText.list.specificInfo.none");
+                    let statusStr = result.isOnline ? i18n.tr("command.resultText.list.specificInfo.online")
+                        : i18n.tr("command.resultText.list.specificInfo.offline");
+
+                    out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo", 
+                        posObj.toString(), operationStr, syncStatusStr, statusStr));
                 }
             }
         }
@@ -1554,9 +1564,9 @@ function cmdCallback(_cmd, ori, out, res)
                 break;
             }  
             if(res.optype == "clear")
-                out.success(`[FakePlayer] §6${res.fpname}§r执行操作已清除`);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.clear", res.fpname));
             else
-                out.success(`[FakePlayer] §6${res.fpname}§r被设置为执行：${res.optype}`);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.setTo", res.fpname, res.optype));
         }
         else
         {
@@ -1567,7 +1577,7 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] §6${res.fpname}§r被设置为执行：${res.longoptype}`);
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.setTo", res.fpname, res.longoptype));
         }
         break;
     case "walkto":
@@ -1583,7 +1593,7 @@ function cmdCallback(_cmd, ori, out, res)
                 break;
             }
             if(data.isFullPath || data.path.length == 0)
-                out.success(`[FakePlayer] 目标已设置。正在走向玩家${target.name}...`);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.targetSet", target.name));
             else
             {
                 let fpPos = FakePlayerManager.getPosition(res.fpname)[1];
@@ -1591,8 +1601,7 @@ function cmdCallback(_cmd, ori, out, res)
 
                 let lastData = data.path[data.path.length - 1];
                 let lastPathPoint = new IntPos(eval(lastData[0]), eval(lastData[1]), eval(lastData[2]), dimid);
-                out.success(`[FakePlayer] 无法到达预定目标。路径将在${lastPathPoint.toString()}终止。`
-                    +` 正在走向路径终止位置...`);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.cannotReach", lastPathPoint.toString()));
             }
         }
         else if (res.targetpos)
@@ -1606,7 +1615,7 @@ function cmdCallback(_cmd, ori, out, res)
                 break;
             }
             if(data.isFullPath || data.path.length == 0)
-                out.success(`[FakePlayer] 目标已设置。正在走向坐标${res.targetpos}...`);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.targetSet", res.targetpos));
             else
             {
                 let fpPos = FakePlayerManager.getPosition(res.fpname)[1];
@@ -1614,12 +1623,11 @@ function cmdCallback(_cmd, ori, out, res)
 
                 let lastData = data.path[data.path.length - 1];
                 let lastPathPoint = new IntPos(eval(lastData[0]), eval(lastData[1]), eval(lastData[2]), dimid);
-                out.success(`[FakePlayer] 无法到达预定目标。路径将在${lastPathPoint.toString()}终止。`
-                    +` 正在走向路径终止位置...`);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.cannotReach", lastPathPoint.toString()));
             }
         }
         else
-            out.error(`[FakePlayer] 目标位置无效`)
+            out.error(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.invalidTarget"))
         break;
     case "tp":
         // logger.debug(res.player);
@@ -1632,7 +1640,7 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] §6${res.fpname}§r已被传送到${target.name}`);
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.tp.success", res.fpname, target.name));
         }
         else if (res.targetpos)
         {
@@ -1642,15 +1650,15 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] §6${res.fpname}§r已被传送到${res.targetpos}`);
+            out.success(`[FakePlayer] `+ i18n.tr("command.resultText.tp.success", res.fpname, res.targetpos));
         }
         else
-            out.error(`[FakePlayer] 目标位置无效`)
+            out.error(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.invalidTarget"))
         break;
     
     case "give":
         if(!ori.player)
-            out.error("[FakePlayer] Only players can do this action!");
+            out.error("[FakePlayer] " + i18n.tr("command.resultText.give.invalidSource"));
         else
         {
             result = FakePlayerManager.giveItem(res.fpname, ori.player);
@@ -1659,7 +1667,7 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] 物品已被给予§6${res.fpname}§r`);
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.give.success", res.fpname));
         }
         break;
     case "getinventory":
@@ -1671,21 +1679,21 @@ function cmdCallback(_cmd, ori, out, res)
                 out.error("[FakePlayer] " + result);
                 break;
             }
-            let resStr = `[FakePlayer] §6${res.fpname}§r的物品栏:\n`;
+            let resStr = `[FakePlayer] ` + i18n.tr("command.resultText.inventory.title", res.fpname) + "\n";
 
             // hand
             let item = data.Hand;
             if(item)
-                resStr += `§3[主手]§r §6${item.name}§2[${item.count}]§r\n`;
+                resStr += i18n.tr("command.resultText.inventory.mainHand.item", item.name, item.cout) + "\n";
             else
-                resStr += `§3[主手]§r 空\n`;
+                resStr += i18n.tr("command.resultText.inventory.mainHand.empty") + "\n";
             
             // offhand
             item = data.OffHand;
             if(item)
-                resStr += `§3[副手]§r §6${item.name}§2[${item.count}]§r\n`;
+                resStr += i18n.tr("command.resultText.inventory.offHand.item", item.name, item.cout) + "\n";
             else
-                resStr += `§3[副手]§r 空\n`;
+                resStr += i18n.tr("command.resultText.inventory.offHand.empty") + "\n";
             
             // inventory
             let inventoryStr = "";
@@ -1698,9 +1706,9 @@ function cmdCallback(_cmd, ori, out, res)
                 }
             }
             if(inventoryStr == "")
-                resStr += "§3[物品栏]§r 空\n";
+                resStr += i18n.tr("command.resultText.inventory.inventory.empty") + "\n";
             else
-                resStr += "§3[物品栏]§r\n" + inventoryStr + "\n";
+                resStr += i18n.tr("command.resultText.inventory.inventory.prefix") + "\n" + inventoryStr + "\n";
             
             // armor
             let armorStr = "";
@@ -1713,9 +1721,9 @@ function cmdCallback(_cmd, ori, out, res)
                 }
             }
             if(armorStr == "")
-                resStr += "§3[盔甲栏]§r 空\n";
+                resStr += i18n.tr("command.resultText.inventory.armor.empty") + "\n";
             else
-                resStr += "§3[盔甲栏]§r\n" + armorStr + "\n";
+                resStr += i18n.tr("command.resultText.inventory.armor.prefix") + "\n" + armorStr + "\n";
             
             out.success(resStr);
             break;
@@ -1727,7 +1735,7 @@ function cmdCallback(_cmd, ori, out, res)
             out.error("[FakePlayer] " + result);
             break;
         }  
-        out.success(`[FakePlayer] §6${res.fpname}§r已丢出物品`);
+        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.drop.success", res.fpname));
         break;
     case "dropall":
         result = FakePlayerManager.dropAllItems(res.fpname);
@@ -1736,7 +1744,7 @@ function cmdCallback(_cmd, ori, out, res)
             out.error("[FakePlayer] " + result);
             break;
         }  
-        out.success(`[FakePlayer] §6${res.fpname}§r已丢出背包中所有物品`);
+        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.dropAll.success", res.fpname));
         break;
     case "setselect":
         result = FakePlayerManager.setSelectSlot(res.fpname, res.slotid);
@@ -1745,11 +1753,11 @@ function cmdCallback(_cmd, ori, out, res)
             out.error("[FakePlayer] " + result);
             break;
         }  
-        out.success(`[FakePlayer] 选中槽位已切换`);
+        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.setselect.success"));
         break;
     case "sync":
         if(!ori.player)
-            out.error("[FakePlayer] Only players can do this action!");
+            out.error("[FakePlayer] " + i18n.tr("command.resultText.give.invalidSource"));
         else
         {
             if(res.synctype == "start")
@@ -1758,7 +1766,7 @@ function cmdCallback(_cmd, ori, out, res)
                 result = FakePlayerManager.stopSync(res.fpname);
             else
             {
-                out.error(`[FakePlayer] 未知操作: ${res.synctype}`);
+                out.error(`[FakePlayer] ` + i18n.tr("command.resultText.sync.unknownAction", res.synctype));
                 break;
             }
 
@@ -1768,10 +1776,9 @@ function cmdCallback(_cmd, ori, out, res)
                 break;
             }
             if(res.synctype == "start")
-                out.success(`[FakePlayer] §6${res.fpname}§r的玩家同步已开始。 `
-                    + `使用命令"/fpc sync stop"停止玩家同步。`);
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.sync.start", res.fpname));
             else
-                out.success(`[FakePlayer] §6${res.fpname}§r的玩家同步已停止。`);
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.sync.stop", res.fpname));
         }
         break;
     
@@ -2920,7 +2927,7 @@ function main()
     InitConfigFile();
     logger.setLogLevel(GlobalConf.get("LogLevel", 4));
     PermManager.initPermManager();
-    logger.info(`LLSE-FakePlayer ${_VER} loaded. Author：yqs112358`);
+    logger.info(i18n.tr("main.welcome", _VER));
 
     FakePlayerManager.loadAllFpData();
     //logger.debug("FpList: ", FakePlayerManager.fpList);
@@ -2936,7 +2943,7 @@ function main()
         let res = FakePlayerManager.initialAutoOnline();
         if(res != SUCCESS)
         {
-            logger.warn("Some errors occur at auto-reconnect:\n" + res);
+            logger.warn(i18n.tr("main.autoreconnect.error") + "\n" + res);
         }
     });
 }
