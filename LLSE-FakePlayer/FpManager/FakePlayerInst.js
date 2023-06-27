@@ -9,6 +9,7 @@ export class FakePlayerInst
 /////////////////////////////////////////////////////////////////////////////////////
     name = "";
     pos = null;
+    ownerXuid = "";
     isonline = false;
     operation = "";
     opInterval = 0;
@@ -216,16 +217,93 @@ export class FakePlayerInst
     {
         return this.isonline != 0;
     }
+    getOwnerXuid()
+    {
+        return this.ownerXuid;
+    }
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                            Fp Data and Inventory                              ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    serializeFpData()
+    {
+        return {
+            '_name': this.name,
+            '_pos': this.pos,
+            '_isOnline': this.isonline,
+            '_operation': this.operation,
+            '_opInterval': this.opInterval,
+            '_opMaxTimes': this.opMaxTimes,
+            '_opLength': this.opLength,
+            '_syncXuid': this.syncXuid,
+            '_ownerXuid': this.ownerXuid
+        };
+    }
+    static recoverFpData(fpName, fpData)
+    {
+        if(fpName != fpData._name)
+            throw Error("Bad fpdata file content");
+
+        let ownerXuid = fpData._ownerXuid ? fpData._ownerXuid : "";
+        return new FakePlayerInst(
+            fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
+            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isonline, ownerXuid);
+    }
+    // return SNBT string of all items
+    serializeAllItems()
+    {
+        let pl = this.getPlayer();
+        if(!pl)
+            return null;
+        let comp = new NbtCompound();
+        // inventory
+        let plNbt = pl.getNbt();
+        let inventoryListTag = plNbt.getTag("Inventory");
+        comp.setTag("Inventory", inventoryListTag);
+        // armor
+        let armorListTag = plNbt.getTag("Armor");
+        comp.setTag("Armor", armorListTag);
+        // offhand
+        let offhandListTag = plNbt.getTag("Offhand");
+        comp.setTag("Offhand", offhandListTag);
+
+        let snbtStr = comp.toSNBT();
+        comp.removeTag("Inventory").removeTag("Armor").removeTag("Offhand").destroy();
+        return snbtStr;
+    }
+    // return true/false
+    recoverAllItems(snbtStr)
+    {
+        let pl = this.getPlayer();
+        if(!pl)
+            return false;
+        let comp = NBT.parseSNBT(snbtStr);
+        if(!comp)
+            return false;
+        
+        let plNbt = pl.getNbt();
+        plNbt.setTag("Inventory", comp.getTag("Inventory"));
+        plNbt.setTag("Armor", comp.getTag("Armor"));
+        plNbt.setTag("Offhand", comp.getTag("Offhand"));
+        if(!pl.setNbt(plNbt))
+            return false;
+        comp.removeTag("Inventory").removeTag("Armor").removeTag("Offhand").destroy();
+        return true;
+    }
 
 
 /////////////////////////////////////////////////////////////////////////////////////
 ///                               Public Functions                                ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false)
+    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false,
+        ownerXuid = "")
     {
         this.name = name;
         this.pos = pos;
+        this.ownerXuid = ownerXuid;
         this.isonline = isonline;
 
         this.operation = operation;
@@ -241,9 +319,9 @@ export class FakePlayerInst
     getAllInfo()
     {
         return {
-            name: this.name, pos: this.pos, isOnline: this.isonline,
-            operation: this.operation, opInterval: this.opInterval, opMaxTimes: this.opMaxTimes, 
-            opLegnth: this.opLength, syncXuid: this.syncXuid
+            'name': this.name, 'pos': this.pos, 'ownerXuid': this.ownerXuid, 'isOnline': this.isonline,
+            'operation': this.operation, 'opInterval': this.opInterval, 'opMaxTimes': this.opMaxTimes, 
+            'opLegnth': this.opLength, 'syncXuid': this.syncXuid
         };
     }
     // return true / false
@@ -354,46 +432,5 @@ export class FakePlayerInst
     {
         this.syncXuid = "";
         this._lastSyncPlayerPos = null;
-    }
-    // return SNBT string of all items
-    serializeAllItems()
-    {
-        let pl = this.getPlayer();
-        if(!pl)
-            return null;
-        let comp = new NbtCompound();
-        // inventory
-        let plNbt = pl.getNbt();
-        let inventoryListTag = plNbt.getTag("Inventory");
-        comp.setTag("Inventory", inventoryListTag);
-        // armor
-        let armorListTag = plNbt.getTag("Armor");
-        comp.setTag("Armor", armorListTag);
-        // offhand
-        let offhandListTag = plNbt.getTag("Offhand");
-        comp.setTag("Offhand", offhandListTag);
-
-        let snbtStr = comp.toSNBT();
-        comp.removeTag("Inventory").removeTag("Armor").removeTag("Offhand").destroy();
-        return snbtStr;
-    }
-    // return true/false
-    recoverAllItems(snbtStr)
-    {
-        let pl = this.getPlayer();
-        if(!pl)
-            return false;
-        let comp = NBT.parseSNBT(snbtStr);
-        if(!comp)
-            return false;
-        
-        let plNbt = pl.getNbt();
-        plNbt.setTag("Inventory", comp.getTag("Inventory"));
-        plNbt.setTag("Armor", comp.getTag("Armor"));
-        plNbt.setTag("Offhand", comp.getTag("Offhand"));
-        if(!pl.setNbt(plNbt))
-            return false;
-        comp.removeTag("Inventory").removeTag("Armor").removeTag("Offhand").destroy();
-        return true;
     }
 }

@@ -42,6 +42,13 @@ export class FakePlayerManager
             callback(fpName, FakePlayerManager.fpListObj[fpName]);
     }
 
+    // return ["fail message", null] / [SUCCESS, {xxx:xxx, ...}]
+    static getFpOwnerXuid(fpName)
+    {
+        if(!(fpName in FakePlayerManager.fpListObj))
+            return null;
+        return FakePlayerManager.fpListObj[fpName].getFpOwnerXuid();
+    }
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +114,7 @@ export class FakePlayerManager
         let fp = FakePlayerManager.fpListObj[fpName];
         if(updatePos)
             fp.updatePos();
-        File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp, null, 4));
+        File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp.serializeFpData(), null, 4));
         return true;
     }
 
@@ -143,20 +150,15 @@ export class FakePlayerManager
                 try
                 {
                     fpData = JSON.parse(jsonStr);
-                    // logger.debug(`${fpName}'s FpData: `, fpData);
+                    logger.debug(`${fpName}'s FpData: `, fpData);
                     if(!(fpData instanceof Object))
                         return false;
-                    if(fpName != fpData._name)
-                        throw Error("Bad fpdata file content");
+                    FakePlayerManager.fpListObj[fpName] = FakePlayerInst.recoverFpData(fpName, fpData);
                 }
                 catch(err) { 
                     logger.error(`Error when parsing fakeplayer ${fpName}'s data record: ` + err);
                     return false; 
-                }
-    
-                FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(
-                    fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
-                    fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline);
+                }  
             }
             return true;
         }
