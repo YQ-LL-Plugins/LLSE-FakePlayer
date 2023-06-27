@@ -4,6 +4,21 @@ import { EntityGetFeetPos } from "../Utils/Utils.js"
 
 export class FakePlayerInst
 {
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Private Data                                 ///
+/////////////////////////////////////////////////////////////////////////////////////
+    name = "";
+    pos = null;
+    isonline = false;
+    operation = "";
+    opInterval = 0;
+    opMaxTimes = 0;
+    opLength = 0;
+    syncXuid = "";
+
+    _opTimeTask = null;
+    _lastSyncPlayerPos = null;
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 ///                                 Private Logic                                 ///
@@ -13,14 +28,14 @@ export class FakePlayerInst
     {
         //logger.debug("op start");
         return function() {
-            if(thiz._operation == "" || !thiz._isOnline)
+            if(thiz.operation == "" || !thiz.isonline)
                 return;
             let pl = thiz.getPlayer();
             if(!pl)
                 return;
 
             let isLongOperation = false;
-            switch(thiz._operation)
+            switch(thiz.operation)
             {
             case "attack":
                 pl.simulateAttack();
@@ -39,20 +54,20 @@ export class FakePlayerInst
 
             // next loop
             if(isLongOperation)
-                thiz._opTimeTask = setTimeout(FakePlayerInst.opReachLength(thiz), thiz._opLength);
+                thiz._opTimeTask = setTimeout(FakePlayerInst.opReachLength(thiz), thiz.opLength);
             else
             {
                 // check max times
-                if(thiz._opMaxTimes > 0)
+                if(thiz.opMaxTimes > 0)
                 {
-                    --thiz._opMaxTimes;
-                    if(thiz._opMaxTimes == 0)
+                    --thiz.opMaxTimes;
+                    if(thiz.opMaxTimes == 0)
                     {
                         thiz.clearOperation();
                         return;
                     }
                 }
-                thiz._opTimeTask = setTimeout(FakePlayerInst.opCallback(thiz), thiz._opInterval);
+                thiz._opTimeTask = setTimeout(FakePlayerInst.opCallback(thiz), thiz.opInterval);
             }
         };
     }
@@ -61,13 +76,13 @@ export class FakePlayerInst
     {
         //logger.debug("op reach length");
         return function() {
-            if(thiz._operation == "" || !thiz._isOnline)
+            if(thiz.operation == "" || !thiz.isonline)
                 return;
             let pl = thiz.getPlayer();
             if(!pl)
                 return;
 
-            switch(thiz._operation)
+            switch(thiz.operation)
             {
             case "useitem":
                 pl.simulateStopUsingItem();
@@ -75,29 +90,29 @@ export class FakePlayerInst
             }
 
             // check max times
-            if(thiz._opMaxTimes > 0)
+            if(thiz.opMaxTimes > 0)
             {
-                --thiz._opMaxTimes;
-                if(thiz._opMaxTimes == 0)
+                --thiz.opMaxTimes;
+                if(thiz.opMaxTimes == 0)
                 {
                     thiz.clearOperation();
                     return;
                 }
             }
-            thiz._opTimeTask = setTimeout(FakePlayerInst.opCallback(thiz), thiz._opInterval);
+            thiz._opTimeTask = setTimeout(FakePlayerInst.opCallback(thiz), thiz.opInterval);
         };
     }
 
     tickLoop()
     {
         // sync
-        if(this._syncXuid != "")
+        if(this.syncXuid != "")
         {
             let pl = this.getPlayer();
             if(!pl)
                 return;
 
-            let targetPlayer = mc.getPlayer(this._syncXuid);
+            let targetPlayer = mc.getPlayer(this.syncXuid);
             if(targetPlayer)
             {
                 // sync move
@@ -110,10 +125,10 @@ export class FakePlayerInst
                     let newPos = EntityGetFeetPos(targetPlayer);
                     if(oldPos.dimid != newPos.dimid)
                     {
-                        this._pos.x = newPos.x;
-                        this._pos.y = newPos.y;
-                        this._pos.z = newPos.z;
-                        this._pos.dimid = newPos.dimid;
+                        this.pos.x = newPos.x;
+                        this.pos.y = newPos.y;
+                        this.pos.z = newPos.z;
+                        this.pos.dimid = newPos.dimid;
                         pl.teleport(newPos);
                         this._lastSyncPlayerPos = newPos;
                         isMoving = true;
@@ -127,11 +142,11 @@ export class FakePlayerInst
                             pl.simulateStopMoving();        // if distance too short, do not move
                         else
                         {
-                            this._pos.x += dx;
-                            this._pos.y += dy;
-                            this._pos.z += dz;
-                            this._pos.dimid = newPos.dimid;
-                            let newTarget = new FloatPos(this._pos.x, this._pos.y, this._pos.z, this._pos.dimid);
+                            this.pos.x += dx;
+                            this.pos.y += dy;
+                            this.pos.z += dz;
+                            this.pos.dimid = newPos.dimid;
+                            let newTarget = new FloatPos(this.pos.x, this.pos.y, this.pos.z, this.pos.dimid);
                             //logger.debug(`Goto ${newTarget}`);
                             pl.simulateMoveTo(newTarget);
                             this._lastSyncPlayerPos = newPos;
@@ -168,21 +183,21 @@ export class FakePlayerInst
 
     getPlayer()
     {
-        let pl = mc.getPlayer(this._name);
+        let pl = mc.getPlayer(this.name);
         if(!pl || !pl.isSimulatedPlayer())
             return null;
         return pl;
     }
     setPos(x, y, z, dimid)
     {
-        this._pos.x = x;
-        this._pos.y = y;
-        this._pos.z = z;
-        this._pos.dimid = dimid;
+        this.pos.x = x;
+        this.pos.y = y;
+        this.pos.z = z;
+        this.pos.dimid = dimid;
     }
     getPos()        // return {x:x, y:y, z:z, dimid:dimid}
     {
-        return this._pos;
+        return this.pos;
     }
     updatePos()
     {
@@ -195,11 +210,11 @@ export class FakePlayerInst
     }
     isNeedTick()
     {
-        return this._syncXuid != "";
+        return this.syncXuid != "";
     }
     isOnline()
     {
-        return this._isOnline != 0;
+        return this.isonline != 0;
     }
 
 
@@ -207,50 +222,50 @@ export class FakePlayerInst
 ///                               Public Functions                                ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isOnline = false)
+    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false)
     {
-        this._name = name;
-        this._pos = pos;
-        this._isOnline = isOnline;
+        this.name = name;
+        this.pos = pos;
+        this.isonline = isonline;
 
-        this._operation = operation;
-        this._opInterval = opInterval;
-        this._opMaxTimes = opMaxTimes;
-        this._opLength = opLength;
+        this.operation = operation;
+        this.opInterval = opInterval;
+        this.opMaxTimes = opMaxTimes;
+        this.opLength = opLength;
         this._opTimeTask = null;        // private
 
-        this._syncXuid = syncXuid;
+        this.syncXuid = syncXuid;
         this._lastSyncPlayerPos = null;     // private
     }
     // return all info object
     getAllInfo()
     {
         return {
-            name: this._name, pos: this._pos, isOnline: this._isOnline,
-            operation: this._operation, opInterval: this._opInterval, opMaxTimes: this._opMaxTimes, 
-            opLegnth: this._opLength, syncXuid: this._syncXuid
+            name: this.name, pos: this.pos, isOnline: this.isonline,
+            operation: this.operation, opInterval: this.opInterval, opMaxTimes: this.opMaxTimes, 
+            opLegnth: this.opLength, syncXuid: this.syncXuid
         };
     }
     // return true / false
     online()
     {
-        if(mc.getPlayer(this._name) != null)
+        if(mc.getPlayer(this.name) != null)
             return true;
 
         // Create simulated player
-        let posData = this._pos;
+        let posData = this.pos;
         let spawnPos = new FloatPos(eval(posData.x), eval(posData.y), eval(posData.z), eval(posData.dimid));
-        let pl = mc.spawnSimulatedPlayer(this._name, spawnPos);
+        let pl = mc.spawnSimulatedPlayer(this.name, spawnPos);
         if(!pl)
             return false;
-        this._isOnline = true;
+        this.isonline = true;
 
         // Teleport to target pos again
         if(!pl.teleport(spawnPos))
             return false;
 
         // Start operation loop if needed
-        if(this._operation != "")
+        if(this.operation != "")
             this.startOperationLoop();
         return true;
     }
@@ -266,7 +281,7 @@ export class FakePlayerInst
         let success = pl.simulateDisconnect();
         if(!success)
             return false;
-        this._isOnline = false;
+        this.isonline = false;
         return true;
     }
     // always success
@@ -287,22 +302,22 @@ export class FakePlayerInst
     setShortOperation(operation, opInterval = 1000, opMaxTimes = 1)
     {
         this.stopOperationLoop();
-        this._operation = operation;
-        this._opInterval = opInterval;
-        this._opMaxTimes = opMaxTimes;
+        this.operation = operation;
+        this.opInterval = opInterval;
+        this.opMaxTimes = opMaxTimes;
         this.startOperationLoop();
-        FakePlayerManager.saveFpData(this._name);
+        FakePlayerManager.saveFpData(this.name);
     }
     // always success
     setLongOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
     {
         this.stopOperationLoop();
-        this._operation = operation;
-        this._opInterval = opInterval;
-        this._opMaxTimes = opMaxTimes;
-        this._opLength = opLength;
+        this.operation = operation;
+        this.opInterval = opInterval;
+        this.opMaxTimes = opMaxTimes;
+        this.opLength = opLength;
         this.startOperationLoop();
-        FakePlayerManager.saveFpData(this._name);
+        FakePlayerManager.saveFpData(this.name);
     }
     // always success
     clearOperation()
@@ -311,7 +326,7 @@ export class FakePlayerInst
         let pl = this.getPlayer();
         if(pl)
         {
-            switch(this._operation)
+            switch(this.operation)
             {
             case "attack":
                 break;
@@ -326,18 +341,18 @@ export class FakePlayerInst
                 break;
             }
         }
-        this._operation = "";
-        FakePlayerManager.saveFpData(this._name);
+        this.operation = "";
+        FakePlayerManager.saveFpData(this.name);
     }
     // always success
     startSync(targetXuid)
     {
-        this._syncXuid = targetXuid;
+        this.syncXuid = targetXuid;
     }
     // always success
     stopSync()
     {
-        this._syncXuid = "";
+        this.syncXuid = "";
         this._lastSyncPlayerPos = null;
     }
     // return SNBT string of all items
