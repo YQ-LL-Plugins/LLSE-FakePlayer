@@ -8,9 +8,18 @@ import {
 
 export class FakePlayerManager
 {
-//////// private
+/////////////////////////////////////////////////////////////////////////////////////
+///                                  Private Data                                 ///
+/////////////////////////////////////////////////////////////////////////////////////
+
     static fpListObj = {};
     static needTickFpListObj = {}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Help Functions                                ///
+/////////////////////////////////////////////////////////////////////////////////////
 
     // return Player / null
     static getPlayer(fpName)
@@ -32,6 +41,12 @@ export class FakePlayerManager
         for(let fpName in FakePlayerManager.fpListObj)
             callback(fpName, FakePlayerManager.fpListObj[fpName]);
     }
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Public Logic                                 ///
+/////////////////////////////////////////////////////////////////////////////////////
 
     static onTick()
     {
@@ -58,22 +73,149 @@ export class FakePlayerManager
                     if(!fp.online())
                         logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRespawn", fpName));
                     else
-                    {
-                        // teleport to target pos
-                        let targetPos = fp.getPos();
-                        let result = FakePlayerManager.teleportToPos(fpName, new FloatPos(eval(targetPos.x), eval(targetPos.y), 
-                            eval(targetPos.z),eval(targetPos.dimid)));
-                        if(result != SUCCESS)
-                            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.respawnedBut", fpName, result));
-                        else
-                            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawned", fpName));
-                    }
+                        logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawned", fpName));
                 }, 500);
             }
         }
     }
 
-//////// public
+    static initialAutoOnline()
+    {
+        let resultStr = "";
+        for(let fpName in FakePlayerManager.fpListObj)
+        {
+            // if fp is online at shutdown, recover him
+            if(FakePlayerManager.fpListObj[fpName].isOnline())
+            {
+                let res = FakePlayerManager.online(fpName, false);
+                if(res != SUCCESS)
+                    resultStr += res + "\n";
+            }
+        }
+        return resultStr == "" ? SUCCESS : resultStr.substring(0, resultStr.length - 1);
+    }
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                Fp Data Storage                                ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    // return true / false
+    static saveFpData(fpName, updatePos = true)
+    {
+        let fp = FakePlayerManager.fpListObj[fpName];
+        if(updatePos)
+            fp.updatePos();
+        File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp, null, 4));
+        return true;
+    }
+
+    // return true / false
+    static deleteFpData(fpName)
+    {
+        return File.delete(_FP_DATA_DIR + `${fpName}.json`);
+    }
+
+    // return true / false
+    static loadAllFpData()
+    {
+        if(!File.exists(_FP_DATA_DIR))
+        {
+            File.mkdir(_FP_DATA_DIR);
+            return true;
+        }
+        else
+        {
+            let fileNamesArr = File.getFilesList(_FP_DATA_DIR);
+            for(let fileName of fileNamesArr)
+            {
+                let path = _FP_DATA_DIR + fileName;
+                if(File.checkIsDir(path) || !fileName.endsWith(".json"))
+                    continue;
+                let fpName = fileName.substring(0, fileName.length - 5);    // remove .json
+
+                let jsonStr = File.readFrom(path);
+                if(jsonStr.length == 0 || jsonStr == "{}")
+                    continue;
+                
+                let fpData = null;
+                try
+                {
+                    fpData = JSON.parse(jsonStr);
+                    // logger.debug(`${fpName}'s FpData: `, fpData);
+                    if(!(fpData instanceof Object))
+                        return false;
+                    if(fpName != fpData._name)
+                        throw Error("Bad fpdata file content");
+                }
+                catch(err) { 
+                    logger.error(`Error when parsing fakeplayer ${fpName}'s data record: ` + err);
+                    return false; 
+                }
+    
+                FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(
+                    fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
+                    fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline);
+            }
+            return true;
+        }
+    }
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                             Fp Inventory Storage                              ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    // return true / false
+    static saveInventoryData(fpName)
+    {
+        if(!(fpName in FakePlayerManager.fpListObj))
+            return false;
+        let fp = FakePlayerManager.fpListObj[fpName];
+        if(!fp.getPlayer())
+            return false;
+
+        let inventoryStr = fp.serializeAllItems();
+        // logger.debug(inventoryStr);
+        if(!File.exists(_FP_INVENTORY_DIR))
+            File.mkdir(_FP_INVENTORY_DIR);
+        return File.writeTo(_FP_INVENTORY_DIR + `${fpName}.snbt`, inventoryStr);
+    }
+
+    // return true / false
+    static loadInventoryData(fpName)
+    {
+        if(!(fpName in FakePlayerManager.fpListObj))
+            return false;
+        let fp = FakePlayerManager.fpListObj[fpName];
+        if(!fp.getPlayer())
+            return false;
+
+        if(!File.exists(_FP_INVENTORY_DIR))
+        {
+            File.mkdir(_FP_INVENTORY_DIR);
+            return false;
+        }
+        let snbtStr = File.readFrom(_FP_INVENTORY_DIR + `${fpName}.snbt`);
+        if(!snbtStr)
+            return false;
+        return fp.recoverAllItems(snbtStr);
+    }
+
+    // return true / false
+    static deleteInventoryData(fpName)
+    {
+        return File.delete(_FP_INVENTORY_DIR + `${fpName}.snbt`);
+    }
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                               Public Functions                                ///
+/////////////////////////////////////////////////////////////////////////////////////
+
     static online(fpName, failIfOnline = true)
     {
         if(!(fpName in FakePlayerManager.fpListObj))
@@ -84,12 +226,6 @@ export class FakePlayerManager
 
         if(!fp.online())
             return i18n.tr("fpManager.resultText.online.fail", fpName);
-        // teleport to target pos
-        let targetPos = fp.getPos();
-        let result = FakePlayerManager.teleportToPos(fpName, new FloatPos(eval(targetPos.x), eval(targetPos.y), 
-            eval(targetPos.z),eval(targetPos.dimid)));
-        if(result != SUCCESS)
-            return i18n.tr("fpManager.resultText.online.successBut", fpName, result);
 
         if(fp.isNeedTick())
             FakePlayerManager.needTickFpListObj[fpName] = fp;
@@ -269,6 +405,7 @@ export class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
+
         if(pos.dimid != pl.pos.dimid)
             return [i18n.tr("fpManager.resultText.fpNotInTargetDimension", fpName), null];
         let res = pl.simulateNavigateTo(pos);
@@ -298,6 +435,7 @@ export class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
+
         if(pl.pos.dimid != entity.pos.dimid)
             return [i18n.tr("fpManager.resultText.fpNotInTargetDimension", fpName), null];
         let res = pl.simulateNavigateTo(EntityGetFeetPos(entity));
@@ -324,6 +462,7 @@ export class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
+
         if(!pl.teleport(pos))
             return i18n.tr("fpManager.resultText.fpFailToTransport", fpName);
         
@@ -344,6 +483,7 @@ export class FakePlayerManager
         let pl = fp.getPlayer();
         if(!pl)
             return i18n.tr("fpManager.resultText.fpFailToGet", fpName);
+
         let pos = EntityGetFeetPos(entity);
         if(!pl.teleport(pos))
             return i18n.tr("fpManager.resultText.fpFailToTransport", fpName);
@@ -579,125 +719,6 @@ export class FakePlayerManager
     {
         let textRaw = i18n.tr("fpManager.resultText.helpText");
         return [SUCCESS, textRaw.replaceAll("\\n", "\n")];
-    }
-
-    // return true / false
-    static saveFpData(fpName, updatePos = true)
-    {
-        let fp = FakePlayerManager.fpListObj[fpName];
-        if(updatePos)
-            fp.updatePos();
-        File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp, null, 4));
-        return true;
-    }
-
-    // return true / false
-    static deleteFpData(fpName)
-    {
-        return File.delete(_FP_DATA_DIR + `${fpName}.json`);
-    }
-
-    // return true / false
-    static loadAllFpData()
-    {
-        if(!File.exists(_FP_DATA_DIR))
-        {
-            File.mkdir(_FP_DATA_DIR);
-            return true;
-        }
-        else
-        {
-            let fileNamesArr = File.getFilesList(_FP_DATA_DIR);
-            for(let fileName of fileNamesArr)
-            {
-                let path = _FP_DATA_DIR + fileName;
-                if(File.checkIsDir(path) || !fileName.endsWith(".json"))
-                    continue;
-                let fpName = fileName.substring(0, fileName.length - 5);    // remove .json
-
-                let jsonStr = File.readFrom(path);
-                if(jsonStr.length == 0 || jsonStr == "{}")
-                    continue;
-                
-                let fpData = null;
-                try
-                {
-                    fpData = JSON.parse(jsonStr);
-                    // logger.debug(`${fpName}'s FpData: `, fpData);
-                    if(!(fpData instanceof Object))
-                        return false;
-                    if(fpName != fpData._name)
-                        throw Error("Bad fpdata file content");
-                }
-                catch(err) { 
-                    logger.error(`Error when parsing fakeplayer ${fpName}'s data record: ` + err);
-                    return false; 
-                }
-    
-                FakePlayerManager.fpListObj[fpName] = new FakePlayerInst(
-                    fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
-                    fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline);
-            }
-            return true;
-        }
-    }
-
-    // return true / false
-    static saveInventoryData(fpName)
-    {
-        if(!(fpName in FakePlayerManager.fpListObj))
-            return false;
-        let fp = FakePlayerManager.fpListObj[fpName];
-        if(!fp.getPlayer())
-            return false;
-
-        let inventoryStr = fp.saveAllItems();
-        // logger.debug(inventoryStr);
-        if(!File.exists(_FP_INVENTORY_DIR))
-            File.mkdir(_FP_INVENTORY_DIR);
-        return File.writeTo(_FP_INVENTORY_DIR + `${fpName}.snbt`, inventoryStr);
-    }
-
-    // return true / false
-    static loadInventoryData(fpName)
-    {
-        if(!(fpName in FakePlayerManager.fpListObj))
-            return false;
-        let fp = FakePlayerManager.fpListObj[fpName];
-        if(!fp.getPlayer())
-            return false;
-
-        if(!File.exists(_FP_INVENTORY_DIR))
-        {
-            File.mkdir(_FP_INVENTORY_DIR);
-            return false;
-        }
-        let snbtStr = File.readFrom(_FP_INVENTORY_DIR + `${fpName}.snbt`);
-        if(!snbtStr)
-            return false;
-        return fp.loadAllItems(snbtStr);
-    }
-
-    // return true / false
-    static deleteInventoryData(fpName)
-    {
-        return File.delete(_FP_INVENTORY_DIR + `${fpName}.snbt`);
-    }
-
-    static initialAutoOnline()
-    {
-        let resultStr = "";
-        for(let fpName in FakePlayerManager.fpListObj)
-        {
-            // if fp is online at shutdown, recover him
-            if(FakePlayerManager.fpListObj[fpName].isOnline())
-            {
-                let res = FakePlayerManager.online(fpName, false);
-                if(res != SUCCESS)
-                    resultStr += res + "\n";
-            }
-        }
-        return resultStr == "" ? SUCCESS : resultStr.substring(0, resultStr.length - 1);
     }
 }
 

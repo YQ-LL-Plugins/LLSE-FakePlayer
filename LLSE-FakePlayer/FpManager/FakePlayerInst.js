@@ -1,9 +1,14 @@
 import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 import { EntityGetFeetPos } from "../Utils/Utils.js"
 
+
 export class FakePlayerInst
 {
-///////// private
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Private Logic                                 ///
+/////////////////////////////////////////////////////////////////////////////////////
+
     static opCallback(thiz)
     {
         //logger.debug("op start");
@@ -155,65 +160,18 @@ export class FakePlayerInst
         }
     }
 
-///////// public
-    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isOnline = false)
-    {
-        this._name = name;
-        this._pos = pos;
-        this._isOnline = isOnline;
 
-        this._operation = operation;
-        this._opInterval = opInterval;
-        this._opMaxTimes = opMaxTimes;
-        this._opLength = opLength;
-        this._opTimeTask = null;        // private
 
-        this._syncXuid = syncXuid;
-        this._lastSyncPlayerPos = null;     // private
-    }
-    getAllInfo()
-    {
-        return {
-            name: this._name, pos: this._pos, isOnline: this._isOnline,
-            operation: this._operation, opInterval: this._opInterval, opMaxTimes: this._opMaxTimes, 
-            opLegnth: this._opLength, syncXuid: this._syncXuid
-        };
-    }
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Help Functions                                ///
+/////////////////////////////////////////////////////////////////////////////////////
+
     getPlayer()
     {
         let pl = mc.getPlayer(this._name);
         if(!pl || !pl.isSimulatedPlayer())
             return null;
         return pl;
-    }
-    online()
-    {
-        if(mc.getPlayer(this._name) != null)
-            return true;
-        let posData = this._pos;
-        // logger.debug(posData.x, " ", posData.y, " ", posData.z, " ", posData.dimid);
-        let spawnPos = new FloatPos(eval(posData.x), eval(posData.y), eval(posData.z), eval(posData.dimid));
-        let pl = mc.spawnSimulatedPlayer(this._name, spawnPos);
-        if(!pl)
-            return false;
-        this._isOnline = true;
-        if(this._operation != "")
-            this.startOperationLoop();
-        return true;
-    }
-    offline()
-    {
-        if(!this.isOnline())
-            return true;
-        let pl = this.getPlayer();
-        if(!pl)
-            return false;
-        let success = pl.simulateDisconnect();
-        if(!success)
-            return false;
-        this._isOnline = false;
-        this.stopOperationLoop();
-        return true;
     }
     setPos(x, y, z, dimid)
     {
@@ -235,10 +193,88 @@ export class FakePlayerInst
             this.setPos(pos.x, pos.y, pos.z, pos.dimid);
         }
     }
+    isNeedTick()
+    {
+        return this._syncXuid != "";
+    }
+    isOnline()
+    {
+        return this._isOnline != 0;
+    }
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                               Public Functions                                ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isOnline = false)
+    {
+        this._name = name;
+        this._pos = pos;
+        this._isOnline = isOnline;
+
+        this._operation = operation;
+        this._opInterval = opInterval;
+        this._opMaxTimes = opMaxTimes;
+        this._opLength = opLength;
+        this._opTimeTask = null;        // private
+
+        this._syncXuid = syncXuid;
+        this._lastSyncPlayerPos = null;     // private
+    }
+    // return all info object
+    getAllInfo()
+    {
+        return {
+            name: this._name, pos: this._pos, isOnline: this._isOnline,
+            operation: this._operation, opInterval: this._opInterval, opMaxTimes: this._opMaxTimes, 
+            opLegnth: this._opLength, syncXuid: this._syncXuid
+        };
+    }
+    // return true / false
+    online()
+    {
+        if(mc.getPlayer(this._name) != null)
+            return true;
+
+        // Create simulated player
+        let posData = this._pos;
+        let spawnPos = new FloatPos(eval(posData.x), eval(posData.y), eval(posData.z), eval(posData.dimid));
+        let pl = mc.spawnSimulatedPlayer(this._name, spawnPos);
+        if(!pl)
+            return false;
+        this._isOnline = true;
+
+        // Teleport to target pos again
+        if(!pl.teleport(spawnPos))
+            return false;
+
+        // Start operation loop if needed
+        if(this._operation != "")
+            this.startOperationLoop();
+        return true;
+    }
+    // return true / false
+    offline()
+    {
+        if(!this.isOnline())
+            return true;
+        let pl = this.getPlayer();
+        if(!pl)
+            return false;
+        this.stopOperationLoop();
+        let success = pl.simulateDisconnect();
+        if(!success)
+            return false;
+        this._isOnline = false;
+        return true;
+    }
+    // always success
     startOperationLoop()
     {
         FakePlayerInst.opCallback(this)();        // operate once immediately
     }
+    // always success
     stopOperationLoop()
     {
         if(this._opTimeTask)
@@ -247,6 +283,7 @@ export class FakePlayerInst
             this._opTimeTask = null;
         }
     }
+    // always success
     setShortOperation(operation, opInterval = 1000, opMaxTimes = 1)
     {
         this.stopOperationLoop();
@@ -256,6 +293,7 @@ export class FakePlayerInst
         this.startOperationLoop();
         FakePlayerManager.saveFpData(this._name);
     }
+    // always success
     setLongOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
     {
         this.stopOperationLoop();
@@ -266,6 +304,7 @@ export class FakePlayerInst
         this.startOperationLoop();
         FakePlayerManager.saveFpData(this._name);
     }
+    // always success
     clearOperation()
     {
         this.stopOperationLoop();
@@ -290,24 +329,19 @@ export class FakePlayerInst
         this._operation = "";
         FakePlayerManager.saveFpData(this._name);
     }
-    isNeedTick()
-    {
-        return this._syncXuid != "";
-    }
+    // always success
     startSync(targetXuid)
     {
         this._syncXuid = targetXuid;
     }
+    // always success
     stopSync()
     {
         this._syncXuid = "";
         this._lastSyncPlayerPos = null;
     }
-    isOnline()
-    {
-        return this._isOnline != 0;
-    }
-    saveAllItems()
+    // return SNBT string of all items
+    serializeAllItems()
     {
         let pl = this.getPlayer();
         if(!pl)
@@ -328,7 +362,8 @@ export class FakePlayerInst
         comp.removeTag("Inventory").removeTag("Armor").removeTag("Offhand").destroy();
         return snbtStr;
     }
-    loadAllItems(snbtStr)
+    // return true/false
+    recoverAllItems(snbtStr)
     {
         let pl = this.getPlayer();
         if(!pl)
