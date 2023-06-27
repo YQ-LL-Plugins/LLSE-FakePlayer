@@ -198,7 +198,7 @@ export class FakePlayerInst
             return false;
         this._isOnline = true;
         if(this._operation != "")
-            this.startOpLoop();
+            this.startOperationLoop();
         return true;
     }
     offline()
@@ -212,7 +212,7 @@ export class FakePlayerInst
         if(!success)
             return false;
         this._isOnline = false;
-        this.stopOpLoop();
+        this.stopOperationLoop();
         return true;
     }
     setPos(x, y, z, dimid)
@@ -235,11 +235,11 @@ export class FakePlayerInst
             this.setPos(pos.x, pos.y, pos.z, pos.dimid);
         }
     }
-    startOpLoop()
+    startOperationLoop()
     {
         FakePlayerInst.opCallback(this)();        // operate once immediately
     }
-    stopOpLoop()
+    stopOperationLoop()
     {
         if(this._opTimeTask)
         {
@@ -249,26 +249,26 @@ export class FakePlayerInst
     }
     setShortOperation(operation, opInterval = 1000, opMaxTimes = 1)
     {
-        this.stopOpLoop();
+        this.stopOperationLoop();
         this._operation = operation;
         this._opInterval = opInterval;
         this._opMaxTimes = opMaxTimes;
-        this.startOpLoop();
+        this.startOperationLoop();
         FakePlayerManager.saveFpData(this._name);
     }
     setLongOperation(operation, opInterval = 1000, opMaxTimes = 1, opLength = 1000)
     {
-        this.stopOpLoop();
+        this.stopOperationLoop();
         this._operation = operation;
         this._opInterval = opInterval;
         this._opMaxTimes = opMaxTimes;
         this._opLength = opLength;
-        this.startOpLoop();
+        this.startOperationLoop();
         FakePlayerManager.saveFpData(this._name);
     }
     clearOperation()
     {
-        this.stopOpLoop();
+        this.stopOperationLoop();
         let pl = this.getPlayer();
         if(pl)
         {

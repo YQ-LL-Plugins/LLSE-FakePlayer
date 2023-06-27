@@ -1,7 +1,8 @@
-//LiteLoaderScript Dev Helper
-/// <reference path="c:\Users\yq\Desktop\BAK\LLSE-Aids-Library/dts/HelperLib-master/src/index.d.ts"/> 
+// LiteLoader-AIDS automatic generated
+/// <reference path="c:\Users\yqs11\Desktop\Projects\Game\Minecraft\LLSE-Aids-Library/dts/helperlib/src/index.d.ts"/> 
 
-const _VER = [1, 0, 1];
+
+const _VER = [1, 0, 2];
 
 import { 
     _I18N_DIR,

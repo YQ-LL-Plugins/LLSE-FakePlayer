@@ -1,5 +1,5 @@
 import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
-import { BetterSimpleForm } from "../Gui/BetterForms.js";
+import { BetterSimpleForm, BetterCustomForm } from "../Gui/BetterForms.js";
 import { PermManager } from "../Utils/PermManager.js";
 import { 
     CalcPosFromViewDirection, IsNumberInt, IsValidDimId, ParsePositionString, EntityGetFeetPos 
