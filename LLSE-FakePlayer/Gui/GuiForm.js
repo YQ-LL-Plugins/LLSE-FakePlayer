@@ -57,13 +57,9 @@ export class FpGuiForms
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer 主菜单", "§e请选择操作：§r");
         fm.addButton("假人列表", "textures/ui/FriendsDiversity", (pl) => { FpGuiForms.sendFpListForm(pl); });
-
-        if(PermManager.hasPermission(player, "online") && PermManager.hasPermission(player, "offline"))
-        {
-            fm.addButton("假人快速上下线", "textures/ui/move", (pl) => { FpGuiForms.sendQuickOnOfflineForm(pl);});
-        }
+        fm.addButton("假人快速上下线", "textures/ui/move", (pl) => { FpGuiForms.sendQuickOnOfflineForm(pl);});
         fm.addButton("假人执行操作", "textures/items/iron_pickaxe", (pl) => { FpGuiForms.sendOperationMenu(pl); });
-        // if(PermManager.isAdmin(player))
+        // if(PermManager.isSu(player))
         // {
         //     fm.addButton("System Settings", "textures/ui/settings_glyph_color_2x", (pl) => {});
         // }
@@ -266,10 +262,13 @@ export class FpGuiForms
         fm.addLabel('label1', '§e设置状态完毕后，点击“提交”执行操作：§r\n');
 
         FakePlayerManager.forEachFp((fpName, fp) => {
-            let isOnline = fp.isOnline();
-            let statusStr = isOnline ? "在线" : "离线";
-            let prefix = isOnline ? "§a" : "§c";
-            fm.addSwitch(fpName, `${prefix}${fpName} - ${statusStr}§r`, isOnline ? true : false);
+            if(PermManager.hasPermission(player, "online", fpName) && PermManager.hasPermission(player, "offline", fpName))
+            {
+                let isOnline = fp.isOnline();
+                let statusStr = isOnline ? "在线" : "离线";
+                let prefix = isOnline ? "§a" : "§c";
+                fm.addSwitch(fpName, `${prefix}${fpName} - ${statusStr}§r`, isOnline ? true : false);
+            }
         });
         
         fm.setCancelCallback((pl)=>{ FpGuiForms.sendMainMenu(pl); });

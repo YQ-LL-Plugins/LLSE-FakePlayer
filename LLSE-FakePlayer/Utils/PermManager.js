@@ -1,5 +1,6 @@
-import { SUCCESS } from "../Utils/GlobalVars.js"
+import { SUCCESS, _FP_PERMISSION_DIR } from "../Utils/GlobalVars.js"
 import { GlobalConf } from "../Utils/ConfigFileHelper.js"
+import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 
 
 // helper
@@ -13,108 +14,88 @@ Array.prototype.removeByValue = function (val) {
     return this;
 }
 
+
 export class PermManager
 {
-    static adminList = null;
-    static userList = null;
-    static userMode = null;
-    static userAllowAction = null;
-    static opIsAdmin = null;
-    static onlyConsoleAction = ["import", "addadmin", "removeadmin"];
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Private Data                                  ///
+/////////////////////////////////////////////////////////////////////////////////////
 
-    static initPermManager()
-    {
-        PermManager.adminList = GlobalConf.get("AdminList", []);
-        PermManager.userList = GlobalConf.get("UserList", []);
-        PermManager.userMode = GlobalConf.get("UserMode", "whitelist");
-        if(PermManager.userMode != "whitelist" && PermManager.userMode != "blacklist")
-            PermManager.userMode = "whitelist";
-        PermManager.userAllowAction = GlobalConf.get("UserAllowAction", ["online", "offline", "list", "getinventory", "help"]);
-        PermManager.opIsAdmin = GlobalConf.get("OpIsAdmin", 1);
-    }
+    static ONLY_CONSOLE_ACTIONS = ["setsu", "removesu", "settings"];
+    static NO_PERM_REQUIRED_ACTIONS = ["help"];
+    static NOT_CERTAIN_FP_ACTIONS = ["create"];
+    static CONSOLE = "CONSOLE_EXECUTES_COMMAND";
+
+    static suList = [];
+    static userList = [];
+    static userMode = "blacklist";
+    static opIsSu = 1;
+    static permConf = null;
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                Help Functions                                 ///
+/////////////////////////////////////////////////////////////////////////////////////
 
     static isWhitelistMode() { return PermManager.userMode == "whitelist"; }
 
-    static isAdmin(player)
+    static initFpPermConfig(fpName, ownerName)
     {
-        return PermManager.adminList.includes(player.realName) || (PermManager.opIsAdmin && player.isOP());
+        // {
+        //     "Version": 1
+        //     "Owner": "yqs112358",
+        //     "Perms": { 
+        //         "aaa": ["admin"],
+        //         "bbb": ["tp", "walkto"],
+        //     }
+        // }
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        permConf.set("Version", 1);
+        permConf.set("Owner", ownerName);
+        permConf.set("Perms", { ownerName: ["admin"] });
     }
 
-    // return true / false
-    static hasPermission(player, action)
+    static getPlayerOwnFpCount
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                 Su Functions                                  ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    static addSu(plName)
     {
-        if(PermManager.isAdmin(player))
+        logger.debug("addSu: ", plName);
+        if(PermManager.suList.includes(plName))
+            return i18n.tr("permManager.error.alreadyInSuList", plName);
+
+        PermManager.suList.push(plName);
+        GlobalConf.set("SuList", PermManager.suList);
+        return SUCCESS;
+    }
+
+    static removeSu(plName)
+    {
+        if(!PermManager.suList.includes(plName))
+            return i18n.tr("permManager.error.notInSuList", plName);
+        PermManager.suList.removeByValue(plName);
+        GlobalConf.set("SuList", PermManager.suList);
+        return SUCCESS;
+    }
+
+    static isSu(player)
+    {
+        if(player == PermManager.CONSOLE)       // console is su
             return true;
-        
-        let plName = player.realName;
-        if(PermManager.userList.includes(plName))
-        {
-            if(PermManager.userMode == "whitelist" && PermManager.userAllowAction.includes(action))        // in whitelist and allow
-                return true;
-        }
-        else
-        {
-            // plName not in userList
-            if(PermManager.userMode == "blacklist" && PermManager.userAllowAction.includes(action))        // not in blacklist and allow
-                return true;
-        }
-        return false;
+        return PermManager.suList.includes(player.realName) || (PermManager.opIsSu && player.isOP());
     }
 
-    // return SUCCESS / fail reason
-    static checkOriginPermission(origin, action)
-    {
-        // refuse only console actions
-        if((PermManager.onlyConsoleAction.includes(action)) && origin.type != 7)          // 7 is BDS console  
-        {   
-            // logger.debug("only can in console!");
-            return i18n.tr("permManager.error.onlyConsoleAction");
-        }
 
-        let pl = origin.player;
-        if(!pl)
-        {
-            //logger.debug("not player execute cmd, pass");
-            return SUCCESS;
-        }
-
-        // ensure is player executed below
-        if(PermManager.hasPermission(pl, action))
-            return SUCCESS;
-        else
-            return i18n.tr("permManager.error.noAccess");
-    }
-
-    static addAdmin(plName)
-    {
-        logger.debug("addAdmin: ", plName);
-        if(PermManager.adminList.includes(plName))
-            return i18n.tr("permManager.error.alreadyInAdminList", plName);
-        if(PermManager.userList.includes(plName))
-        {
-            logger.warn(`${plName} is removing from user ${PermManager.userMode}`);
-            PermManager.userList.removeByValue(plName);
-            GlobalConf.set("UserList", PermManager.userList);
-        }
-
-        PermManager.adminList.push(plName);
-        GlobalConf.set("AdminList", PermManager.adminList);
-        return SUCCESS;
-    }
-
-    static removeAdmin(plName)
-    {
-        if(!PermManager.adminList.includes(plName))
-            return i18n.tr("permManager.error.notInAdminList", plName);
-        PermManager.adminList.removeByValue(plName);
-        GlobalConf.set("AdminList", PermManager.adminList);
-        return SUCCESS;
-    }
+/////////////////////////////////////////////////////////////////////////////////////
+///                              UserList Functions                               ///
+/////////////////////////////////////////////////////////////////////////////////////
 
     static addUserToList(plName)
     {
-        if(PermManager.adminList.includes(plName))
-            return i18n.tr("permManager.error.setAdminTwice", plName);
         if(PermManager.userList.includes(plName))
             return i18n.tr("permManager.error.alreadyInList", plName, PermManager.userMode);
 
@@ -130,5 +111,332 @@ export class PermManager
         PermManager.userList.removeByValue(plName);
         GlobalConf.set("UserList", PermManager.userList);
         return SUCCESS;
+    }
+
+    // return true / false
+    static isAllowInUserList(plName)
+    {
+        if(!this.isWhitelistMode() && PermManager.userList.includes(plName))
+        {
+            // plName in blacklist
+            return false;
+        }
+        if(this.isWhitelistMode() && !PermManager.userList.includes(plName))
+        {
+            // plName not in whitelist
+            return false;
+        }
+        return true;
+    }
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                                Owner Functions                                ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    // return SUCCESS / "fail reason"
+    static setOwner(setter, fpName, newOwnerName)
+    {
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        let oldOwner = permConf.get("Owner", "");
+        if(PermManager.isSu(setter) || setter.realName == oldOwner)
+        {
+            // Have access to change owner
+            if(!PermManager.isSu(setter))
+            {
+                // Walk permission dir to check if new owner has space for new fp
+                // Su can have unlimited numbers of fps
+                let maxFpCountLimit = GlobalConf.get("MaxFpCountLimitEach", 3);
+                let currentFpCount = 0;
+
+                let fpNameList = FakePlayerManager.list();
+                fpNameList.forEach((fpNameCheck)=>{
+                    let fpPermConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpNameCheck}.json`);
+                    let checkOwner = fpPermConf.get("Owner", "");
+                    if(checkOwner == newOwnerName)
+                        ++currentFpCount;
+                });
+                if(currentFpCount > maxFpCountLimit)
+                {
+                    // newOwnerName cannot have more fp
+                    return i18n.tr("permManager.error.fpCountMaxLimitReached", newOwnerName);
+                }
+            }
+            permConf.set("Owner", newOwnerName);
+            return SUCCESS;
+        }
+        else
+            return i18n.tr("permManager.error.noAccess");
+    }
+
+    // return true / false
+    static isFpOwner(player, fpName)
+    {
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        let owner = permConf.get("Owner", "");
+        if(owner == "")
+        {
+            // This fp has no matched owner
+            if(player)
+                player.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
+            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+        }
+        else
+        {
+            if(owner == player.realName)         // fp owner has all permissions
+                return true;    
+        }
+        return false;
+    }
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                            Certain Perm Functions                             ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    static addCertainPerm(setter, fpName, plName, action)
+    {
+        if(PermManager.ONLY_CONSOLE_ACTIONS.includes(action))
+        {
+            // only_console_actions are not allowed to add perm to player
+            return i18n.tr("permManager.error.permConsoleActionToPlayer", action);
+        }
+        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS)
+        {
+            // there action do not need perm
+            return i18n.tr("permManager.error.noPermNeeded", action);
+        }
+
+        let setterName = setter.realName;
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        let permsData = permConf.get("Perms", {});
+        let owner = permConf.get("Owner", "");
+        if(owner == "")
+        {
+            // This fp has no matched owner
+            if(setter)
+                setter.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
+            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+        }
+
+        if(action == "admin")
+        {
+            // Only su or owner can give admin access
+            if(PermManager.isSu(setter) || setterName == owner)
+            {
+                // Have access to set admin perm
+                if(plName in permsData && permsData[plName].includes("admin"))
+                {
+                    // already exists
+                    return i18n.tr("permManager.error.permAlreadyExists", plName, action);
+                }
+                else
+                {
+                    permsData[plName] = ['admin'];
+                    permConf.set("Perms", permsData);
+                    return SUCCESS;
+                }
+            }
+            else
+                return i18n.tr("permManager.error.noAccess");
+        }
+        else
+        {
+            // su or owner or admin can give certain access
+            if(PermManager.isSu(setter) || setterName == owner
+                || (setterName in permsData && permsData[setterName].includes("admin")))
+            {
+                // Have access to set perm
+                if(plName in permsData)
+                {
+                    if(permsData[plName].includes("admin"))
+                    {
+                        // already exists admin, no need to add certain access
+                        return i18n.tr("permManager.error.playerIsAlreadyAdmin", plName);
+                    }
+                    else if(permsData[plName].includes(action))
+                    {
+                        // already exists admin, no need to add certain access
+                        return i18n.tr("permManager.error.permAlreadyExists", plName, action);
+                    }
+                }
+                permsData[plName].push(action);
+                permConf.set("Perms", permsData);
+                return SUCCESS;
+            }
+            else
+                return i18n.tr("permManager.error.noAccess");
+        }
+        return i18n.tr("permManager.error.noAccess");
+    }
+
+    static removeCertainPerm(setter, fpName, plName, action)
+    {
+        if(PermManager.ONLY_CONSOLE_ACTIONS.includes(action))
+        {
+            // only_console_actions are not allowed to add perm to player
+            return i18n.tr("permManager.error.permConsoleActionToPlayer", action);
+        }
+        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS)
+        {
+            // there action do not need perm
+            return i18n.tr("permManager.error.noPermNeeded", action);
+        }
+
+        let setterName = setter.realName;
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        let permsData = permConf.get("Perms", {});
+        let owner = permConf.get("Owner", "");
+        if(owner == "")
+        {
+            // This fp has no matched owner
+            if(setter)
+                setter.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
+            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+        }
+
+        if(action == "admin")
+        {
+            // Only su or owner can withdraw admin access
+            if(PermManager.isSu(setter) || setterName == owner)
+            {
+                // Have access to withdraw admin perm
+                if(!plName in permsData || !permsData[plName].includes("admin"))
+                {
+                    // perm not have
+                    return i18n.tr("permManager.error.permNotHave", plName, action);
+                }
+                else
+                {
+                    permsData[plName].removeByValue("admin");
+                    permConf.set("Perms", permsData);
+                    return SUCCESS;
+                }
+            }
+            else
+                return i18n.tr("permManager.error.noAccess");
+        }
+        else
+        {
+            // su or owner or admin can withdraw certain access
+            if(PermManager.isSu(setter) || setterName == owner
+                || (setterName in permsData && permsData[setterName].includes("admin")))
+            {
+                // Have access to withdraw perm
+                if(!plName in permsData || !permsData[plName].includes(action))
+                {
+                    // cannot withdraw not-exist perm
+                    return i18n.tr("permManager.error.permNotHave", plName, action);
+                }
+                permsData[plName].removeByValue(action);
+                permConf.set("Perms", permsData);
+                return SUCCESS;
+            }
+            else
+                return i18n.tr("permManager.error.noAccess");
+        }
+        return i18n.tr("permManager.error.noAccess");
+    }
+
+    // return true / false
+    static checkIfHasCertainPerm(fpName, plName, action)
+    {
+        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS)
+        {
+            // there action do not need perm
+            return true;
+        }
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        let permsData = permConf.get("Perms", {});
+        if(permsData != {})
+        {
+            if(plName in permsData)
+            {
+                // if plName is fp admin, or has access to certain action
+                if(permsData[plName].includes("admin") || permsData[plName].includes(action))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////
+///                               Public Functions                                ///
+/////////////////////////////////////////////////////////////////////////////////////
+
+    static initPermManager()
+    {
+        PermManager.suList = GlobalConf.get("SuList", []);
+        PermManager.userList = GlobalConf.get("UserList", []);
+        PermManager.userMode = GlobalConf.get("UserMode", "blacklist");
+        if(PermManager.userMode != "whitelist" && PermManager.userMode != "blacklist")
+            PermManager.userMode = "blacklist";
+        PermManager.opIsSu = GlobalConf.get("OpIsSu", 1);
+    }
+
+    // return true / false
+    static hasPermission(player, action, fpName)
+    {
+        if(player == PermManager.CONSOLE)
+        {
+            // console always have access
+            return true;
+        }
+
+        if(PermManager.ONLY_CONSOLE_ACTIONS.includes(action))
+        {
+            // Only allow executed in console! Ban it
+            return false;
+        }
+
+        // If player is not valid, refuse
+        if(!player)
+            return false;
+        let plName = player.realName;
+
+        // Check if su
+        if(PermManager.isSu(player))        // Su has all permissions
+            return true;
+        // Check if in whitelist/blacklist
+        if(!PermManager.isAllowInUserList(plName))
+            return false;
+        // Check if fp owner
+        if(PermManager.isFpOwner(player, fpName))       // fp owner has all permissions
+            return true;
+        // Check if fp and action matches the rule
+        if(PermManager.checkIfHasCertainPerm(fpName, plName, action))
+            return true;
+        return false;
+    }
+
+    // return SUCCESS / "fail reason"
+    static checkOriginPermission(origin, action, fp)
+    {
+        let pl = origin.player;
+        if(!pl)
+        {
+            // not player execute cmd, always pass
+            return SUCCESS;
+        }
+
+        // refuse only console actions
+        // origin.type == 7 is BDS console  
+        if((PermManager.ONLY_CONSOLE_ACTIONS.includes(action)) && origin.type != 7)
+        {   
+            // logger.debug("only can in console!");
+            return i18n.tr("permManager.error.onlyConsoleAction");
+        }
+
+        // check if the player have access
+        if(PermManager.hasPermission(pl, action))
+            return SUCCESS;
+        else
+            return i18n.tr("permManager.error.noAccess");
+    }
+
+    // return true / false
+    static checkPermToCreateNewFp(player)
+    {
+        return PermManager.isSu(player) || PermManager.isAllowInUserList(plName);
     }
 }

@@ -5,11 +5,10 @@ import { EntityGetFeetPos } from "../Utils/Utils.js"
 export class FakePlayerInst
 {
 /////////////////////////////////////////////////////////////////////////////////////
-///                                 Private Data                                 ///
+///                                 Private Data                                  ///
 /////////////////////////////////////////////////////////////////////////////////////
     name = "";
     pos = null;
-    ownerXuid = "";
     isonline = false;
     operation = "";
     opInterval = 0;
@@ -217,10 +216,6 @@ export class FakePlayerInst
     {
         return this.isonline != 0;
     }
-    getOwnerXuid()
-    {
-        return this.ownerXuid;
-    }
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -230,6 +225,7 @@ export class FakePlayerInst
     serializeFpData()
     {
         return {
+            '_version': 1,      // fpdata version
             '_name': this.name,
             '_pos': this.pos,
             '_isOnline': this.isonline,
@@ -237,8 +233,7 @@ export class FakePlayerInst
             '_opInterval': this.opInterval,
             '_opMaxTimes': this.opMaxTimes,
             '_opLength': this.opLength,
-            '_syncXuid': this.syncXuid,
-            '_ownerXuid': this.ownerXuid
+            '_syncXuid': this.syncXuid        
         };
     }
     static recoverFpData(fpName, fpData)
@@ -246,10 +241,9 @@ export class FakePlayerInst
         if(fpName != fpData._name)
             throw Error("Bad fpdata file content");
 
-        let ownerXuid = fpData._ownerXuid ? fpData._ownerXuid : "";
         return new FakePlayerInst(
             fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
-            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isonline, ownerXuid);
+            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isonline);
     }
     // return SNBT string of all items
     serializeAllItems()
@@ -298,12 +292,10 @@ export class FakePlayerInst
 ///                               Public Functions                                ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false,
-        ownerXuid = "")
+    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false)
     {
         this.name = name;
         this.pos = pos;
-        this.ownerXuid = ownerXuid;
         this.isonline = isonline;
 
         this.operation = operation;
@@ -319,7 +311,7 @@ export class FakePlayerInst
     getAllInfo()
     {
         return {
-            'name': this.name, 'pos': this.pos, 'ownerXuid': this.ownerXuid, 'isOnline': this.isonline,
+            'name': this.name, 'pos': this.pos, 'isOnline': this.isonline,
             'operation': this.operation, 'opInterval': this.opInterval, 'opMaxTimes': this.opMaxTimes, 
             'opLegnth': this.opLength, 'syncXuid': this.syncXuid
         };

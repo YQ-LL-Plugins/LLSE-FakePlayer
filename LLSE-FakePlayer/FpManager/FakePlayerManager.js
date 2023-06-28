@@ -42,14 +42,6 @@ export class FakePlayerManager
             callback(fpName, FakePlayerManager.fpListObj[fpName]);
     }
 
-    // return ["fail message", null] / [SUCCESS, {xxx:xxx, ...}]
-    static getFpOwnerXuid(fpName)
-    {
-        if(!(fpName in FakePlayerManager.fpListObj))
-            return null;
-        return FakePlayerManager.fpListObj[fpName].getFpOwnerXuid();
-    }
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 ///                                 Public Logic                                 ///

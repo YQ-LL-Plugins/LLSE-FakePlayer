@@ -2,6 +2,7 @@
 const _CONFIG_PATH = "./plugins/LLSE-FakePlayer/config.json";
 const _FP_DATA_DIR = "./plugins/LLSE-FakePlayer/fpdata/";
 const _FP_INVENTORY_DIR = "./plugins/LLSE-FakePlayer/fpinventorys/";
+const _FP_PERMISSION_DIR = "./plugins/LLSE-FakePlayer/fppermissions/";
 const _I18N_DIR = "./plugins/LLSE-FakePlayer/LangPack";
 
 // Pre-defined global consts
