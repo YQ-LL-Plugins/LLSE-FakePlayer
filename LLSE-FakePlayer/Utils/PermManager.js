@@ -55,7 +55,15 @@ export class PermManager
         permConf.set("Perms", { ownerName: ["admin"] });
     }
 
-    static getPlayerOwnFpCount
+    static getPlayerOwnFpCount(plName)
+    {
+        let count = 0;
+        FakePlayerManager.forEachFp((fpName, fp)=>{
+            if(fp.getOwnerName() == plName)
+                ++count;
+        });
+        return count;
+    }
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -137,32 +145,31 @@ export class PermManager
     // return SUCCESS / "fail reason"
     static setOwner(setter, fpName, newOwnerName)
     {
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
+
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
         let oldOwner = permConf.get("Owner", "");
-        if(PermManager.isSu(setter) || setter.realName == oldOwner)
+        if(PermManager.isSu(setter) || oldOwner == "" || setter.realName == oldOwner)
         {
             // Have access to change owner
             if(!PermManager.isSu(setter))
             {
-                // Walk permission dir to check if new owner has space for new fp
-                // Su can have unlimited numbers of fps
+                // Check if new owner has space for new fp
+                // (Su can have unlimited numbers of fps)
                 let maxFpCountLimit = GlobalConf.get("MaxFpCountLimitEach", 3);
-                let currentFpCount = 0;
-
-                let fpNameList = FakePlayerManager.list();
-                fpNameList.forEach((fpNameCheck)=>{
-                    let fpPermConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpNameCheck}.json`);
-                    let checkOwner = fpPermConf.get("Owner", "");
-                    if(checkOwner == newOwnerName)
-                        ++currentFpCount;
-                });
+                let currentFpCount = PermManager.getPlayerOwnFpCount(newOwnerName);
                 if(currentFpCount > maxFpCountLimit)
                 {
                     // newOwnerName cannot have more fp
                     return i18n.tr("permManager.error.fpCountMaxLimitReached", newOwnerName);
                 }
             }
+            // Change owner
             permConf.set("Owner", newOwnerName);
+            fp.setOwnerName(newOwnerName);
+            FakePlayerManager.saveFpData(fpName);
             return SUCCESS;
         }
         else
@@ -172,8 +179,11 @@ export class PermManager
     // return true / false
     static isFpOwner(player, fpName)
     {
-        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
-        let owner = permConf.get("Owner", "");
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
+
+        let owner = fp.getOwnerName();
         if(owner == "")
         {
             // This fp has no matched owner
@@ -196,6 +206,10 @@ export class PermManager
 
     static addCertainPerm(setter, fpName, plName, action)
     {
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
+
         if(PermManager.ONLY_CONSOLE_ACTIONS.includes(action))
         {
             // only_console_actions are not allowed to add perm to player
@@ -272,6 +286,10 @@ export class PermManager
 
     static removeCertainPerm(setter, fpName, plName, action)
     {
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
+
         if(PermManager.ONLY_CONSOLE_ACTIONS.includes(action))
         {
             // only_console_actions are not allowed to add perm to player
@@ -375,6 +393,7 @@ export class PermManager
     }
 
     // return true / false
+    // must sure that fp exists
     static hasPermission(player, action, fpName)
     {
         if(player == PermManager.CONSOLE)
@@ -410,7 +429,8 @@ export class PermManager
     }
 
     // return SUCCESS / "fail reason"
-    static checkOriginPermission(origin, action, fp)
+    // must sure that fp exists
+    static checkOriginPermission(origin, action, fpName)
     {
         let pl = origin.player;
         if(!pl)
@@ -428,7 +448,7 @@ export class PermManager
         }
 
         // check if the player have access
-        if(PermManager.hasPermission(pl, action))
+        if(PermManager.hasPermission(pl, action, fpName))
             return SUCCESS;
         else
             return i18n.tr("permManager.error.noAccess");
@@ -438,5 +458,20 @@ export class PermManager
     static checkPermToCreateNewFp(player)
     {
         return PermManager.isSu(player) || PermManager.isAllowInUserList(plName);
+    }
+
+    // return PermData / null
+    static getFpPermData(fpName)
+    {
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
+            return null;
+            
+        let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
+        let result = {};
+        result["Version"] = permConf.get("Version", 1);
+        result["Owner"] = permConf.get("Owner", "");
+        result["Perms"] = permConf.get("Perms", {});
+        return result;
     }
 }

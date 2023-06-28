@@ -15,6 +15,7 @@ export class FakePlayerInst
     opMaxTimes = 0;
     opLength = 0;
     syncXuid = "";
+    ownerName = "";
 
     _opTimeTask = null;
     _lastSyncPlayerPos = null;
@@ -208,6 +209,14 @@ export class FakePlayerInst
             this.setPos(pos.x, pos.y, pos.z, pos.dimid);
         }
     }
+    getOwnerName()
+    {
+        return this.ownerName;
+    }
+    setOwnerName(newOwner)
+    {
+        this.ownerName = newOwner;
+    }
     isNeedTick()
     {
         return this.syncXuid != "";
@@ -225,15 +234,16 @@ export class FakePlayerInst
     serializeFpData()
     {
         return {
-            '_version': 1,      // fpdata version
+            '_version': 2,      // fpdata version
             '_name': this.name,
             '_pos': this.pos,
+            '_ownerName': this.ownerName,
             '_isOnline': this.isonline,
             '_operation': this.operation,
             '_opInterval': this.opInterval,
             '_opMaxTimes': this.opMaxTimes,
             '_opLength': this.opLength,
-            '_syncXuid': this.syncXuid        
+            '_syncXuid': this.syncXuid      
         };
     }
     static recoverFpData(fpName, fpData)
@@ -243,7 +253,7 @@ export class FakePlayerInst
 
         return new FakePlayerInst(
             fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
-            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isonline);
+            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isonline, fpData._ownerName);
     }
     // return SNBT string of all items
     serializeAllItems()
@@ -292,18 +302,20 @@ export class FakePlayerInst
 ///                               Public Functions                                ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false)
+    constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false
+        , ownerName = "")
     {
         this.name = name;
         this.pos = pos;
         this.isonline = isonline;
+        this.ownerName = ownerName;
 
         this.operation = operation;
         this.opInterval = opInterval;
         this.opMaxTimes = opMaxTimes;
         this.opLength = opLength;
         this._opTimeTask = null;        // private
-
+ 
         this.syncXuid = syncXuid;
         this._lastSyncPlayerPos = null;     // private
     }
@@ -311,7 +323,7 @@ export class FakePlayerInst
     getAllInfo()
     {
         return {
-            'name': this.name, 'pos': this.pos, 'isOnline': this.isonline,
+            'name': this.name, 'pos': this.pos, 'isOnline': this.isonline, 'ownerName': this.ownerName,
             'operation': this.operation, 'opInterval': this.opInterval, 'opMaxTimes': this.opMaxTimes, 
             'opLegnth': this.opLength, 'syncXuid': this.syncXuid
         };
