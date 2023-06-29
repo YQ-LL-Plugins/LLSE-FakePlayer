@@ -104,6 +104,50 @@
 
   同步身体朝向、视角、同步移动等
 
+### 权限控制命令
+
+- **授权假人的特定权限给某用户**
+
+  `/fpc perm <fpname> add <actionname> <plname>`
+
+- **撤销授权给某用户的权限**
+
+  `/fpc perm <fpname> remove <actionname> <plname>`
+
+- **将某用户设置为假人管理员**
+
+  `/fpc perm <fpname> add admin <plname>`
+
+- **撤销某用户的假人管理员**
+
+  `/fpc perm <fpname> remove admin <plname>`
+
+- **显示指定假人的所有授权信息**
+
+  `/fpc perm <fpname> list`
+
+  相关机制解释详见下方 **系统权限管理机制** 小节
+
+### 系统设置命令
+
+- **设置玩家为超级管理员**
+
+  `/fpc settings setsu <plname>`
+
+- **撤销玩家的超级管理员身份**
+
+  `/fpc settings removesu <plname>`
+
+- **将指定玩家加入黑名单/白名单**
+
+  `/fpc settings ban/allow <plname>`
+
+- **修改每个玩家所能拥有的假人数量上限**
+
+  `/fpc settings maxfpcountlimit <limit>`
+
+  相关机制解释详见下方 **系统权限管理机制** 小节
+
 ### 其他命令
 
 - **从其他假人工具导入数据**
@@ -133,22 +177,22 @@
 #### 所有权机制
 
 - 新的权限管理机制下，每一个假人拥有一个“所有者”
-- 当一个玩家创建假人时，他将自动成为此假人的所有者。所有者对其拥有的假人拥有最高权限，可以执行任意操作。
-- 玩家每人可以拥有的假人数量有一个上限，默认为3个。此项可以在配置文件中修改。
+- 当玩家创建假人时，他将自动成为此假人的所有者。所有者对其拥有的假人拥有最高权限，可以执行任意操作。
+- 玩家每人可以拥有的假人数量有上限，默认为3个。此项可以在配置文件中用`MaxFpCountLimitEach`项修改。
 - 后续，可以通过 `/fpc perm <fpname> setowner <plname>` 命令将自己拥有的假人的所有权转移给其他玩家。
 
 #### 特定授权机制
 
 - 对特定假人的每一项操作，如`online` `offline` `operation ` `setselect`等等，都可以单独授权
 - 假人“所有者”可以通过 `/fpc perm <fpname> add <actionname> <plname>`命令将特定的操作授权给指定用户
-- 可以通过 `/fpc perm <fpname> remove <actionname> <plname>`命令撤销授权给指定用户的权限
+- 通过 `/fpc perm <fpname> remove <actionname> <plname>`命令撤销授权给指定用户的权限
   - 举例：我拥有假人`cxk`，想授权此假人的`sync`权限给另一个玩家`ikun`，可以执行以下命令：`/fpc perm cxk add sync ikun`来完成授权
   - 如果后续想撤销他的权限，执行以下命令：`/fpc perm cxk remove sync ikun`即可
 
 #### 管理员机制
 
 - 假人“所有者”可以通过 `/fpc perm <fpname> add admin <plname>`命令给当前假人设置一些管理员
-- 可以通过 `/fpc perm <fpname> remove admin <plname>`命令撤销当前假人的管理员
+- 可以通过 `/fpc perm <fpname> remove admin <plname>`命令撤销管理员的管理权限
   - 举例：我拥有假人`cxk`，想设置玩家`xiaoheizi`成为此假人的管理员，可以执行以下命令：`/fpc perm cxk add admin xiaoheizi`来完成设置
   - 如果想撤销管理员，执行`/fpc perm cxk remove admin xiaoheizi`即可
 - 假人的管理员除了不能删除此假人之外，拥有和所有者一样的权限。管理员也可以将一些特定的操作授权给其他玩家。
@@ -164,7 +208,7 @@
 
 - 最后，可以针对性地对某些恶意用户设置黑名单，以禁止他们使用整个假人系统。
 - 使用`/fpc settings ban <plname>`命令将玩家加入黑名单，使用`/fpc settings allow <plname>`命令将玩家移除出黑名单。此命令只能在BDS控制台中执行。
-- 如果服务器打算对假人系统施行白名单机制，去配置文件中修改设置即可。加入 / 移除白名单的命令与上面黑名单的顺序相反。
+- 如果服务器打算对假人系统施行白名单机制，去配置文件中修改`UserMode`项即可。加入/移除白名单的命令与上面黑名单的顺序相反。
 
 <br/>
 
