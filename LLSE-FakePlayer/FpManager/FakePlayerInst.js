@@ -325,7 +325,7 @@ export class FakePlayerInst
         return {
             'name': this.name, 'pos': this.pos, 'isOnline': this.isonline, 'ownerName': this.ownerName,
             'operation': this.operation, 'opInterval': this.opInterval, 'opMaxTimes': this.opMaxTimes, 
-            'opLegnth': this.opLength, 'syncXuid': this.syncXuid
+            'opLength': this.opLength, 'syncXuid': this.syncXuid
         };
     }
     // return true / false

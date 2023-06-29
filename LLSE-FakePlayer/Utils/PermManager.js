@@ -94,6 +94,8 @@ export class PermManager
     {
         if(player == PermManager.CONSOLE)       // console is su
             return true;
+        if(!player)
+            return false;
         return PermManager.suList.includes(player.realName) || (PermManager.opIsSu && player.isOP());
     }
 

@@ -20,13 +20,13 @@ export class FpGuiForms
 
     static sendErrorForm(player, errMsg, callback = function(pl){})
     {
-        player.sendModalForm("LLSE-FakePlayer 发生错误", 
+        player.sendModalForm("LLSE-FakePlayer 错误", 
             "§c§l发生错误:§r\n" + errMsg, "OK", "关闭", (pl, res)=>{ callback(pl); });
     }
 
     static sendInfoForm(player, infoText, callback = function(pl){})
     {
-        player.sendModalForm("LLSE-FakePlayer 消息对话框", infoText, "OK", "关闭", (pl, res)=>{ callback(pl); });
+        player.sendModalForm("LLSE-FakePlayer 消息", infoText, "OK", "关闭", (pl, res)=>{ callback(pl); });
     }
 
     static sendAskForm(player, askText, confirmCallback = function(pl){}, rejectCallback = function(pl){})
@@ -161,14 +161,16 @@ export class FpGuiForms
                 spawnPos.dimid = dimid;
             }
 
-            // create
-            let result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.dimid);
+            // Create
+            let result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, 
+                spawnPos.dimid, pl.realName, pl);
             if(result != SUCCESS)
             {
                 FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpListForm(pl);});
                 return;
             }
-            // online
+            // Created by owner, so must have perm to online.
+            // Online it
             result = FakePlayerManager.online(fpName);
             if(result != SUCCESS)
             {
@@ -192,15 +194,19 @@ export class FpGuiForms
             let result = resultData[1];
             let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
             let syncPlayerName = data.xuid2name(result.syncXuid);
+            let ownerName = result.ownerName;
+            if(ownerName == player.realName)
+                ownerName = "§6$" + ownerName + "§r";
 
             let fm = new BetterSimpleForm("LLSE-FakePlayer 假人信息");
             fm.setContent(`§6${fpName}§r假人信息：\n`
                 + `- 坐标： ${posObj.toString()}\n`
                 + `- 执行操作： ${result.operation ? result.operation : "None"}\n`
                 + `- 同步玩家： ${syncPlayerName ? syncPlayerName : "None"}\n`
-                + `- 状态： ${result.isOnline ? "§a§l在线§r" : "§c§l离线§r"}`
+                + `- 状态： ${result.isOnline ? "§a§l在线§r" : "§c§l离线§r"}\n`
+                + `- 所有者： ${ownerName}`
             );
-            if(result.isOnline && PermManager.hasPermission(player, "offline"))
+            if(result.isOnline && PermManager.hasPermission(player, "offline", fpName))
             {
                 fm.addButton("下线当前假人", "textures/ui/down_arrow", (pl) => {
                     // offline fakeplayer
@@ -212,7 +218,7 @@ export class FpGuiForms
                         FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                 });
             }
-            else if (PermManager.hasPermission(player, "online"))
+            if (!result.isOnline && PermManager.hasPermission(player, "online", fpName))
             {
                 fm.addButton("上线当前假人", "textures/ui/up_arrow", (pl) => {
                     // online fakeplayer
@@ -224,7 +230,7 @@ export class FpGuiForms
                         FpGuiForms.sendErrorForm(pl, result, (pl) => {FpGuiForms.sendFpInfoForm(pl, fpName);});
                 });
             }
-            if(PermManager.hasPermission(player, "remove"))
+            if(PermManager.hasPermission(player, "remove", fpName))
             {
                 fm.addButton("删除此假人", "textures/ui/cancel", (pl)=> {
                     // remove fakeplayer
@@ -301,47 +307,37 @@ export class FpGuiForms
     static sendOperationMenu(player)
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer 假人操作菜单");
+        fm.setContent("§e请选择操作：§r");
 
-        let atLeastOneItem = false;
-        if(PermManager.hasPermission(player, "operation"))
-        {
-            atLeastOneItem = true;
-            fm.addButton("执行/清除假人操作", "", (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
-        }
-        if(PermManager.hasPermission(player, "walkto"))
-        {
-            atLeastOneItem = true;
-            fm.addButton("假人走向指定坐标", "", (pl)=>{ FpGuiForms.sendWalkToPosForm(pl); });
-            fm.addButton("假人走向指定玩家", "", (pl)=>{ FpGuiForms.sendWalkToPlayerForm(pl); });
-        }
-        if(PermManager.hasPermission(player, "tp"))
-        {
-            atLeastOneItem = true;
-            fm.addButton("假人传送到指定坐标", "", (pl)=>{ FpGuiForms.sendTpToPosForm(pl); });
-            fm.addButton("假人传送到指定玩家", "", (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
-        }
-        if(PermManager.hasPermission(player, "sync"))
-        {
-            atLeastOneItem = true;
-            fm.addButton("假人与玩家同步", "", (pl)=>{ FpGuiForms.sendSyncForm(pl); });
-        }
+        fm.addButton("执行/清除假人操作", "", (pl)=>{ FpGuiForms.sendDoClearOpMenu(pl); });
+        fm.addButton("假人走向指定坐标", "", (pl)=>{ FpGuiForms.sendWalkToPosForm(pl); });
+        fm.addButton("假人走向指定玩家", "", (pl)=>{ FpGuiForms.sendWalkToPlayerForm(pl); });
+        fm.addButton("假人传送到指定坐标", "", (pl)=>{ FpGuiForms.sendTpToPosForm(pl); });
+        fm.addButton("假人传送到指定玩家", "", (pl)=>{ FpGuiForms.sendTpToPlayerForm(pl); });
+        fm.addButton("假人与玩家同步", "", (pl)=>{ FpGuiForms.sendSyncForm(pl); });
         fm.addButton("返回上一级", "", (pl) => { FpGuiForms.sendMainMenu(pl); });
 
-        if(atLeastOneItem)
-            fm.setContent("§e请选择操作：§r");
-        else
-            fm.setContent("§e对不起，你无权执行此操作§r");
         fm.send(player);
     }
 
     // fakeplayer do/clear operation
     static sendDoClearOpMenu(player)
     {
+        let fpsList = [];
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(PermManager.hasPermission(player, "operation", fpName))
+                fpsList.push(fpName);
+        });
+        if(fpsList.length == 0)
+        {
+            FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
+                    (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        }
+        let opsArr = _LONG_OPERATIONS_LIST.concat(_SHORT_OPERATIONS_LIST);
+
         let fm = new BetterCustomForm("LLSE-FakePlayer 执行/清除假人操作");
         fm.addLabel("label1", "§e选择操作并填写参数：§r\n");
 
-        let fpsList = FakePlayerManager.list()[1];
-        let opsArr = _LONG_OPERATIONS_LIST.concat(_SHORT_OPERATIONS_LIST);
         fm.addDropdown("fpName", "假人：", fpsList);
         fm.addDropdown("operation", "执行操作：", opsArr);
         fm.addInput("interval", "操作间隔时间(毫秒):", "1000");
@@ -403,10 +399,20 @@ export class FpGuiForms
     // fakeplayer walk to position
     static sendWalkToPosForm(player)
     {
+        let fpsList = [];
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(PermManager.hasPermission(player, "walkto", fpName))
+                fpsList.push(fpName);
+        });
+        if(fpsList.length == 0)
+        {
+            FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
+                    (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        }
+
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人行走");
         fm.addLabel("label1", "§e选择目标位置：§r\n");
 
-        let fpsList = FakePlayerManager.list()[1];
         fm.addDropdown("fpName", "假人：", fpsList);
         fm.addInput("position", "目标坐标：(x y z)", "315 70 233");
         fm.addDropdown("dimid", "目标维度：", _VALID_DIMENSION_NAMES, player.pos.dimid);
@@ -454,10 +460,20 @@ export class FpGuiForms
     // fakeplayer walk to another player
     static sendWalkToPlayerForm(player)
     {
+        let fpsList = [];
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(PermManager.hasPermission(player, "walkto", fpName))
+                fpsList.push(fpName);
+        });
+        if(fpsList.length == 0)
+        {
+            FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
+                    (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        }
+
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人行走");
         fm.addLabel("label1", "§e选择目标：§r\n");
 
-        let fpsList = FakePlayerManager.list()[1];
         let plsList = mc.getOnlinePlayers();
         let plNamesList = [];
         let currentPlIndex = 0;
@@ -510,10 +526,20 @@ export class FpGuiForms
     // fakeplayer tp to position
     static sendTpToPosForm(player)
     {
+        let fpsList = [];
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(PermManager.hasPermission(player, "tp", fpName))
+                fpsList.push(fpName);
+        });
+        if(fpsList.length == 0)
+        {
+            FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
+                    (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        }
+
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人传送");
         fm.addLabel("label1", "§e选择目标位置：§r\n");
 
-        let fpsList = FakePlayerManager.list()[1];
         fm.addDropdown("fpName", "假人：", fpsList);
         fm.addInput("position", "目标坐标： (x y z)", "315 70 233");
         fm.addDropdown("dimid", "目标维度：", _VALID_DIMENSION_NAMES, player.pos.dimid);
@@ -543,10 +569,20 @@ export class FpGuiForms
     // fakeplayer tp to another player
     static sendTpToPlayerForm(player)
     {
+        let fpsList = [];
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(PermManager.hasPermission(player, "tp", fpName))
+                fpsList.push(fpName);
+        });
+        if(fpsList.length == 0)
+        {
+            FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
+                    (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        }
+
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人传送");
         fm.addLabel("label1", "§e选择目标：§r\n");
 
-        let fpsList = FakePlayerManager.list()[1];
         let plsList = mc.getOnlinePlayers();
         let plNamesList = [];
         let currentPlIndex = 0;
@@ -582,10 +618,20 @@ export class FpGuiForms
     // fakeplayer sync with another player
     static sendSyncForm(player)
     {
+        let fpsList = [];
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(PermManager.hasPermission(player, "sync", fpName))
+                fpsList.push(fpName);
+        });
+        if(fpsList.length == 0)
+        {
+            FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
+                    (pl) => { FpGuiForms.sendOperationMenu(pl); });
+        }
+
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人玩家同步");
         fm.addLabel("label1", "§e选择目标玩家：§r\n");
 
-        let fpsList = FakePlayerManager.list()[1];
         let plsList = mc.getOnlinePlayers();
         let plNamesList = [];
         let currentPlIndex = 0;
@@ -635,7 +681,7 @@ export class FpGuiForms
         let fm = new BetterSimpleForm("LLSE-FakePlayer 假人物品栏操作");
 
         let atLeastOneItem = false;
-        if(PermManager.hasPermission(player, "getinventory"))
+        if(PermManager.hasPermission(player, "getinventory", fpName))
         {
             atLeastOneItem = true;
             // getInventory
@@ -697,7 +743,7 @@ export class FpGuiForms
                 FpGuiForms.sendInfoForm(pl, resStr, (pl) => { FpGuiForms.sendInventoryMenu(pl, fpName); });
             });
         }
-        if(PermManager.hasPermission(player, "give"))
+        if(PermManager.hasPermission(player, "give", fpName))
         {
             atLeastOneItem = true;
             fm.addButton("将手中物品给予假人", "", (pl)=>{
@@ -713,7 +759,7 @@ export class FpGuiForms
                     (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
             });
         }
-        if(PermManager.hasPermission(player, "drop"))
+        if(PermManager.hasPermission(player, "drop", fpName))
         {
             atLeastOneItem = true;
             fm.addButton("假人丢出手中物品", "", (pl)=>{
@@ -730,7 +776,7 @@ export class FpGuiForms
                     (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
             });
         }
-        if(PermManager.hasPermission(player, "dropall"))
+        if(PermManager.hasPermission(player, "dropall", fpName))
         {
             atLeastOneItem = true;
             fm.addButton("假人丢出背包所有物品", "", (pl)=>{ 

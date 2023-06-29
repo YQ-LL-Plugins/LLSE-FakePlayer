@@ -291,12 +291,16 @@ export class FakePlayerManager
             return [resultStr.substring(0, resultStr.length - 1), successNames];
     }
 
-    static createNew(fpName, x, y, z, dimid)
+    static createNew(fpName, x, y, z, dimid, ownerName, executor = null)
     {
         if(fpName in FakePlayerManager.fpListObj)
             return i18n.tr("fpManager.resultText.fpExists", fpName);
-        FakePlayerManager.fpListObj[fpName] 
-            = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
+        let fp = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
+        let result = PermManager.setOwner(executor, fpName, ownerName);
+        if(result != SUCCESS)
+            return result;
+
+        FakePlayerManager.fpListObj[fpName] = fp;
         FpListSoftEnum.add(fpName);
         FakePlayerManager.saveFpData(fpName, false);
         return SUCCESS;
