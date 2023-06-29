@@ -5,8 +5,8 @@ import {
 } from "../Utils/GlobalVars.js";
 import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 
-let FpListSoftEnum = null;
-export {FpListSoftEnum};
+export let FpListSoftEnum = null;
+export let PlayerListSoftEnum = null;
 
 export function RegisterCmd(userMode)      // whitelist / blacklist
 {
@@ -14,6 +14,7 @@ export function RegisterCmd(userMode)      // whitelist / blacklist
 
     // create soft enum
     FpListSoftEnum = new SoftEnumInst(fpCmd, "FakePlayerList", Object.keys(FakePlayerManager.fpListObj));
+    PlayerListSoftEnum = new SoftEnumInst(fpCmd, "RealPlayerList", []);
 
     // fpc online/offline <fpname>
     fpCmd.setEnum("StatusAction", ["online", "offline"]);
@@ -101,20 +102,49 @@ export function RegisterCmd(userMode)      // whitelist / blacklist
     fpCmd.mandatory("synctype", ParamType.Enum, "SyncType", "SyncType", 1);
     fpCmd.overload(["SyncAction", "fpname", "synctype"]);       // fpname created before
 
-    // fpc addadmin/removeadmin <name>
-    fpCmd.setEnum("AdminAction", ["addadmin", "removeadmin"]);
-    fpCmd.mandatory("action", ParamType.Enum, "AdminAction", "AdminAction", 1);
-    fpCmd.mandatory("adminname", ParamType.String);
-    fpCmd.overload(["AdminAction", "adminname"]);
+    // fpc perm <fpname> add/remove <actionname>/admin <plname>
+    fpCmd.setEnum("PermAction", ["perm"]);
+    fpCmd.setEnum("PermType", ["add", "remove"]);
+    // all actions can be permed
+    fpCmd.setEnum("ActionEnum", ["admin", "online", "offline", "operation", "walkto", "tp", "give", "getinventory"
+        , "setselect", "drop", "dropall", "sync", "perm"]);
+    fpCmd.mandatory("action", ParamType.Enum, "PermAction", "PermAction", 1);
+    fpCmd.mandatory("permtype", ParamType.Enum, "PermType", "PermType", 1);
+    fpCmd.mandatory("actionenum", ParamType.Enum, "ActionEnum", "ActionEnum", 1);
+    fpCmd.mandatory("plname", ParamType.SoftEnum, PlayerListSoftEnum.getName(), "plname");
+    fpCmd.overload(["PermAction", "fpname", "permtype", "actionenum", "plname"]);
+    // fpname created before
 
-    // fpc adduser/removeuser/banuser/unbanuser <name>
-    if(userMode == "whitelist")
-        fpCmd.setEnum("UserAction", ["adduser", "removeuser"]);
-    else
-        fpCmd.setEnum("UserAction", ["banuser", "unbanuser"]);
-    fpCmd.mandatory("action", ParamType.Enum, "UserAction", "UserAction", 1);
-    fpCmd.mandatory("username", ParamType.String);
-    fpCmd.overload(["UserAction", "username"]);
+    // fpc perm <fpname> list
+    fpCmd.setEnum("PermListType", ["list"]);
+    fpCmd.mandatory("permlisttype", ParamType.Enum, "PermListType", "PermListType", 1);
+    fpCmd.overload(["PermAction", "fpname", "permlisttype"]);
+    // fpname created before
+
+    // fpc perm <fpname> setowner <plname>
+    fpCmd.setEnum("PermSetOwnerType", ["setowner"]);
+    fpCmd.mandatory("permsetownertype", ParamType.Enum, "PermSetOwnerType", "PermSetOwnerType", 1);
+    fpCmd.overload(["PermAction", "fpname", "permsetownertype", "plname"]);
+    // fpname and plname created before
+
+    // fpc settings setsu/removesu/ban/allow <plname>
+    fpCmd.setEnum("SettingsAction", ["settings"]);
+    fpCmd.setEnum("SettingsType", ["setsu", "removesu", "ban", "allow"]);
+    fpCmd.mandatory("action", ParamType.Enum, "SettingsAction", "SettingsAction", 1);
+    fpCmd.mandatory("settingstype", ParamType.Enum, "SettingsType", "SettingsType", 1);
+    fpCmd.overload(["SettingsAction", "settingstype", "plname"]);
+    // plname created before
+
+    // fpc settings listsu
+    fpCmd.setEnum("ListSuType", ["listsu"]);
+    fpCmd.mandatory("listsutype", ParamType.Enum, "ListSuType", "ListSuType", 1);
+    fpCmd.overload(["SettingsAction", "listsutype"]);
+
+    // fpc settings maxfpcountlimit <limit>
+    fpCmd.setEnum("SettingsItems", ["maxfpcountlimit"]);
+    fpCmd.mandatory("settingsitems", ParamType.Enum, "SettingsItems", "SettingsItems", 1);
+    fpCmd.mandatory("value", ParamType.Int);
+    fpCmd.overload(["SettingsAction", "settingsitems", "value"]);
 
     // fpc import <path>
     fpCmd.setEnum("ImportAction", ["import"]);

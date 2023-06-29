@@ -13,7 +13,7 @@ import {
 import { GlobalConf, InitConfigFile } from "./plugins/LLSE-FakePlayer/Utils/ConfigFileHelper.js";
 import { PermManager } from "./plugins/LLSE-FakePlayer/Utils/PermManager.js";
 import { ExportFakePlayerAPIs, FakePlayerManager } from "./plugins/LLSE-FakePlayer/FpManager/FakePlayerManager.js";
-import { RegisterCmd } from "./plugins/LLSE-FakePlayer/Command/CommandRegistry.js";
+import { RegisterCmd, PlayerListSoftEnum } from "./plugins/LLSE-FakePlayer/Command/CommandRegistry.js";
 
 function main()
 {
@@ -39,6 +39,14 @@ function main()
 
     mc.listen("onTick", FakePlayerManager.onTick);
     mc.listen("onPlayerDie", FakePlayerManager.onPlayerDie);
+    mc.listen("onJoin", (pl) => {
+        if(!pl.isSimulatedPlayer())
+            PlayerListSoftEnum.add(pl.realName);
+    });
+    mc.listen("onLeft", (pl) => {
+        if(!pl.isSimulatedPlayer())
+            PlayerListSoftEnum.remove(pl.realName);
+    });
     mc.listen("onServerStarted", () =>
     {
         // command registry

@@ -437,86 +437,86 @@ export function CmdCallback(_cmd, ori, out, res)
         }
         break;
     
-    case "addadmin":
-    {
-        let plName = res.adminname;
-        result = PermManager.addAdmin(plName);
-        if(result == SUCCESS)
-            out.success(`[FakePlayer] ${plName} added to admin list.`);
-        else
-            out.error("[FakePlayer] " + result);
-        break;
-    }
-    case "removeadmin":
-    {
-        let plName = res.adminname;
-        result = PermManager.removeAdmin(plName);
-        if(result == SUCCESS)
-            out.success(`[FakePlayer] ${plName} removed from admin list.`);
-        else
-            out.error("[FakePlayer] " + result);
-        break;
-    }
-    case "adduser":
-    {
-        if(!PermManager.isWhitelistMode())
-        {
-            out.error('[FakePlayer] User为黑名单模式. 请使用命令"/fpc banuser <user>" 或 "/fpc unbanuser <user>"');
-            break;
-        }
-        let plName = res.username;
-        result = PermManager.addUserToList(plName);
-        if(result == SUCCESS)
-            out.success(`[FakePlayer] ${plName}已加入User白名单`);
-        else
-            out.error("[FakePlayer] " + result);
-        break;
-    }
-    case "removeuser":
-    {
-        if(!PermManager.isWhitelistMode())
-        {
-            out.error('[FakePlayer] User为黑名单模式. 请使用命令"/fpc banuser <user>" 或 "/fpc unbanuser <user>"');
-            break;
-        }
-        let plName = res.username;
-        result = PermManager.removeUserFromList(plName);
-        if(result == SUCCESS)
-            out.success(`[FakePlayer] ${plName}已从User白名单移除`);
-        else
-            out.error("[FakePlayer] " + result);
-        break;
-    }
-    case "banuser":
-    {
-        if(PermManager.isWhitelistMode())
-        {
-            out.error('[FakePlayer] User为白名单模式。请使用命令"/fpc adduser <user>" or "/fpc removeuser <user>"');
-            break;
-        }
-        let plName = res.username;
-        result = PermManager.addUserToList(plName);
-        if(result == SUCCESS)
-            out.success(`[FakePlayer] ${plName}已加入User黑名单`);
-        else
-            out.error("[FakePlayer] " + result);
-        break;
-    }
-    case "unbanuser":
-    {
-        if(PermManager.isWhitelistMode())
-        {
-            out.error('[FakePlayer] User为白名单模式。请使用命令"/fpc adduser <user>" or "/fpc removeuser <user>"');
-            break;
-        }
-        let plName = res.username;
-        result = PermManager.removeUserFromList(plName);
-        if(result == SUCCESS)
-            out.success(`[FakePlayer] ${plName}已从User黑名单移除`);
-        else
-            out.error("[FakePlayer] " + result);
-        break;
-    }
+    // case "addadmin":
+    // {
+    //     let plName = res.adminname;
+    //     result = PermManager.addAdmin(plName);
+    //     if(result == SUCCESS)
+    //         out.success(`[FakePlayer] ${plName} added to admin list.`);
+    //     else
+    //         out.error("[FakePlayer] " + result);
+    //     break;
+    // }
+    // case "removeadmin":
+    // {
+    //     let plName = res.adminname;
+    //     result = PermManager.removeAdmin(plName);
+    //     if(result == SUCCESS)
+    //         out.success(`[FakePlayer] ${plName} removed from admin list.`);
+    //     else
+    //         out.error("[FakePlayer] " + result);
+    //     break;
+    // }
+    // case "adduser":
+    // {
+    //     if(!PermManager.isWhitelistMode())
+    //     {
+    //         out.error('[FakePlayer] User为黑名单模式. 请使用命令"/fpc banuser <user>" 或 "/fpc unbanuser <user>"');
+    //         break;
+    //     }
+    //     let plName = res.username;
+    //     result = PermManager.addUserToList(plName);
+    //     if(result == SUCCESS)
+    //         out.success(`[FakePlayer] ${plName}已加入User白名单`);
+    //     else
+    //         out.error("[FakePlayer] " + result);
+    //     break;
+    // }
+    // case "removeuser":
+    // {
+    //     if(!PermManager.isWhitelistMode())
+    //     {
+    //         out.error('[FakePlayer] User为黑名单模式. 请使用命令"/fpc banuser <user>" 或 "/fpc unbanuser <user>"');
+    //         break;
+    //     }
+    //     let plName = res.username;
+    //     result = PermManager.removeUserFromList(plName);
+    //     if(result == SUCCESS)
+    //         out.success(`[FakePlayer] ${plName}已从User白名单移除`);
+    //     else
+    //         out.error("[FakePlayer] " + result);
+    //     break;
+    // }
+    // case "banuser":
+    // {
+    //     if(PermManager.isWhitelistMode())
+    //     {
+    //         out.error('[FakePlayer] User为白名单模式。请使用命令"/fpc adduser <user>" or "/fpc removeuser <user>"');
+    //         break;
+    //     }
+    //     let plName = res.username;
+    //     result = PermManager.addUserToList(plName);
+    //     if(result == SUCCESS)
+    //         out.success(`[FakePlayer] ${plName}已加入User黑名单`);
+    //     else
+    //         out.error("[FakePlayer] " + result);
+    //     break;
+    // }
+    // case "unbanuser":
+    // {
+    //     if(PermManager.isWhitelistMode())
+    //     {
+    //         out.error('[FakePlayer] User为白名单模式。请使用命令"/fpc adduser <user>" or "/fpc removeuser <user>"');
+    //         break;
+    //     }
+    //     let plName = res.username;
+    //     result = PermManager.removeUserFromList(plName);
+    //     if(result == SUCCESS)
+    //         out.success(`[FakePlayer] ${plName}已从User黑名单移除`);
+    //     else
+    //         out.error("[FakePlayer] " + result);
+    //     break;
+    // }
 
     case "import":
         out.success(`[FakePlayer] Target file: ${res.filepath}. Function not finished.`);
