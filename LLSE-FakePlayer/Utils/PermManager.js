@@ -21,7 +21,7 @@ export class PermManager
 ///                                 Private Data                                  ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    static ONLY_CONSOLE_ACTIONS = ["setsu", "removesu", "settings", "import"];
+    static ONLY_CONSOLE_ACTIONS = ["settings", "import"];
     static NO_PERM_REQUIRED_ACTIONS = ["help", "list", "onlineall", "offlineall"];
     static SPECIAL_PROCESS_ACTIONS = ["create", "remove"];
     static CONSOLE = "CONSOLE_EXECUTES_COMMAND";

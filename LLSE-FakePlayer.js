@@ -2,7 +2,7 @@
 /// <reference path="c:\Users\yqs11\Desktop\Projects\Game\Minecraft\LLSE-Aids-Library/dts/helperlib/src/index.d.ts"/> 
 
 
-const _VER = [1, 0, 2];
+const _VER = [2, 0, 0];
 
 import { 
     _I18N_DIR,

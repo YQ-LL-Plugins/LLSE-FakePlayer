@@ -26,17 +26,27 @@
 
   `/fpc onlineall / offlineall`
 
+  批量上 / 下线自己有权限操作的假人
+
 - **创建假人**
 
   `/fpc create <name> [x] [y] [z] [dimid]`
 
-- **移除假人**
+  每个玩家拥有的假人数量有上限，在配置文件中设置（超级管理员玩家不受此限制）。创建者默认成为假人的所有者。
+
+- **删除假人**
 
   `/fpc remove <fpname>`
 
-- **列出所有假人 / 查看假人详细信息**
+  玩家可以且仅可以删除自己拥有的假人（超级管理员玩家不受此限制）
 
-  `/fpc list [fpname]`
+- **列出所有假人**
+
+  `/fpc list`
+  
+- **查看指定假人的详细信息**
+
+  `/fpc list <fpname>`
 
 ### 假人行为控制
 
@@ -46,7 +56,7 @@
 
   `/fpc operation <fpname> useitem [length] [interval] [maxtimes]`
 
-  注意：operation的可选值：attack 攻击，interact 与方块互动，useitem 使用物品（destroy和place正在修复中）
+  注意：operation的可选值：attack 攻击，interact 与方块互动，useitem 使用物品（destroy和place即将到来）
 
   interval表示执行间隔，length表示工作的长度（这里表示useitem右键按多久），两者单位均为ms（毫秒）
 
@@ -58,7 +68,7 @@
 
   `/fpc walkto <fpname> <player>`
 
-  即使无法到达目标位置，假人仍然会行走到离目标最近的点才结束
+  即使无法到达目标位置，假人仍然会行走到离目标最近的点再结束
 
 - **TP到目标位置**
 
@@ -94,22 +104,6 @@
 
   同步身体朝向、视角、同步移动等
 
-### 系统权限管理
-
-管理员玩家可以执行几乎所有操作命令，用户玩家被限制为只能执行某些特定操作命令。具体限制详见配置文件
-
-- **新增假人管理员玩家**
-
-  `/fpc addadmin / removeadmin <name>`
-
-  此命令只能在控制台执行，避免玩家通过非法渠道获取权限
-
-- **新增假人用户玩家**
-
-  `/fpc adduser / removeuser / banuser / unbanuser <name>`
-  
-  用户玩家的相关配置见下面配置文件部分
-
 ### 其他命令
 
 - **从其他假人工具导入数据**
@@ -126,22 +120,51 @@
 
 ## 系统权限管理机制
 
-上面命令中提到的权限管理机制，在这里做一下说明：
+在 LLSE-FakePlayer 2.0 版本中，权限系统进行了重大修改，以匹配各大服务器对权限管理、职责分配等的要求。
 
-- 系统分为 admin 和 user 两级用户机制，用于区分假人管理员和假人普通用户。
+回顾一下旧设计：
 
-- 假人管理员
+> 系统分为 admin 和 user 两级用户机制。任何一个玩家属于admin或者user之一，admin拥有最高权限，user拥有部分权限，两者均可以操作所有假人。
 
-  - 管理员拥有最高权限，可以执行系统中所有的假人操作
-  - 只能在后台控制台使用命令添加和删除
+旧方案存在较多问题，比如无法实现对特定假人权限的精细化管理、无法让普通玩家自由创建和操作假人、无法控制恶意创建假人等在内的行为等等。
 
-- 假人普通用户
+### 新方案：基于所有权和特定授权的权限管理机制
 
-  - 普通用户拥有有限的假人操作权限，具体权限限制位于配置文件中，可以按需修改
-  - 分为白名单 / 黑名单模式，可以按需选取使用。默认为白名单模式，如果需要修改请前往配置文件处修改
-  - 白名单模式下，所有玩家默认无权使用假人，需要手动添加玩家进入白名单；黑名单模式下，所有玩家默认都属于假人用户，可以向黑名单中加入需要禁止使用假人的玩家
+#### 所有权机制
 
-  - 普通用户可以由假人管理员使用命令添加和删除，也可以在后台控制台使用命令添加和删除。命令根据白名单 / 黑名单模式而有所不同
+- 新的权限管理机制下，每一个假人拥有一个“所有者”
+- 当一个玩家创建假人时，他将自动成为此假人的所有者。所有者对其拥有的假人拥有最高权限，可以执行任意操作。
+- 玩家每人可以拥有的假人数量有一个上限，默认为3个。此项可以在配置文件中修改。
+- 后续，可以通过 `/fpc perm <fpname> setowner <plname>` 命令将自己拥有的假人的所有权转移给其他玩家。
+
+#### 特定授权机制
+
+- 对特定假人的每一项操作，如`online` `offline` `operation ` `setselect`等等，都可以单独授权
+- 假人“所有者”可以通过 `/fpc perm <fpname> add <actionname> <plname>`命令将特定的操作授权给指定用户
+- 可以通过 `/fpc perm <fpname> remove <actionname> <plname>`命令撤销授权给指定用户的权限
+  - 举例：我拥有假人`cxk`，想授权此假人的`sync`权限给另一个玩家`ikun`，可以执行以下命令：`/fpc perm cxk add sync ikun`来完成授权
+  - 如果后续想撤销他的权限，执行以下命令：`/fpc perm cxk remove sync ikun`即可
+
+#### 管理员机制
+
+- 假人“所有者”可以通过 `/fpc perm <fpname> add admin <plname>`命令给当前假人设置一些管理员
+- 可以通过 `/fpc perm <fpname> remove admin <plname>`命令撤销当前假人的管理员
+  - 举例：我拥有假人`cxk`，想设置玩家`xiaoheizi`成为此假人的管理员，可以执行以下命令：`/fpc perm cxk add admin xiaoheizi`来完成设置
+  - 如果想撤销管理员，执行`/fpc perm cxk remove admin xiaoheizi`即可
+- 假人的管理员除了不能删除此假人之外，拥有和所有者一样的权限。管理员也可以将一些特定的操作授权给其他玩家。
+- 假人的管理员名单只由假人“所有者”控制，假人管理员无法任免其他管理员。
+
+#### 超级管理员玩家
+
+- 系统拥有一些超级管理员玩家，称为`su`。`su`对整个假人系统拥有最高权限，可以对系统中的所有假人进行任何操作，无视所有的权限管理机制，也不受假人创建数量上限的限制。
+- **默认情况下，服务器中的OP玩家会自动成为超级管理员，**这样的设置是为了方便OP进行服务器管理。如果不想要此行为，可以去配置文件中关闭。
+- 可以使用`/fpc settings setsu <plname>`命令设置指定玩家为超级管理员，使用`/fpc settings removesu <plname>`命令撤销指定玩家的超级管理员。这两条命令只能在BDS控制台中执行。
+
+#### 黑名单 / 白名单机制
+
+- 最后，可以针对性地对某些恶意用户设置黑名单，以禁止他们使用整个假人系统。
+- 使用`/fpc settings ban <plname>`命令将玩家加入黑名单，使用`/fpc settings allow <plname>`命令将玩家移除出黑名单。此命令只能在BDS控制台中执行。
+- 如果服务器打算对假人系统施行白名单机制，去配置文件中修改设置即可。加入 / 移除白名单的命令与上面黑名单的顺序相反。
 
 <br/>
 
@@ -151,44 +174,33 @@
 
 ```json5
 {
+    // 配置文件版本
+    "Version": 2,
     // 输出日志等级，默认为4，一般不用修改
     "LogLevel": 4,
-    // 是否将OP玩家自动视为假人管理员，1为是，0为否
-    "OpIsAdmin": 1,
-    // 假人管理员玩家列表
-    "AdminList": [
+    // 每个用户允许拥有的假人数量上限（超级管理员玩家不受此限制）
+    "MaxFpCountLimitEach": 3,
+    // 是否将OP玩家自动视为超级管理员，1为是，0为否
+    "OpIsSu": 1,
+    // 超级管理员玩家列表
+    "SuList": [
         "yqs112358"
     ],
-    // 假人用户玩家模式，whitelist为白名单模式，blacklist为黑名单模式
-    "UserMode": "whitelist",
-    // 假人用户被允许执行的操作命令
-    // 所有可选的操作命令列表：online offline onlineall offlineall create remove list operation walkto tp give getinventory setselect drop dropall sync help gui
-    "UserAllowAction": [
-        "online",
-        "offline",
-        "list",
-        "getinventory",
-        "help",
-        "gui"
-    ],
-    // 假人用户玩家列表（如果为白名单模式，则此处为玩家白名单，否则为玩家黑名单）
-    "UserList": [
-        "testuser"
-    ]
+    // 假人用户模式，whitelist为白名单模式，blacklist为黑名单模式
+    // 例如，在黑名单模式下，通过 /fpc setting ban命令可以禁用特定玩家使用假人系统
+    // 默认情况下为黑名单模式
+    "UserMode": "blacklist",
+    // 黑名单/白名单玩家列表
+    "UserList": []
 }
 ```
 
-> 另外，位于`plugins\LLSE-FakePlayer\fpdata\`目录里面的每一个文件储存每一个假人的记录数据，位于`plugins\LLSE-FakePlayer\fpinventorys\`目录里面的每一个文件储存每一个假人的物品栏数据。不建议普通用户修改这两个位置的储存数据，任何一点错误的修改将导致插件无法正常工作。
-
 <br/>
 
-## 已知问题
+## Bug跟踪和反馈
 
-目前已知有这些bug，等待修复：
-
-- sync只能二维寻路
-- setselect后手中的物品不马上显示，要玩家重进游戏才能看到
-- operation时不会保持sync已经看向的头部朝向
+- Bug跟踪器位于 [Issues · YQ-LL-Plugins/LLSE-FakePlayer (github.com)](https://github.com/YQ-LL-Plugins/LLSE-FakePlayer/issues)
+- 欢迎反馈假人插件存在的各种bug和问题，作者将择机进行修复
 
 <br/><br/>
 
@@ -210,24 +222,10 @@
 - 返回值：如果成功返回`""`，如果失败返回错误原因字符串
 - 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "offline")`
 
-#### 所有假人上线
-
-- 函数原型：`function onlineAll() :[String, [String, String, ...]]`
-- 说明：使所有的假人上线，如果没有全部成功上线，会给出成功上线的名字列表
-- 返回值：如果成功返回`["", [所有假人名字列表]]`，如果失败返回`["错误原因字符串", [已经成功上线的假人名字列表]]`
-- 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "onlineAll")`
-
-#### 所有假人下线
-
-- 函数原型：`function offlineAll() :[String, [String, String, ...]]`
-- 说明：使所有的假人下线，如果没有全部成功下线，会给出成功下线的名字列表
-- 返回值：如果成功返回`["", [所有假人名字列表]]`，如果失败返回`["错误原因字符串", [已经成功下线的假人名字列表]]`
-- 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "offlineAll")`
-
 #### 创建新的假人
 
-- 函数原型：`function createNew(fpName:String, x:Float, y:Float, z:Float, dimid:Int) :String`
-- 说明：创建新的假人，但是不上线
+- 函数原型：`function createNew(fpName:String, x:Float, y:Float, z:Float, dimid:Int, ownerName:String) :String`
+- 说明：创建新的假人，但是不上线。ownerName为假人的所有者玩家名，每一个假人都必须拥有一个所有者。
 - 返回值：如果成功返回`""`，如果失败返回错误原因字符串
 - 导入方法：`ll.import("_LLSE_FakePlayer_PLUGIN_", "createNew")`
 
