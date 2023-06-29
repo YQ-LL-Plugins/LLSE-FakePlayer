@@ -21,9 +21,9 @@ export class PermManager
 ///                                 Private Data                                  ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    static ONLY_CONSOLE_ACTIONS = ["setsu", "removesu", "settings"];
-    static NO_PERM_REQUIRED_ACTIONS = ["help"];
-    static NOT_CERTAIN_FP_ACTIONS = ["create"];
+    static ONLY_CONSOLE_ACTIONS = ["setsu", "removesu", "settings", "import"];
+    static NO_PERM_REQUIRED_ACTIONS = ["help", "list", "onlineall", "offlineall"];
+    static SPECIAL_PROCESS_ACTIONS = ["create", "remove"];
     static CONSOLE = "CONSOLE_EXECUTES_COMMAND";
 
     static suList = [];
@@ -215,9 +215,9 @@ export class PermManager
             // only_console_actions are not allowed to add perm to player
             return i18n.tr("permManager.error.permConsoleActionToPlayer", action);
         }
-        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS)
+        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS || action in PermManager.SPECIAL_PROCESS_ACTIONS)
         {
-            // there action do not need perm
+            // these action do not need perm
             return i18n.tr("permManager.error.noPermNeeded", action);
         }
 
@@ -295,9 +295,9 @@ export class PermManager
             // only_console_actions are not allowed to add perm to player
             return i18n.tr("permManager.error.permConsoleActionToPlayer", action);
         }
-        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS)
+        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS || action in PermManager.SPECIAL_PROCESS_ACTIONS)
         {
-            // there action do not need perm
+            // these action do not need perm
             return i18n.tr("permManager.error.noPermNeeded", action);
         }
 
@@ -359,9 +359,9 @@ export class PermManager
     // return true / false
     static checkIfHasCertainPerm(fpName, plName, action)
     {
-        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS)
+        if(action in PermManager.NO_PERM_REQUIRED_ACTIONS || action in PermManager.SPECIAL_PROCESS_ACTIONS)
         {
-            // there action do not need perm
+            // these action do not need perm
             return true;
         }
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
@@ -419,6 +419,16 @@ export class PermManager
         // Check if in whitelist/blacklist
         if(!PermManager.isAllowInUserList(plName))
             return false;
+        // Special process
+        if(action == "create")
+        {
+            return PermManager.checkPermToCreateNewFp(player);
+        }
+        if(action == "remove")
+        {
+            // only owner can remove his fp
+            return PermManager.isFpOwner(player, fpName);
+        }
         // Check if fp owner
         if(PermManager.isFpOwner(player, fpName))       // fp owner has all permissions
             return true;
@@ -466,7 +476,7 @@ export class PermManager
         let fp = FakePlayerManager.getFpInstance(fpName);
         if(!fp)
             return null;
-            
+
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
         let result = {};
         result["Version"] = permConf.get("Version", 1);

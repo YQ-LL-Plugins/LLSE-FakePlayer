@@ -14,6 +14,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
 
     // logger.debug("OriginType: ", ori.type);
+    let isExecutedByPlayer = (ori.player == null);
     let result;
     switch(res.action)
     {
@@ -34,7 +35,7 @@ export function CmdCallback(_cmd, ori, out, res)
     case "onlineall":
         {
             let successNames = [];
-            [result, successNames] = FakePlayerManager.onlineAll();
+            [result, successNames] = FakePlayerManager.onlineAll(isExecutedByPlayer ? ori.player : PermManager.CONSOLE);
 
             let namesList = "";
             for(let name of successNames)
@@ -51,7 +52,7 @@ export function CmdCallback(_cmd, ori, out, res)
     case "offlineall":
         {
             let successNames = [];
-            [result, successNames] = FakePlayerManager.offlineAll();
+            [result, successNames] = FakePlayerManager.offlineAll(isExecutedByPlayer ? ori.player : PermManager.CONSOLE);
 
             let namesList = "";
             for(let name of successNames)

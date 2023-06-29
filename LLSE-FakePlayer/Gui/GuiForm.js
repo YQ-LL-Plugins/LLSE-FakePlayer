@@ -74,7 +74,7 @@ export class FpGuiForms
     static sendFpListForm(player)
     {
         let fm = new BetterSimpleForm("LLSE-FakePlayer 假人列表", "§e所有假人列表：§r");
-        if(PermManager.hasPermission(player, "create"))
+        if(PermManager.checkPermToCreateNewFp(player))
         {
             fm.addButton("创建新假人", "textures/ui/color_plus", (pl) => {
                 FpGuiForms.sendCreateNewForm(player);
@@ -84,48 +84,42 @@ export class FpGuiForms
             let statusStr = fp.isOnline() ? "§a在线§r" : "§4离线§r";
             fm.addButton(`${fpName} - ${statusStr}`, "", (pl) => { FpGuiForms.sendFpInfoForm(pl, fpName); });
         });
-        if(PermManager.hasPermission(player, "onlineall"))
+        fm.addButton("上线所有假人", "textures/ui/up_arrow", (pl) =>
         {
-            fm.addButton("上线所有假人", "textures/ui/up_arrow", (pl) =>
-            {
-                let successNames = [];
-                let result = "";
-                [result, successNames] = FakePlayerManager.onlineAll();
+            let successNames = [];
+            let result = "";
+            [result, successNames] = FakePlayerManager.onlineAll(player);
 
-                let namesList = "";
-                for(let name of successNames)
-                    namesList += `§6${name}§r, `;
-                namesList = namesList.substring(0, namesList.length - 2);
-                if(result == SUCCESS)
-                    FpGuiForms.sendSuccessForm(pl, "所有假人已上线：\n" + namesList, 
-                        (pl) => {FpGuiForms.sendFpListForm(pl);});
-                else
-                    FpGuiForms.sendSuccessForm(pl, "上线过程中发生错误：" + result 
-                        + "\n这些假人已经全部上线：\n" + namesList, 
-                        (pl) => {FpGuiForms.sendFpListForm(pl);});
-            });
-        }
-        if(PermManager.hasPermission(player, "offlineall"))
+            let namesList = "";
+            for(let name of successNames)
+                namesList += `§6${name}§r, `;
+            namesList = namesList.substring(0, namesList.length - 2);
+            if(result == SUCCESS)
+                FpGuiForms.sendSuccessForm(pl, "所有假人已上线：\n" + namesList, 
+                    (pl) => {FpGuiForms.sendFpListForm(pl);});
+            else
+                FpGuiForms.sendSuccessForm(pl, "上线过程中发生错误：" + result 
+                    + "\n这些假人已经全部上线：\n" + namesList, 
+                    (pl) => {FpGuiForms.sendFpListForm(pl);});
+        });
+        fm.addButton("下线所有假人", "textures/ui/down_arrow", (pl) => 
         {
-            fm.addButton("下线所有假人", "textures/ui/down_arrow", (pl) => 
-            {
-                let successNames = [];
-                let result = "";
-                [result, successNames] = FakePlayerManager.offlineAll();
+            let successNames = [];
+            let result = "";
+            [result, successNames] = FakePlayerManager.offlineAll(player);
 
-                let namesList = "";
-                for(let name of successNames)
-                    namesList += `§6${name}§r, `;
-                namesList = namesList.substring(0, namesList.length - 2);
-                if(result == SUCCESS)
-                    FpGuiForms.sendSuccessForm(pl, "所有假人已下线：\n" + namesList, 
-                        (pl) => {FpGuiForms.sendFpListForm(pl);});
-                else
-                    FpGuiForms.sendSuccessForm(pl, "下线过程中发生错误：" + result 
-                        + "\n这些假人已经全部下线：\n" + namesList, 
-                        (pl) => {FpGuiForms.sendFpListForm(pl);});
-            });
-        }
+            let namesList = "";
+            for(let name of successNames)
+                namesList += `§6${name}§r, `;
+            namesList = namesList.substring(0, namesList.length - 2);
+            if(result == SUCCESS)
+                FpGuiForms.sendSuccessForm(pl, "所有假人已下线：\n" + namesList, 
+                    (pl) => {FpGuiForms.sendFpListForm(pl);});
+            else
+                FpGuiForms.sendSuccessForm(pl, "下线过程中发生错误：" + result 
+                    + "\n这些假人已经全部下线：\n" + namesList, 
+                    (pl) => {FpGuiForms.sendFpListForm(pl);});
+        });
         fm.addButton("返回上一级", "", (pl) => { FpGuiForms.sendMainMenu(pl); });
         fm.send(player);
     }

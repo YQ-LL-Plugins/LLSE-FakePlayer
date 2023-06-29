@@ -5,6 +5,7 @@ import {
     _FP_DATA_DIR, _FP_INVENTORY_DIR, _DEFAULT_PLAYER_SELECT_SLOT, _LONG_OPERATIONS_LIST,
     SUCCESS 
 } from "../Utils/GlobalVars.js";
+import { PermManager } from "../Utils/PermManager.js";
 
 export class FakePlayerManager
 {
@@ -249,20 +250,20 @@ export class FakePlayerManager
     }
 
     // return ["fail result", ["aaa", "bbb", ...]] / [SUCCESS, ["aaa", "bbb", ...]]
-    static onlineAll()
+    static onlineAll(executor)
     {
         let resultStr = "";
         let successNames = [];
-        for(let fpName of Object.keys(FakePlayerManager.fpListObj))
-        {
-            if(FakePlayerManager.fpListObj[fpName].isOnline())
-                continue;
-            let res = FakePlayerManager.online(fpName, false);
-            if(res != SUCCESS)
-                resultStr += res + "\n";
-            else
-                successNames.push(fpName);
-        }
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(!fp.isOnline() && PermManager.hasPermission(executor, "online", fpName))
+            {
+                let res = FakePlayerManager.online(fpName, false);
+                if(res != SUCCESS)
+                    resultStr += res + "\n";
+                else
+                    successNames.push(fpName);
+            }
+        });
         if(resultStr == "")
             return [SUCCESS, successNames];
         else
@@ -270,20 +271,20 @@ export class FakePlayerManager
     }
 
     // return ["fail result", ["aaa", "bbb", ...]] / [SUCCESS, ["aaa", "bbb", ...]]
-    static offlineAll()
+    static offlineAll(executor)
     {
         let resultStr = "";
         let successNames = [];
-        for(let fpName of Object.keys(FakePlayerManager.fpListObj))
-        {
-            if(!FakePlayerManager.fpListObj[fpName].isOnline())
-                continue;
-            let res = FakePlayerManager.offline(fpName, false);
-            if(res != SUCCESS)
-                resultStr += res + "\n"
-            else
-                successNames.push(fpName);
-        }
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(fp.isOnline() && PermManager.hasPermission(executor, "offline", fpName))
+            {
+                let res = FakePlayerManager.offline(fpName, false);
+                if(res != SUCCESS)
+                    resultStr += res + "\n";
+                else
+                    successNames.push(fpName);
+            }
+        });
         if(resultStr == "")
             return [SUCCESS, successNames];
         else
@@ -725,8 +726,6 @@ export function ExportFakePlayerAPIs()
 {
     ll.export(FakePlayerManager.online ,"_LLSE_FakePlayer_PLUGIN_", "online");
     ll.export(FakePlayerManager.offline, "_LLSE_FakePlayer_PLUGIN_", "offline");
-    ll.export(FakePlayerManager.onlineAll, "_LLSE_FakePlayer_PLUGIN_", "onlineAll");
-    ll.export(FakePlayerManager.offlineAll ,"_LLSE_FakePlayer_PLUGIN_", "offlineAll");
     ll.export(FakePlayerManager.createNew ,"_LLSE_FakePlayer_PLUGIN_", "createNew");
     ll.export(FakePlayerManager.remove ,"_LLSE_FakePlayer_PLUGIN_", "remove");
     ll.export(FakePlayerManager.list ,"_LLSE_FakePlayer_PLUGIN_", "list");
