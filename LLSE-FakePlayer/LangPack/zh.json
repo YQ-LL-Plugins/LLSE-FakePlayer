@@ -29,6 +29,33 @@
         },
         "warning": {
             "fpNoOwner": "§6{0}§r尚未拥有所有者。请使用 /fpc perm {0} setowner <玩家名> 命令设置此假人的所有者"
+        },
+        "ask": {
+            "setOwner": {
+                "confirm": "玩家{0}将要把假人{1}的所有权移交给你，你同意吗？"
+            }
+        },
+        "success": {
+            "setOwner": {
+                "received": "玩家{0}已将假人{1}的所有权转移给你"
+            },
+            "addPerm": {
+                "received": "你已被给予假人{0}的{1}权限"
+            },
+            "removePerm": {
+                "received": "你已被撤销假人{0}的{1}权限"
+            },
+            "setsu": {
+                "received": "你已被设置为假人系统的超级管理员"
+            },
+            "removesu": {
+                "received": "你已被撤销假人系统的超级管理员身份"
+            }
+        },
+        "fail": {
+            "setOwner": {
+                "received": "玩家{0}未能成功将假人{1}的所有权转移给你"
+            }
         }
     },
     "fpManager": {
@@ -93,7 +120,8 @@
                     "notValidDimId": "{0}不是一个有效的维度ID",
                     "needValidDimId": "无法创建，你必须传入一个有效的维度ID",
                     "needValidPosition": "无法创建，你必须传入一个有效的坐标",
-                    "needValidOwner": "无法创建，你必须传入一个有效的假人所有者"
+                    "needValidOwner": "无法创建，你必须传入一个有效的假人所有者",
+                    "commonPlayerCreateForOther": "普通玩家不允许为其他玩家创建假人。请将ownername项留空"
                 },
                 "success": "§6{0}§r已创建"
             },
@@ -165,18 +193,22 @@
             "perm": {
                 "add": "已成功授予权限{0}给玩家{1}",
                 "remove": "已撤销玩家{0}的权限{1}",
-                "setowner": "已成功将§6{0}§r的所有权转移给玩家{1}",
                 "list": {
                     "title": "§6{0}§r的权限数据：",
                     "owner": "所有者：",
                     "player": "玩家{0}拥有权限："
+                },
+                "setowner": {
+                    "success": "已成功将§6{0}§r的所有权转移给玩家{1}",
+                    "ask": "确定要把§6{0}§r的所有权转移给玩家{1}吗？",
+                    "tofp": "不允许把假人设置为另一个假人的所有者",
+                    "waitConfirm": "等待玩家{0}给出接受答复...",
+                    "notOnline": "玩家{0}并不在线，无法将所有权转移给他",
+                    "rejected": "玩家{0}拒绝了你的所有权转移申请"
                 }
             },
             "action": {
                 "cancelled": "动作已取消"
-            },
-            "setowner": {
-                "ask": "确定要把§6{0}§r的所有权转移给玩家{1}吗？"
             },
             "settings": {
                 "setsu": "已将玩家{0}设置为超级管理员",

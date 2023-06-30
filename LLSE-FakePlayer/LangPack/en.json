@@ -29,6 +29,33 @@
         },
         "warning": {
             "fpNoOwner": "§6{0}§r does not yet have an owner. Please use command /fpc perm {0} setowner <plname> to set the owner of this fakeplayer"
+        },
+        "ask": {
+            "setOwner": {
+                "confirm": "Player {0} wants to transfer ownership of fakeplayer {1} to you. Do you agree?"
+            }
+        },
+        "success": {
+            "setOwner": {
+                "received": "Player {0} has transferred ownership of fakeplayer {1} to you"
+            },
+            "addPerm": {
+                "received": "You have been given {1} permission for fakeplayer {0}"
+            },
+            "removePerm": {
+                "received": "You have been revoked {1} permission for fakeplayer {0}"
+            },
+            "setsu": {
+                "received": "You have been set as the super user of fakeplayer system"
+            },
+            "removesu": {
+                "received": "You have been revoked super user of fakeplayer system"
+            }
+        },
+        "fail": {
+            "setOwner": {
+                "received": "Player {0} failed to transfer ownership of fakeplayer {1} to you"
+            }
         }
     },
     "fpManager": {
@@ -93,7 +120,8 @@
                     "notValidDimId": "{0} is not a valid dimension id",
                     "needValidDimId": "Fail to create. You must give a valid dimension ID",
                     "needValidPosition": "Fail to create. You must give a valid position",
-                    "needValidOwner": "Fail to create. You must give a valid fakeplayer owner"
+                    "needValidOwner": "Fail to create. You must give a valid fakeplayer owner",
+                    "commonPlayerCreateForOther": "Common players are not allowed to create fakeplayer for other players. Please leave the ownername blank"
                 },
                 "success": "§6{0}§r created"
             },
@@ -165,18 +193,22 @@
             "perm": {
                 "add": "Permission {0} have been successfully granted to player {1}",
                 "remove": "Player {0}'s permission {1} revoked",
-                "setowner": "Ownership of §6{0}§r transferred to player {1}",
                 "list": {
                     "title": "Permission data for §6{0}§r: ",
                     "owner": "Owner: ",
                     "player": "Player {0} has permissions: "
+                },
+                "setowner": {
+                    "success": "Ownership of §6{0}§r transferred to player {1}",
+                    "ask": "Are you sure to transfer ownership of §6{0}§r to player {1}?",
+                    "tofp": "Not allowed to set one fakeplayer as the owner of another fakeplayer",
+                    "waitConfirm": "Waiting for player {0} to give an acceptance reply...",
+                    "notOnline": "Player {0} is not online and cannot transfer ownership to him",
+                    "rejected": "Player {0} has rejected your ownership transfer request"
                 }
             },
             "action": {
                 "cancelled": "Action cancelled"
-            },
-            "setowner": {
-                "ask": "Are you sure to transfer ownership of §6{0}§r to player {1}?"
             },
             "settings": {
                 "setsu": "Player {0} has been set as super user",
