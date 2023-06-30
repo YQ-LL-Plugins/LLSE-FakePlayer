@@ -696,6 +696,12 @@ export function CmdCallback(_cmd, ori, out, res)
                 // player execute
                 if(PermManager.hasPermission(executor, "perm", fpName))
                 {
+                    if(plName == executor.realName)
+                    {
+                        // cannot setowner to self
+                        out.error("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.toself", fpName));
+                        break;
+                    }
                     // send confirm dialog
                     FpGuiForms.sendAskForm(executor, 
                         i18n.tr("command.resultText.perm.setowner.ask", fpName, plName),
