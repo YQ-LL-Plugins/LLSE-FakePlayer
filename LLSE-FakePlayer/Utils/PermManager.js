@@ -39,7 +39,7 @@ export class PermManager
 
     static isWhitelistMode() { return PermManager.userMode == "whitelist"; }
 
-    static initFpPermConfig(fpName, ownerName)
+    static initFpPermConfig(fpName, ownerName = "")
     {
         // {
         //     "Version": 1
@@ -50,9 +50,12 @@ export class PermManager
         //     }
         // }
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
-        permConf.set("Version", 1);
-        permConf.set("Owner", ownerName);
-        permConf.set("Perms", { ownerName: ["admin"] });
+        permConf.init("Version", 1);
+        permConf.init("Owner", ownerName);
+        if(ownerName && ownerName.length != 0)
+            permConf.init("Perms", { ownerName: ["admin"] });
+        else
+            permConf.init("Perms", {});
     }
 
     static getPlayerOwnFpCount(plName)
@@ -156,6 +159,7 @@ export class PermManager
         if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
 
+        PermManager.initFpPermConfig(fpName);
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
         let oldOwner = permConf.get("Owner", "");
         if(PermManager.isSu(executor) || oldOwner == "" || executor.realName == oldOwner)
@@ -397,6 +401,10 @@ export class PermManager
         if(PermManager.userMode != "whitelist" && PermManager.userMode != "blacklist")
             PermManager.userMode = "blacklist";
         PermManager.opIsSu = GlobalConf.get("OpIsSu", 1);
+
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            PermManager.initFpPermConfig(fpName);
+        });
     }
 
     // return true / false

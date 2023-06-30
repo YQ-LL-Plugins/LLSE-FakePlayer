@@ -270,6 +270,14 @@ export function CmdCallback(_cmd, ori, out, res)
 
                 out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo.model", 
                     posObj.toString(), operationStr, syncStatusStr, statusStr, ownerName));
+
+                if(!result.ownerName)
+                {
+                    if(isExecutedByPlayer)
+                        ori.player.tell("[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+                    else
+                        logger.info("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+                }
             }
         }
         break;

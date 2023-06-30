@@ -253,7 +253,7 @@ export class FakePlayerInst
 
         return new FakePlayerInst(
             fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
-            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isonline, fpData._ownerName);
+            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline, fpData._ownerName);
     }
     // return SNBT string of all items
     serializeAllItems()

@@ -31,10 +31,8 @@ function main()
     ExportFakePlayerAPIs();
 
     logger.setLogLevel(GlobalConf.get("LogLevel", 4));
-    PermManager.initPermManager();
-    logger.info(i18n.tr("main.welcome", _VER));
-
     FakePlayerManager.loadAllFpData();
+    PermManager.initPermManager();
     //logger.debug("FpList: ", FakePlayerManager.fpList);
 
     mc.listen("onTick", FakePlayerManager.onTick);
@@ -59,6 +57,8 @@ function main()
             logger.warn(i18n.tr("main.autoreconnect.error") + "\n" + res);
         }
     });
+
+    logger.info(i18n.tr("main.welcome", _VER));
 }
 
 main();
