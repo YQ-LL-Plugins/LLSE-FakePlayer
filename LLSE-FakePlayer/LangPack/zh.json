@@ -20,7 +20,7 @@
             "notInList": "{0} 不在 {1} 列表中",
             "alreadyInSuList": "{0} 已在管理员列表中",
             "notInSuList": "{0} 不在管理员列表中",
-            "permConsoleActionToPlayer": "/fpc {0} 命令只能在服务端控制台执行，无法授权给某一个特定用户",
+            "permConsoleActionToPlayer": "/fpc {0} 命令只能在服务端控制台执行，无法授权给某一个特定玩家",
             "permAlreadyExists": "玩家{0}已拥有{1}权限，无法重复授权",
             "permNotHave": "玩家{0}未拥有{1}权限，无法撤销",
             "noPermNeeded": "命令 /fpc {0} 无需授权",

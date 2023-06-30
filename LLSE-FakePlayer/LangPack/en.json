@@ -20,7 +20,7 @@
             "notInList": "{0} is not in user {1}",
             "alreadyInSuList": "{0} is already in admin list",
             "notInSuList": "{0} is not in admin list",
-            "permConsoleActionToPlayer": "Command /fpc {0} can only be executed in BDS console. It cannot be authorized to a specific user",
+            "permConsoleActionToPlayer": "Command /fpc {0} can only be executed in BDS console. It cannot be authorized to a specific player",
             "permAlreadyExists": "Player {0} already has {1} permission, cannot be authorized again",
             "permNotHave": "Player {0} does not have {1} permission, cannot revoke",
             "noPermNeeded": "No authorization is required for command /fpc {0}",
