@@ -403,6 +403,12 @@ export class PermManager
         return false;
     }
 
+    // return true / false
+    static isAdminOfFp(fpName, plName)
+    {
+        return PermManager.checkIfHasCertainPerm(fpName, plName, "admin");
+    }
+
 /////////////////////////////////////////////////////////////////////////////////////
 ///                               Public Functions                                ///
 /////////////////////////////////////////////////////////////////////////////////////

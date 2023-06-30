@@ -255,13 +255,47 @@ export function CmdCallback(_cmd, ori, out, res)
                 else
                     namesStr += name + ", ";
             }
-            if(namesStr.length > 0)
+            if(namesStr.length <= 0)
             {
-                namesStr = namesStr.substring(0, namesStr.length - 2);
-                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.has", result.length) + `\n${namesStr}`);
-            }
-            else
+                // No fp at all
                 out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.none"));
+                break;
+            }
+            namesStr = namesStr.substring(0, namesStr.length - 2);
+            let resultText = i18n.tr("command.resultText.list.has", result.length) + "\n" + namesStr;
+
+            if(isExecutedByPlayer)
+            {
+                let executor = ori.player;
+
+                // Calc fp owned
+                let ownedFpList = "";
+                FakePlayerManager.forEachFp((fpName, fp)=>{
+                    if(fp.getOwnerName() == executor.realName)
+                        ownedFpList += fp.isOnline() ? ("§6" + fpName + "§r, ") : (fpName + ", ");
+                });
+                if(ownedFpList.length != 0)
+                {
+                    ownedFpList = ownedFpList.substring(0, ownedFpList.length - 2);
+                    resultText += "\n" + i18n.tr("command.resultText.list.own") + "\n" + ownedFpList;
+                }
+
+                // Calc fp admined
+                let adminedFpList = "";
+                FakePlayerManager.forEachFp((fpName, fp)=>{
+                    if(PermManager.isSu(executor) || PermManager.isFpOwner(executor, fpName) 
+                        || PermManager.isAdminOfFp(fpName, executor.realName))
+                    {
+                        adminedFpList += fp.isOnline() ? ("§6" + fpName + "§r, ") : (fpName + ", ");
+                    }
+                });
+                if(adminedFpList.length != 0)
+                {
+                    adminedFpList = adminedFpList.substring(0, adminedFpList.length - 2);
+                    resultText += "\n" + i18n.tr("command.resultText.list.admin") + "\n" + adminedFpList;
+                }
+            }
+            out.success(`[FakePlayer] ` + resultText);
         }
         else
         {

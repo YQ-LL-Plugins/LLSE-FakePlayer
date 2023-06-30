@@ -137,7 +137,9 @@
                     "none": "None",
                     "online": "§a§lOnline§r",
                     "offline": "§a§lOffline§r"
-                }
+                },
+                "own": "Fakeplayers you own: ",
+                "admin": "Fakeplayers you have admin permission for: "
             },
             "operation": {
                 "clear": "§6{0}§r operation cleared",
