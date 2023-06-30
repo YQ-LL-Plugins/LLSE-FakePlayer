@@ -8,7 +8,7 @@ import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 export let FpListSoftEnum = null;
 export let PlayerListSoftEnum = null;
 
-export function RegisterCmd(userMode)      // whitelist / blacklist
+export function RegisterCmd()
 {
     let fpCmd = mc.newCommand("fpc", "§6LLSE-FakePlayer Control§r", PermType.Any, 0x80);
 

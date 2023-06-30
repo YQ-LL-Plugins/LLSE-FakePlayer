@@ -50,7 +50,7 @@ function main()
     mc.listen("onServerStarted", () =>
     {
         // command registry
-        RegisterCmd(PermManager.userMode);
+        RegisterCmd();
 
         // auto reconnect
         let res = FakePlayerManager.initialAutoOnline();

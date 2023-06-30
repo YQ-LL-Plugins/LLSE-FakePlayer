@@ -145,7 +145,7 @@ export class PermManager
 /////////////////////////////////////////////////////////////////////////////////////
 
     // return SUCCESS / "fail reason"
-    static setOwner(setter, fpName, newOwnerName)
+    static setOwner(executor, fpName, newOwnerName)
     {
         let fp = FakePlayerManager.getFpInstance(fpName);
         if(!fp)
@@ -153,10 +153,10 @@ export class PermManager
 
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
         let oldOwner = permConf.get("Owner", "");
-        if(PermManager.isSu(setter) || oldOwner == "" || setter.realName == oldOwner)
+        if(PermManager.isSu(executor) || oldOwner == "" || executor.realName == oldOwner)
         {
             // Have access to change owner
-            if(!PermManager.isSu(setter))
+            if(!PermManager.isSu(executor))
             {
                 // Check if new owner has space for new fp
                 // (Su can have unlimited numbers of fps)
@@ -206,7 +206,7 @@ export class PermManager
 ///                            Certain Perm Functions                             ///
 /////////////////////////////////////////////////////////////////////////////////////
 
-    static addCertainPerm(setter, fpName, plName, action)
+    static addCertainPerm(executor, fpName, plName, action)
     {
         let fp = FakePlayerManager.getFpInstance(fpName);
         if(!fp)
@@ -223,22 +223,22 @@ export class PermManager
             return i18n.tr("permManager.error.noPermNeeded", action);
         }
 
-        let setterName = setter.realName;
+        let executorName = executor.realName;
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
         let permsData = permConf.get("Perms", {});
         let owner = permConf.get("Owner", "");
         if(owner == "")
         {
             // This fp has no matched owner
-            if(setter)
-                setter.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
+            if(executor)
+                executor.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
             logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
         }
 
         if(action == "admin")
         {
             // Only su or owner can give admin access
-            if(PermManager.isSu(setter) || setterName == owner)
+            if(PermManager.isSu(executor) || executorName == owner)
             {
                 // Have access to set admin perm
                 if(plName in permsData && permsData[plName].includes("admin"))
@@ -259,8 +259,8 @@ export class PermManager
         else
         {
             // su or owner or admin can give certain access
-            if(PermManager.isSu(setter) || setterName == owner
-                || (setterName in permsData && permsData[setterName].includes("admin")))
+            if(PermManager.isSu(executor) || executorName == owner
+                || (executorName in permsData && permsData[executorName].includes("admin")))
             {
                 // Have access to set perm
                 if(plName in permsData)
@@ -286,7 +286,7 @@ export class PermManager
         return i18n.tr("permManager.error.noAccess");
     }
 
-    static removeCertainPerm(setter, fpName, plName, action)
+    static removeCertainPerm(executor, fpName, plName, action)
     {
         let fp = FakePlayerManager.getFpInstance(fpName);
         if(!fp)
@@ -303,22 +303,22 @@ export class PermManager
             return i18n.tr("permManager.error.noPermNeeded", action);
         }
 
-        let setterName = setter.realName;
+        let executorName = executor.realName;
         let permConf = new JsonConfigFile(_FP_PERMISSION_DIR + `${fpName}.json`);
         let permsData = permConf.get("Perms", {});
         let owner = permConf.get("Owner", "");
         if(owner == "")
         {
             // This fp has no matched owner
-            if(setter)
-                setter.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
+            if(executor)
+                executor.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
             logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
         }
 
         if(action == "admin")
         {
             // Only su or owner can withdraw admin access
-            if(PermManager.isSu(setter) || setterName == owner)
+            if(PermManager.isSu(executor) || executorName == owner)
             {
                 // Have access to withdraw admin perm
                 if(!plName in permsData || !permsData[plName].includes("admin"))
@@ -339,8 +339,8 @@ export class PermManager
         else
         {
             // su or owner or admin can withdraw certain access
-            if(PermManager.isSu(setter) || setterName == owner
-                || (setterName in permsData && permsData[setterName].includes("admin")))
+            if(PermManager.isSu(executor) || executorName == owner
+                || (executorName in permsData && permsData[executorName].includes("admin")))
             {
                 // Have access to withdraw perm
                 if(!plName in permsData || !permsData[plName].includes(action))

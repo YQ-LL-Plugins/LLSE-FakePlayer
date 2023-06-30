@@ -2,6 +2,7 @@ import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 import { FpGuiForms } from "../Gui/GuiForm.js";
 import { PermManager } from "../Utils/PermManager.js";
 import { CalcPosFromViewDirection, IsValidDimId, EntityGetFeetPos } from "../Utils/Utils.js";
+import { GlobalConf } from "../Utils/ConfigFileHelper.js";
 import { SUCCESS } from "../Utils/GlobalVars.js";
 
 export function CmdCallback(_cmd, ori, out, res)
@@ -143,7 +144,7 @@ export function CmdCallback(_cmd, ori, out, res)
                     pl.tell(`[FakePlayer] ` + i18n.tr("command.resultText.remove.success", fpName));
             }, (pl)=>
             {
-                pl.tell("[FakePlayer] " + i18n.tr("command.resultText.remove.cancelled"));
+                pl.tell("[FakePlayer] " + i18n.tr("command.resultText.action.cancelled"));
             });
         }
         else
@@ -437,86 +438,194 @@ export function CmdCallback(_cmd, ori, out, res)
         }
         break;
     
-    // case "addadmin":
-    // {
-    //     let plName = res.adminname;
-    //     result = PermManager.addAdmin(plName);
-    //     if(result == SUCCESS)
-    //         out.success(`[FakePlayer] ${plName} added to admin list.`);
-    //     else
-    //         out.error("[FakePlayer] " + result);
-    //     break;
-    // }
-    // case "removeadmin":
-    // {
-    //     let plName = res.adminname;
-    //     result = PermManager.removeAdmin(plName);
-    //     if(result == SUCCESS)
-    //         out.success(`[FakePlayer] ${plName} removed from admin list.`);
-    //     else
-    //         out.error("[FakePlayer] " + result);
-    //     break;
-    // }
-    // case "adduser":
-    // {
-    //     if(!PermManager.isWhitelistMode())
-    //     {
-    //         out.error('[FakePlayer] User为黑名单模式. 请使用命令"/fpc banuser <user>" 或 "/fpc unbanuser <user>"');
-    //         break;
-    //     }
-    //     let plName = res.username;
-    //     result = PermManager.addUserToList(plName);
-    //     if(result == SUCCESS)
-    //         out.success(`[FakePlayer] ${plName}已加入User白名单`);
-    //     else
-    //         out.error("[FakePlayer] " + result);
-    //     break;
-    // }
-    // case "removeuser":
-    // {
-    //     if(!PermManager.isWhitelistMode())
-    //     {
-    //         out.error('[FakePlayer] User为黑名单模式. 请使用命令"/fpc banuser <user>" 或 "/fpc unbanuser <user>"');
-    //         break;
-    //     }
-    //     let plName = res.username;
-    //     result = PermManager.removeUserFromList(plName);
-    //     if(result == SUCCESS)
-    //         out.success(`[FakePlayer] ${plName}已从User白名单移除`);
-    //     else
-    //         out.error("[FakePlayer] " + result);
-    //     break;
-    // }
-    // case "banuser":
-    // {
-    //     if(PermManager.isWhitelistMode())
-    //     {
-    //         out.error('[FakePlayer] User为白名单模式。请使用命令"/fpc adduser <user>" or "/fpc removeuser <user>"');
-    //         break;
-    //     }
-    //     let plName = res.username;
-    //     result = PermManager.addUserToList(plName);
-    //     if(result == SUCCESS)
-    //         out.success(`[FakePlayer] ${plName}已加入User黑名单`);
-    //     else
-    //         out.error("[FakePlayer] " + result);
-    //     break;
-    // }
-    // case "unbanuser":
-    // {
-    //     if(PermManager.isWhitelistMode())
-    //     {
-    //         out.error('[FakePlayer] User为白名单模式。请使用命令"/fpc adduser <user>" or "/fpc removeuser <user>"');
-    //         break;
-    //     }
-    //     let plName = res.username;
-    //     result = PermManager.removeUserFromList(plName);
-    //     if(result == SUCCESS)
-    //         out.success(`[FakePlayer] ${plName}已从User黑名单移除`);
-    //     else
-    //         out.error("[FakePlayer] " + result);
-    //     break;
-    // }
+    case "perm":
+    {
+        let executor = ori.player ? ori.player : PermManager.CONSOLE;
+        let fpName = res.fpname;
+
+        if(res.permtype == "add")
+        {
+            let action = res.actionenum;
+            let plName = res.plname;
+            if(PermManager.hasPermission(executor, "perm", fpName))
+            {
+                result = PermManager.addCertainPerm(executor, fpName, plName, action);
+                if(result == SUCCESS)
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.add", action, plName));
+                else
+                    out.error("[FakePlayer] " + result);
+            }
+            else
+                out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+        }
+        else if(res.permtype == "remove")
+        {
+            let action = res.actionenum;
+            let plName = res.plname;
+            if(PermManager.hasPermission(executor, "perm", fpName))
+            {
+                result = PermManager.removeCertainPerm(executor, fpName, plName, action);
+                if(result == SUCCESS)
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.remove", plName, action));
+                else
+                    out.error("[FakePlayer] " + result);
+            }
+            else
+                out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+        }
+        else if(res.permlisttype = "list")
+        {
+            //TODO:finish 
+            out.success("perm <fpname> list");
+        }
+        else if(res.permsetownertype == "setowner")
+        {
+            let plName = res.plname;
+            if(executor != PermManager.CONSOLE)
+            {
+                // player execute
+                if(PermManager.hasPermission(executor, "perm", fpName))
+                {
+                    // send confirm dialog
+                    FpGuiForms.sendAskForm(executor, 
+                        i18n.tr("command.resultText.remove.ask", fpName, plName),
+                        (executor)=>
+                    {
+                        result = PermManager.setOwner(executor, fpName, plName);
+                        if(result == SUCCESS)
+                            out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner", fpName, plName));
+                        else
+                            out.error("[FakePlayer] " + result);
+                    }, (pl)=>
+                    {
+                        pl.tell("[FakePlayer] " + i18n.tr("command.resultText.action.cancelled"));
+                    });
+                }
+                else
+                    out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+            }
+            else
+            {
+                // console execute
+                result = PermManager.setOwner(executor, fpName, plName);
+                if(result == SUCCESS)
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner", fpName, plName));
+                else
+                    out.error("[FakePlayer] " + result);
+            }
+        }
+        else
+            out.error(`[FakePlayer] ` + i18n.tr("command.resultText.sync.unknownAction", res.permtype));
+        break;
+    }
+
+    case "settings":
+    {
+        if(ori.player)
+        {
+            // settings can only execute in console
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.onlyConsoleAction"));
+            break;
+        }
+
+        if(res.settingstype == "setsu")
+        {
+            let plName = res.plname;
+            result = PermManager.addSu(plName);
+            if(result == SUCCESS)
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.setsu", plName));
+            else
+                out.error("[FakePlayer] " + result);
+        }
+        else if(res.settingstype == "removesu")
+        {
+            let plName = res.plname;
+            result = PermManager.removeSu(plName);
+            if(result == SUCCESS)
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.removesu", plName));
+            else
+                out.error("[FakePlayer] " + result);
+        }
+        else if(res.settingstype == "ban")
+        {
+            let plName = res.plname;
+            let isInUserList = PermManager.userList.includes(plName);
+            if(PermManager.userMode == "blacklist")
+            {
+                if(isInUserList)
+                {
+                    out.error("[FakePlayer] " + i18n.tr("command.resultText.settings.blacklistBanExist", plName));
+                }
+                else
+                {
+                    PermManager.addUserToList(plName);
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.blacklistBanned", plName));
+                }
+            }
+            else
+            {
+                // whitelist mode
+                if(isInUserList)
+                {
+                    PermManager.removeUserFromList(plName);
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.whitelistBanned", plName));
+                }
+                else
+                {
+                    out.error("[FakePlayer] " + i18n.tr("command.resultText.settings.whitelistBanNotExist", plName));
+                }
+            }
+        }
+        else if(res.settingstype == "allow")
+        {
+            let plName = res.plname;
+            let isInUserList = PermManager.userList.includes(plName);
+            if(PermManager.userMode == "blacklist")
+            {
+                if(isInUserList)
+                {
+                    PermManager.removeUserFromList(plName);
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.blacklistAllowed", plName));
+                }
+                else
+                {
+                    out.error("[FakePlayer] " + i18n.tr("command.resultText.settings.blacklistAllowNotExist", plName));
+                }
+            }
+            else
+            {
+                // whitelist mode
+                if(isInUserList)
+                {
+                    out.error("[FakePlayer] " + i18n.tr("command.resultText.settings.whitelistAllowExist", plName));
+                }
+                else
+                {
+                    PermManager.addUserToList(plName);
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.whitelistAllowed", plName));
+                }
+            }
+        }
+        else if(res.listsutype == "listsu")
+        {
+            //TODO:finish 
+            out.success("settings listsu");
+        }
+        else if(res.settingsitems == "maxfpcountlimit")
+        {
+            let value = res.value;
+            if(value < 0)
+                out.error("[FakePlayer] " + i18n.tr("command.resultText.settings.maxFpCountLimit.belowZero"));
+            else
+            {
+                GlobalConf.set("MaxFpCountLimitEach", value);
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.maxFpCountLimit.set", value));
+            }
+        }
+        else
+            out.error(`[FakePlayer] ` + i18n.tr("command.resultText.sync.unknownAction", res.settingstype));
+        break;
+    }
 
     case "import":
         out.success(`[FakePlayer] Target file: ${res.filepath}. Function not finished.`);
