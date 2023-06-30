@@ -213,7 +213,7 @@ export function CmdCallback(_cmd, ori, out, res)
             {
                 let removeResult = FakePlayerManager.remove(fpName);
                 if(removeResult != SUCCESS)
-                    pl.tell("§4[FakePlayer] " + removeResult + "§r");
+                    pl.tell("§c[FakePlayer] " + removeResult + "§r");
                 else
                     pl.tell(`[FakePlayer] ` + i18n.tr("command.resultText.remove.success", fpName));
             }, (pl)=>
@@ -727,7 +727,7 @@ export function CmdCallback(_cmd, ori, out, res)
                                 }
                             }
                             else
-                                executor.tell("§4[FakePlayer] " + result + "§r");
+                                executor.tell("§c[FakePlayer] " + result + "§r");
                         }
                         else
                         {
@@ -735,45 +735,54 @@ export function CmdCallback(_cmd, ori, out, res)
                             let targetPlayer = mc.getPlayer(plName);
                             if(!targetPlayer)
                             {
-                                executor.tell("§4[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.notOnline", plName) + "§r");
+                                executor.tell("§c[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.notOnline", plName) + "§r");
                                 return;
                             }
                             if(targetPlayer.isSimulatedPlayer())
                             {
-                                executor.tell("§4[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.tofp", plName) + "§r");
+                                executor.tell("§c[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.tofp", plName) + "§r");
                                 return;
                             }
                             if(!PermManager.checkPlayerHasSpaceForNewFp(plName))
                             {
                                 // plName cannot have more fp
-                                executor.tell("§4[FakePlayer] " + i18n.tr("permManager.error.fpCountMaxLimitReached", plName) + "§r");
+                                executor.tell("§c[FakePlayer] " + i18n.tr("permManager.error.fpCountMaxLimitReached", plName) + "§r");
                                 return;
                             }
 
-                            // ask the target to confirm transfer
-                            executor.tell("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.waitConfirm", plName));
-                            FpGuiForms.sendAskForm(targetPlayer, i18n.tr("permManager.ask.setOwner.confirm", executor.realName, fpName),
-                                (pl) => {
-                                    // confirmed
-                                    result = PermManager.setOwner(executor, fpName, plName);
-                                    if(result == SUCCESS)
-                                    {
-                                        executor.tell("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.success", fpName, plName));
-                                        targetPlayer.tell("[FakePlayer] " + 
-                                            i18n.tr("permManager.success.setOwner.received", executor.realName, fpName));
-                                    }
-                                    else
-                                    {
-                                        executor.tell("§4[FakePlayer] " + result + "§r");
-                                        targetPlayer.tell("[FakePlayer] " + 
-                                            i18n.tr("permManager.fail.setOwner.received", executor.realName, fpName));
-                                    }
-                                },
-                                (pl) => {
-                                    // rejected
-                                    executor.tell("§4[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.rejected", plName) + "§r");
-                                    return;
-                                })
+                            let oldOwner = FakePlayerManager.getFpInstance(fpName).getOwnerName();
+                            if(PermManager.isSu(executor) || oldOwner == "" || executor.realName == oldOwner)
+                            {
+                                // ask the target to confirm transfer
+                                executor.tell("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.waitConfirm", plName));
+                                FpGuiForms.sendAskForm(targetPlayer, i18n.tr("permManager.ask.setOwner.confirm", executor.realName, fpName),
+                                    (pl) => {
+                                        // confirmed
+                                        result = PermManager.setOwner(executor, fpName, targetPlayer.realName);
+                                        if(result == SUCCESS)
+                                        {
+                                            executor.tell("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.success", fpName, plName));
+                                            targetPlayer.tell("[FakePlayer] " + 
+                                                i18n.tr("permManager.success.setOwner.received", executor.realName, fpName));
+                                        }
+                                        else
+                                        {
+                                            executor.tell("§c[FakePlayer] " + result + "§r");
+                                            targetPlayer.tell("[FakePlayer] " + 
+                                                i18n.tr("permManager.fail.setOwner.received", executor.realName, fpName));
+                                        }
+                                    },
+                                    (pl) => {
+                                        // rejected
+                                        executor.tell("§c[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.rejected", plName) + "§r");
+                                        return;
+                                    });
+                            }
+                            else
+                            {
+                                executor.tell("§c[FakePlayer] " + i18n.tr("permManager.error.noAccess") + "§r");
+                                return;
+                            }
                         }
                     }, (pl)=>
                     {
