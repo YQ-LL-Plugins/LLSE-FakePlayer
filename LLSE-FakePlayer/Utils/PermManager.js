@@ -99,6 +99,11 @@ export class PermManager
         return PermManager.suList.includes(player.realName) || (PermManager.opIsSu && player.isOP());
     }
 
+    static getSuList()
+    {
+        return PermManager.suList;
+    }
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 ///                              UserList Functions                               ///

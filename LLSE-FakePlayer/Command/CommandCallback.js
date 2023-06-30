@@ -473,10 +473,17 @@ export function CmdCallback(_cmd, ori, out, res)
             else
                 out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
         }
-        else if(res.permlisttype = "list")
+        else if(res.permlisttype == "list")
         {
-            //TODO:finish 
-            out.success("perm <fpname> list");
+            let permData = PermManager.getFpPermData(fpName);
+            let resultText = i18n.tr("command.resultText.perm.list.title", fpName) + "\n";
+            resultText += i18n.tr("command.resultText.perm.list.owner") + permData.Owner;
+            for(let plName in permData.Perms)
+            {
+                resultText += "\n" + i18n.tr("command.resultText.perm.list.player", plName)
+                    + permData.Perms[plName].join(', ');
+            }
+            out.success("[FakePlayer] " + result);
         }
         else if(res.permsetownertype == "setowner")
         {
@@ -488,7 +495,7 @@ export function CmdCallback(_cmd, ori, out, res)
                 {
                     // send confirm dialog
                     FpGuiForms.sendAskForm(executor, 
-                        i18n.tr("command.resultText.remove.ask", fpName, plName),
+                        i18n.tr("command.resultText.setowner.ask", fpName, plName),
                         (executor)=>
                     {
                         result = PermManager.setOwner(executor, fpName, plName);
@@ -608,8 +615,16 @@ export function CmdCallback(_cmd, ori, out, res)
         }
         else if(res.listsutype == "listsu")
         {
-            //TODO:finish 
-            out.success("settings listsu");
+            let suList = PermManager.getSuList();
+            if(suList.length > 0)
+            {
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.listsu.title") + 
+                    "\n" + suList.join(", "));
+            }
+            else
+            {
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.listsu.none"));
+            }
         }
         else if(res.settingsitems == "maxfpcountlimit")
         {
