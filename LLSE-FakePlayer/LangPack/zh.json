@@ -16,11 +16,19 @@
         "error": {
             "onlyConsoleAction": "此操作只能在服务端控制台中执行",
             "noAccess": "你没有权限执行此操作",
-            "alreadyInAdminList": "{0} 已在管理员列表中",
-            "notInAdminList": "{0} 不在管理员列表中",
-            "setAdminTwice": "{0} 已在管理员列表中，不能被设置两次",
             "alreadyInList": "{0} 已经在 {1} 列表中",
-            "notInList": "{0} 不在 {1} 列表中"
+            "notInList": "{0} 不在 {1} 列表中",
+            "alreadyInSuList": "{0} 已在管理员列表中",
+            "notInSuList": "{0} 不在管理员列表中",
+            "permConsoleActionToPlayer": "/fpc {0} 命令只能在服务端控制台执行，无法授权给某一个特定用户",
+            "permAlreadyExists": "玩家{0}已拥有{1}权限，无法重复授权",
+            "permNotHave": "玩家{0}未拥有{1}权限，无法撤销",
+            "noPermNeeded": "命令 /fpc {0} 无需授权",
+            "playerIsAlreadyAdmin": "玩家{0}已是假人管理员，无需再单独设置操作权限",
+            "fpCountMaxLimitReached": "用户{0}拥有的假人数量已经达到上限，无法再拥有更多假人"
+        },
+        "warning": {
+            "fpNoOwner": "§6{0}§r尚未拥有所有者。请使用 /fpc perm {0} setowner <玩家名> 命令设置此假人的所有者"
         }
     },
     "fpManager": {
@@ -28,8 +36,7 @@
             "respawning": "{0} 死亡。正在重生...",
             "error": {
                 "failToRecreate": "重新创建 {0} 失败",
-                "failToRespawn": "{0} 重生失败",
-                "respawnedBut": "{0} 已重生，不过{1}"
+                "failToRespawn": "{0} 重生失败"
             },
             "respawned": "{0} 已重生",
             "failToSaveInventory": "保存 {0} 的物品栏失败"
@@ -38,8 +45,7 @@
             "fpNoFound": "§6{0}§r未找到。请先创建此假人",
             "online": {
                 "fail": "上线§6{0}§r失败",
-                "success": "§6{0}§r已上线",
-                "successBut": "§6{0}§r已创建，不过{1}"
+                "success": "§6{0}§r已上线"
             },
             "offline": {
                 "success": "§6{0}§r已下线",
@@ -86,14 +92,14 @@
                 "fail": {
                     "notValidDimId": "{0}不是一个有效的维度ID",
                     "needValidDimId": "无法创建，你必须传入一个有效的维度ID",
-                    "needValidPosition": "无法创建，你必须传入一个有效的坐标"
+                    "needValidPosition": "无法创建，你必须传入一个有效的坐标",
+                    "needValidOwner": "无法创建，你必须传入一个有效的假人所有者"
                 },
                 "success": "§6{0}§r已创建"
             },
             "remove": {
                 "ask": "你确定要删除假人§6{0}§r吗？\\n他所有的数据将被清除，且无法恢复。",
-                "success": "§6{0}§r已删除",
-                "cancelled": "动作已取消"
+                "success": "§6{0}§r已删除"
             },
             "list": {
                 "has": "共有{0}个假人:",
@@ -154,6 +160,42 @@
                 "unknownAction": "未知操作: {0}",
                 "start": "§6{0}§r的玩家同步已开始。使用命令\"/fpc sync stop\"停止玩家同步。",
                 "stop": "§6{0}§r的玩家同步已停止。"
+            },
+            "perm": {
+                "add": "已成功授予权限{0}给玩家{1}",
+                "remove": "已撤销玩家{0}的权限{1}",
+                "setowner": "已成功将§6{0}§r的所有权转移给玩家{1}",
+                "list": {
+                    "title": "§6{0}§r的权限数据：",
+                    "owner": "所有者：",
+                    "player": "玩家{0}拥有权限："
+                }
+            },
+            "action": {
+                "cancelled": "动作已取消"
+            },
+            "setowner": {
+                "ask": "确定要把§6{0}§r的所有权转移给玩家{1}吗？"
+            },
+            "settings": {
+                "setsu": "已将玩家{0}设置为超级管理员",
+                "removesu": "已撤销玩家{0}的超级管理员身份",
+                "blacklistBanned": "已将玩家{0}加入到假人系统黑名单",
+                "blacklistBanExist": "玩家{0}已在假人系统黑名单中，无法重复封禁",
+                "whitelistBanned": "已将玩家{0}移出假人系统白名单",
+                "whitelistBanNotExist": "玩家{0}不在假人系统白名单中，无法移除",
+                "blacklistAllowed": "已将玩家{0}移除出假人系统黑名单",
+                "blacklistAllowNotExist": "玩家{0}不在假人系统黑名单中，无法移除",
+                "whitelistAllowExist": "玩家{0}已在假人系统白名单中，无法重复添加",
+                "whitelistAllowed": "已将玩家{0}加入到假人系统白名单",
+                "maxFpCountLimit": {
+                    "belowZero": "错误：MaxFpCountLimit设置项的值必须大于等于0",
+                    "set": "已设置每个玩家最大拥有假人数：{0}"
+                },
+                "listsu": {
+                    "title": "假人系统超级管理员列表：",
+                    "none": "尚未设置超级管理员玩家。在控制台执行命令 /fpc settings setsu <玩家名> 来设置超级管理员"
+                }
             }
         }
     }

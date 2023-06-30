@@ -16,11 +16,19 @@
         "error": {
             "onlyConsoleAction": "This action can only be executed in server console",
             "noAccess": "You have no permission to do this action",
-            "alreadyInAdminList": "{0} is already in admin list",
-            "notInAdminList": "{0} is not in admin list",
-            "setAdminTwice": "{0} is in admin list, and cannot be set twice",
             "alreadyInList": "{0} is already in user {1}",
-            "notInList": "{0} is not in user {1}"
+            "notInList": "{0} is not in user {1}",
+            "alreadyInSuList": "{0} is already in admin list",
+            "notInSuList": "{0} is not in admin list",
+            "permConsoleActionToPlayer": "Command /fpc {0} can only be executed in BDS console. It cannot be authorized to a specific user",
+            "permAlreadyExists": "Player {0} already has {1} permission, cannot be authorized again",
+            "permNotHave": "Player {0} does not have {1} permission, cannot revoke",
+            "noPermNeeded": "No authorization is required for command /fpc {0}",
+            "playerIsAlreadyAdmin": "Player {0} is already an administrator, and no need to set the operation permission independently",
+            "fpCountMaxLimitReached": "Player {0} has reached the maximum limit of owned fakeplayer and cannot have more"
+        },
+        "warning": {
+            "fpNoOwner": "§6{0}§r does not yet have an owner. Please use command /fpc perm {0} setowner <plname> to set the owner of this fakeplayer"
         }
     },
     "fpManager": {
@@ -28,8 +36,7 @@
             "respawning": "{0} died. Respawning...",
             "error": {
                 "failToRecreate": "Fail to re-create {0}",
-                "failToRespawn": "Fail to respawn {0}",
-                "respawnedBut": "{0} respawned, but {1}"
+                "failToRespawn": "Fail to respawn {0}"
             },
             "respawned": "{0} respawned",
             "failToSaveInventory": "保存 {0} 的物品栏失败"
@@ -38,8 +45,7 @@
             "fpNoFound": "§6{0}§r no found. Please create it first.",
             "online": {
                 "fail": "Fail to online §6{0}§r",
-                "success": "§6{0}§r is online now",
-                "successBut": "`§6{0}§r created, but {1}"
+                "success": "§6{0}§r is online now"
             },
             "offline": {
                 "success": "§6{0}§r is offline now",
@@ -86,14 +92,14 @@
                 "fail": {
                     "notValidDimId": "{0} is not a valid dimension id",
                     "needValidDimId": "Fail to create. You must give a valid dimension ID",
-                    "needValidPosition": "Fail to create. You must give a valid position"
+                    "needValidPosition": "Fail to create. You must give a valid position",
+                    "needValidOwner": "Fail to create. You must give a valid fakeplayer owner"
                 },
                 "success": "§6{0}§r created"
             },
             "remove": {
                 "ask": "Are you sure to delete fakeplayer §6{0}§r?\\nAll his data will be deleted and cannot be recovered",
-                "success": "§6{0}§r is removed",
-                "cancelled": "Action cancelled"
+                "success": "§6{0}§r is removed"
             },
             "list": {
                 "has": "{0} fakeplayers in all:",
@@ -154,6 +160,42 @@
                 "unknownAction": "Unknown action: {0}",
                 "start": "Sync of §6{0}§r started. Use \"/fpc sync stop\" to stop.",
                 "stop": "Sync of §6{0}§r stopped."
+            },
+            "perm": {
+                "add": "Permission {0} have been successfully granted to player {1}",
+                "remove": "Player {0}'s permission {1} revoked",
+                "setowner": "Ownership of §6{0}§r transferred to player {1}",
+                "list": {
+                    "title": "Permission data for §6{0}§r: ",
+                    "owner": "Owner: ",
+                    "player": "Player {0} has permissions: "
+                }
+            },
+            "action": {
+                "cancelled": "Action cancelled"
+            },
+            "setowner": {
+                "ask": "Are you sure to transfer ownership of §6{0}§r to player {1}?"
+            },
+            "settings": {
+                "setsu": "Player {0} has been set as super user",
+                "removesu": "Player {0}'s super user status has been revoked",
+                "blacklistBanned": "Added player {0} to fakeplayer system blacklist",
+                "blacklistBanExist": "Player {0} is already in fakeplayer system blacklist, and can not be banned repeatedly",
+                "whitelistBanned": "Moved player {0} out of fakeplayer system whitelist",
+                "whitelistBanNotExist": "Player {0} is not in fakeplayer system whitelist and cannot be removed",
+                "blacklistAllowed": "Player {0} has been removed from fakeplayer system blacklist",
+                "blacklistAllowNotExist": "Player {0} is not in fakeplayer system blacklist and cannot be removed",
+                "whitelistAllowExist": "Player {0} is already in fakeplayer system whitelist and cannot be added repeatedly",
+                "whitelistAllowed": "Added player {0} to fakeplayer system whitelist",
+                "maxFpCountLimit": {
+                    "belowZero": "Error: Value of MaxFpCountLimit must be greater than or equal to 0",
+                    "set": "The maximum number of fakeplayers per player own has been set to: {0}"
+                },
+                "listsu": {
+                    "title": "FakePlayer system super user list: ",
+                    "none": "Super user player has not been set yet. Execute the command /fpc settings setsu <plname> in BDS console to add super users"
+                }
             }
         }
     }
