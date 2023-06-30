@@ -117,7 +117,7 @@ export function CmdCallback(_cmd, ori, out, res)
             spawnPos.z = res.createpos.z;
 
             let dimid = res.createdimid;
-            if(dimid)
+            if(dimid != undefined && dimid != null)
             {
                 // createdimid is set
                 if(!IsValidDimId(dimid))
