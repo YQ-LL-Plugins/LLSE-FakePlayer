@@ -127,7 +127,7 @@ export function CmdCallback(_cmd, ori, out, res)
                 }
                 spawnPos.dimid = dimid;
             }
-            else if(ori.player)
+            else if(isExecutedByPlayer)
                 spawnPos.dimid = ori.player.pos.dimid;
             else
             {
@@ -135,7 +135,7 @@ export function CmdCallback(_cmd, ori, out, res)
                 break;
             }
         }
-        else if(ori.player)
+        else if(isExecutedByPlayer)
         {
             // createpos not set, but executed by player
             spawnPos = CalcPosFromViewDirection(EntityGetFeetPos(ori.player), ori.player.direction, 1);
@@ -191,7 +191,7 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
-        if(ori.player)
+        if(isExecutedByPlayer)
         {
             // send confirm dialog
             FpGuiForms.sendAskForm(ori.player, 
@@ -276,7 +276,7 @@ export function CmdCallback(_cmd, ori, out, res)
                     if(isExecutedByPlayer)
                         ori.player.tell("[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName));
                     else
-                        logger.info("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+                        logger.warn("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
                 }
             }
         }
@@ -429,7 +429,7 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
-        if(!ori.player)
+        if(!isExecutedByPlayer)
             out.error("[FakePlayer] " + i18n.tr("command.resultText.give.invalidSource"));
         else
         {
@@ -576,7 +576,7 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
-        if(!ori.player)
+        if(!isExecutedByPlayer)
             out.error("[FakePlayer] " + i18n.tr("command.resultText.give.invalidSource"));
         else
         {
@@ -605,7 +605,7 @@ export function CmdCallback(_cmd, ori, out, res)
     
     case "perm":
     {
-        let executor = ori.player ? ori.player : PermManager.CONSOLE;
+        let executor = isExecutedByPlayer ? ori.player : PermManager.CONSOLE;
         let fpName = res.fpname;
 
         if(res.permtype == "add")
@@ -642,13 +642,22 @@ export function CmdCallback(_cmd, ori, out, res)
         {
             let permData = PermManager.getFpPermData(fpName);
             let resultText = i18n.tr("command.resultText.perm.list.title", fpName) + "\n";
-            resultText += i18n.tr("command.resultText.perm.list.owner") + permData.Owner;
+            let ownerName = permData.Owner;
+            if(!ownerName || ownerName.length == 0)
+            {
+                ownerName = i18n.tr("command.resultText.list.specificInfo.none");
+                if(isExecutedByPlayer)
+                    ori.player.tell("[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+                else
+                    logger.warn("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+            }
+            resultText += i18n.tr("command.resultText.perm.list.owner") + ownerName;
             for(let plName in permData.Perms)
             {
                 resultText += "\n" + i18n.tr("command.resultText.perm.list.player", plName)
                     + permData.Perms[plName].join(', ');
             }
-            out.success("[FakePlayer] " + result);
+            out.success("[FakePlayer] " + resultText);
         }
         else if(res.permsetownertype == "setowner")
         {
@@ -834,7 +843,7 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
-        if(!ori.player)
+        if(!isExecutedByPlayer)
             out.error("[FakePlayer] Only players can use gui command");
         else
             FpGuiForms.sendMainMenu(ori.player);

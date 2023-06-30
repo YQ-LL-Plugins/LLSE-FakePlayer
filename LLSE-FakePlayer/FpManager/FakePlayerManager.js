@@ -143,7 +143,7 @@ export class FakePlayerManager
                 try
                 {
                     fpData = JSON.parse(jsonStr);
-                    logger.debug(`${fpName}'s FpData: `, fpData);
+                    // logger.debug(`${fpName}'s FpData: `, fpData);
                     if(!(fpData instanceof Object))
                         return false;
                     FakePlayerManager.fpListObj[fpName] = FakePlayerInst.recoverFpData(fpName, fpData);
