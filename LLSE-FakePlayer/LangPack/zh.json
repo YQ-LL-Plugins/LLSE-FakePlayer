@@ -73,7 +73,7 @@
             "sync": {
                 "withAnotherFp": "无法与另一个假人进行sync同步"
             },
-            "helpText": "§e§l[LLSE-FakePlayer]§r\\nLiteLoaderBDS平台强大的假人插件\\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\\n- 作者: yqs112358"
+            "helpText": "§e§l[LLSE-FakePlayer]§r\nLiteLoaderBDS平台强大的假人插件\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\n- 作者: yqs112358"
         }
     },
     "command": {
@@ -81,12 +81,12 @@
             "online": "§6{0}§r已上线",
             "offline": "§6{0}§r已下线",
             "onlineAll": {
-                "partlySuccess": "有部分假人发生错误：{0}\\n这些假人已经成功上线：",
+                "partlySuccess": "有部分假人发生错误：{0}\n这些假人已经成功上线：",
                 "allSuccess": "所有假人上线成功："
             },
             "offlineAll": {
                 "allSuccess": "所有假人下线成功：",
-                "partlySuccess": "有部分假人发生错误：{0}\\n这些假人已经成功下线："
+                "partlySuccess": "有部分假人发生错误：{0}\n这些假人已经成功下线："
             },
             "create": {
                 "fail": {
@@ -98,16 +98,17 @@
                 "success": "§6{0}§r已创建"
             },
             "remove": {
-                "ask": "你确定要删除假人§6{0}§r吗？\\n他所有的数据将被清除，且无法恢复。",
+                "ask": "你确定要删除假人§6{0}§r吗？\n他所有的数据将被清除，且无法恢复。",
                 "success": "§6{0}§r已删除"
             },
             "list": {
                 "has": "共有{0}个假人:",
                 "none": "共有0个假人。",
                 "specificInfo": {
+                    "model": "- 坐标: {0}\n- 执行操作: {1}\n- 同步玩家: {2}\n- 状态: {3}\n- 所有者: {4}",
                     "none": "无",
-                    "online": "§a§l在线§r",
-                    "offline": "§c§l离线§r"
+                    "online": "在线",
+                    "offline": "离线"
                 }
             },
             "operation": {

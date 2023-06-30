@@ -266,9 +266,10 @@ export function CmdCallback(_cmd, ori, out, res)
                 let syncStatusStr = syncPlayerName ? syncPlayerName : i18n.tr("command.resultText.list.specificInfo.none");
                 let statusStr = result.isOnline ? i18n.tr("command.resultText.list.specificInfo.online")
                     : i18n.tr("command.resultText.list.specificInfo.offline");
+                let ownerName = result.ownerName ? result.ownerName : i18n.tr("command.resultText.list.specificInfo.none");
 
-                out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo", 
-                    posObj.toString(), operationStr, syncStatusStr, statusStr));
+                out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo.model", 
+                    posObj.toString(), operationStr, syncStatusStr, statusStr, ownerName));
             }
         }
         break;

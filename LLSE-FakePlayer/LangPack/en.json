@@ -73,7 +73,7 @@
             "sync": {
                 "withAnotherFp": "Cannot sync with another fakeplayer"
             },
-            "helpText": "§e§l[LLSE-FakePlayer]§r\\nA strong fake-player plugin for LiteLoaderBDS\\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\\n- Author: yqs112358"
+            "helpText": "§e§l[LLSE-FakePlayer]§r\nA strong fake-player plugin for LiteLoaderBDS\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\n- Author: yqs11235"
         }
     },
     "command": {
@@ -81,12 +81,12 @@
             "online": "§6{0}§r is online",
             "offline": "§6{0}§r is offline",
             "onlineAll": {
-                "partlySuccess": "Some fakeplayers failed with error: {0}\\nThese fakeplayers are online now:",
+                "partlySuccess": "Some fakeplayers failed with error: {0}\nThese fakeplayers are online now: ",
                 "allSuccess": "All fakeplayers are online:"
             },
             "offlineAll": {
                 "allSuccess": "All fakeplayers are offline:",
-                "partlySuccess": "Some fakeplayers failed with error: {0}\\nThese fakeplayers are offline now:"
+                "partlySuccess": "Some fakeplayers failed with error: {0}\nThese fakeplayers are offline now: "
             },
             "create": {
                 "fail": {
@@ -98,16 +98,17 @@
                 "success": "§6{0}§r created"
             },
             "remove": {
-                "ask": "Are you sure to delete fakeplayer §6{0}§r?\\nAll his data will be deleted and cannot be recovered",
+                "ask": "Are you sure you want to delete fakeplayer §6{0}§r?\nAll his data will be deleted and cannot be recovered.",
                 "success": "§6{0}§r is removed"
             },
             "list": {
                 "has": "{0} fakeplayers in all:",
                 "none": "No fakeplayers now.",
                 "specificInfo": {
+                    "model": "- Position: {0}\n- Do Operation: {1}\n- Sync with Player: {2}\n- Status: {3}\n- Owner: {4}",
                     "none": "None",
-                    "online": "§a§lOnline§r",
-                    "offline": "§c§lOffline§r"
+                    "online": "Online",
+                    "offline": "Offline"
                 }
             },
             "operation": {
