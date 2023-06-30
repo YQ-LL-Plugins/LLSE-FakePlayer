@@ -437,6 +437,9 @@ export class PermManager
             return false;
         }
 
+        // If fp is not valid, refuse
+        if(!FakePlayerManager.getFpInstance(fpName))
+            return false;
         // If player is not valid, refuse
         if(!player)
             return false;

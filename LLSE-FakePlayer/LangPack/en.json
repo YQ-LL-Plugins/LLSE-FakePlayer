@@ -205,7 +205,7 @@
                     "waitConfirm": "Waiting for player {0} to give an acceptance reply...",
                     "notOnline": "Player {0} is not online and cannot transfer ownership to him",
                     "rejected": "Player {0} has rejected your ownership transfer request",
-                    "toself": "You are already the owner of fakeplayer {0} and cannot repeat the setting"
+                    "toself": "The owner of the fakeplayer {0} is already {1}. It cannot be set repeatedly"
                 }
             },
             "action": {

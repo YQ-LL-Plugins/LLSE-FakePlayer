@@ -620,6 +620,11 @@ export function CmdCallback(_cmd, ori, out, res)
     {
         let executor = isExecutedByPlayer ? ori.player : PermManager.CONSOLE;
         let fpName = res.fpname;
+        if(!FakePlayerManager.getFpInstance(fpName))
+        {
+            out.error("[FakePlayer] " + i18n.tr("fpManager.resultText.fpNoFound", fpName));
+            break;
+        }
 
         if(res.permtype == "add")
         {
@@ -696,10 +701,10 @@ export function CmdCallback(_cmd, ori, out, res)
                 // player execute
                 if(PermManager.hasPermission(executor, "perm", fpName))
                 {
-                    if(plName == executor.realName)
+                    if(plName == FakePlayerManager.getFpInstance(fpName).getOwnerName())
                     {
                         // cannot setowner to self
-                        out.error("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.toself", fpName));
+                        out.error("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.toself", fpName, plName));
                         break;
                     }
                     // send confirm dialog
