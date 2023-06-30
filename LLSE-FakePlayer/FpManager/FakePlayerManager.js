@@ -297,19 +297,18 @@ export class FakePlayerManager
         {
             return i18n.tr("fpManager.resultText.fpExists", fpName);
         }
-        if(!PermManager.checkPlayerHasSpaceForNewFp(ownerName))
-        {
-            // ownerName cannot have more fp
-            return i18n.tr("permManager.error.fpCountMaxLimitReached", ownerName);
-        }
-        let fp = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
-        let result = PermManager.setOwner(executor, fpName, ownerName);
-        if(result != SUCCESS)
-            return result;
 
+        let fp = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
         FakePlayerManager.fpListObj[fpName] = fp;
         FpListSoftEnum.add(fpName);
         FakePlayerManager.saveFpData(fpName, false);
+
+        let result = PermManager.setOwner(executor, fpName, ownerName);
+        if(result != SUCCESS)
+        {
+            FakePlayerManager.remove(fpName);   // withdraw previous changes
+            return result;
+        }
         return SUCCESS;
     }
 
