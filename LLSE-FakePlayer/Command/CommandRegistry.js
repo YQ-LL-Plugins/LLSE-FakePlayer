@@ -27,13 +27,14 @@ export function RegisterCmd()
     fpCmd.mandatory("action", ParamType.Enum, "AllStatusAction", "AllStatusAction", 1);
     fpCmd.overload(["AllStatusAction"]);
 
-    // fpc create <name> [createpos]
+    // fpc create <name> [createpos] [ownerName]
     fpCmd.setEnum("CreateAction", ["create"]);
     fpCmd.mandatory("action", ParamType.Enum, "CreateAction", "CreateAction", 1);
     fpCmd.mandatory("fpnewname", ParamType.String);
     fpCmd.optional("createpos", ParamType.Vec3);
     fpCmd.optional("createdimid", ParamType.Int);
-    fpCmd.overload(["CreateAction", "fpnewname", "createpos", "createdimid"]);
+    fpCmd.optional("ownername", ParamType.String);
+    fpCmd.overload(["CreateAction", "fpnewname", "createpos", "createdimid", "ownername"]);
 
     // fpc remove <fpname>
     fpCmd.setEnum("RemoveAction", ["remove"]);

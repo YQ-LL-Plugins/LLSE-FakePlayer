@@ -7,69 +7,106 @@ import { SUCCESS } from "../Utils/GlobalVars.js";
 
 export function CmdCallback(_cmd, ori, out, res)
 {
-    let permRes = PermManager.checkOriginPermission(ori, res.action);
-    if(permRes != SUCCESS)
+    // logger.debug("OriginType: ", ori.type);
+    let isExecutedByPlayer = (ori.player != null);
+    let isExecutedByConsole = (ori.type == 7);          // 7 is BDS console
+    if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
     {
-        out.error("[FakePlayer] " + permRes);
+        out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
         return;
     }
 
-    // logger.debug("OriginType: ", ori.type);
-    let isExecutedByPlayer = (ori.player == null);
     let result;
-    switch(res.action)
+    let action = res.action;
+    switch(action)
     {
     case "online":
-        result = FakePlayerManager.online(res.fpname);
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+        result = FakePlayerManager.online(fpName);
         if (result == SUCCESS)
-            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.online", res.fpname));
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.online", fpName));
         else
             out.error("[FakePlayer] " + result);
         break;
+    }
     case "offline":
-        result = FakePlayerManager.offline(res.fpname);
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+        result = FakePlayerManager.offline(fpName);
         if(result == SUCCESS)
-            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.offline", res.fpname));
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.offline", fpName));
         else
             out.error("[FakePlayer] " + result)
         break;
+    }
     case "onlineall":
+    {
+        if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
         {
-            let successNames = [];
-            [result, successNames] = FakePlayerManager.onlineAll(isExecutedByPlayer ? ori.player : PermManager.CONSOLE);
-
-            let namesList = "";
-            for(let name of successNames)
-                namesList += `§6${name}§r, `;
-            namesList = namesList.substring(0, namesList.length - 2);
-            if(result == SUCCESS)
-                out.success("[FakePlayer] " + i18n.tr("command.resultText.onlineAll.allSuccess") 
-                    + "\n" + namesList);
-            else
-                out.error("[FakePlayer] " + i18n.tr("command.resultText.onlineAll.partlySuccess", result)
-                    + "\n" + namesList)
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
             break;
         }
+
+        let successNames = [];
+        [result, successNames] = FakePlayerManager.onlineAll(isExecutedByPlayer ? ori.player : PermManager.CONSOLE);
+
+        let namesList = "";
+        for(let name of successNames)
+            namesList += `§6${name}§r, `;
+        namesList = namesList.substring(0, namesList.length - 2);
+        if(result == SUCCESS)
+            out.success("[FakePlayer] " + i18n.tr("command.resultText.onlineAll.allSuccess") 
+                + "\n" + namesList);
+        else
+            out.error("[FakePlayer] " + i18n.tr("command.resultText.onlineAll.partlySuccess", result)
+                + "\n" + namesList)
+        break;
+    }
     case "offlineall":
+    {
+        if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
         {
-            let successNames = [];
-            [result, successNames] = FakePlayerManager.offlineAll(isExecutedByPlayer ? ori.player : PermManager.CONSOLE);
-
-            let namesList = "";
-            for(let name of successNames)
-                namesList += `§6${name}§r, `;
-            namesList = namesList.substring(0, namesList.length - 2);
-            if(result == SUCCESS)
-                out.success("[FakePlayer] " + i18n.tr("command.resultText.offlineAll.allSuccess") 
-                    + "\n" + namesList);
-            else
-                out.error("[FakePlayer] " + i18n.tr("command.resultText.offlineAll.partlySuccess", result)
-                    + "\n" + namesList)
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
             break;
         }
+        
+        let successNames = [];
+        [result, successNames] = FakePlayerManager.offlineAll(isExecutedByPlayer ? ori.player : PermManager.CONSOLE);
+
+        let namesList = "";
+        for(let name of successNames)
+            namesList += `§6${name}§r, `;
+        namesList = namesList.substring(0, namesList.length - 2);
+        if(result == SUCCESS)
+            out.success("[FakePlayer] " + i18n.tr("command.resultText.offlineAll.allSuccess") 
+                + "\n" + namesList);
+        else
+            out.error("[FakePlayer] " + i18n.tr("command.resultText.offlineAll.partlySuccess", result)
+                + "\n" + namesList)
+        break;
+    }
 
     case "create":
     {
+        if(isExecutedByPlayer && !PermManager.checkPermToCreateNewFp(ori.player))
+        {
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+            break;
+        }
+
         let fpName = res.fpnewname;
         let spawnPos = new FloatPos(0, 32767, 0, 0);
         // if createpos is set
@@ -109,9 +146,26 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
+        let ownerName;
+        if(isExecutedByConsole)
+        {
+            ownerName = res.ownername;
+            if(!ownerName)
+            {
+                out.error(`[FakePlayer] ` + i18n.tr("command.resultText.create.fail.needValidOwner"));
+                break;
+            }
+        }
+        else
+        {
+            // In default, creator is owner
+            ownerName = ori.player.realName;
+        }
+
         // create
         // logger.debug("SpawnPos: ", spawnPos.toString());
-        result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.dimid);
+        let executor = isExecutedByPlayer ? ori.player : PermManager.CONSOLE;
+        result = FakePlayerManager.createNew(fpName, spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.dimid, ownerName, executor);
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
@@ -130,6 +184,13 @@ export function CmdCallback(_cmd, ori, out, res)
     case "remove":
     {
         let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
         if(ori.player)
         {
             // send confirm dialog
@@ -160,89 +221,115 @@ export function CmdCallback(_cmd, ori, out, res)
         break;
     }
     case "list":
+    {
+        if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
         {
-            let fpName = res.fpname2;
-            if(!fpName)
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+            break;
+        }
+
+        let fpName = res.fpname2;
+        if(!fpName)
+        {
+            // get namelist of all fps
+            result = FakePlayerManager.list()[1];
+            let namesStr = "";
+            for(let name of result)
             {
-                // get namelist of all fps
-                result = FakePlayerManager.list()[1];
-                let namesStr = "";
-                for(let name of result)
-                {
-                    let isOnline = FakePlayerManager.isOnline(name)[1];
-                    if(isOnline)
-                        namesStr += "§6" + name + "§r, ";
-                    else
-                        namesStr += name + ", ";
-                }
-                if(namesStr.length > 0)
-                {
-                    namesStr = namesStr.substring(0, namesStr.length - 2);
-                    out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.has", result.length) + `\n${namesStr}`);
-                }
+                let isOnline = FakePlayerManager.isOnline(name)[1];
+                if(isOnline)
+                    namesStr += "§6" + name + "§r, ";
                 else
-                    out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.none"));
+                    namesStr += name + ", ";
+            }
+            if(namesStr.length > 0)
+            {
+                namesStr = namesStr.substring(0, namesStr.length - 2);
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.has", result.length) + `\n${namesStr}`);
             }
             else
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.list.none"));
+        }
+        else
+        {
+            // get info of a specific fp
+            let resultData = FakePlayerManager.getAllInfo(fpName);
+            if(resultData[0] != SUCCESS)
+                out.error(`[FakePlayer] ` + resData[0]);
+            else
             {
-                // get info of a specific fp
-                let resultData = FakePlayerManager.getAllInfo(fpName);
-                if(resultData[0] != SUCCESS)
-                    out.error(`[FakePlayer] ` + resData[0]);
-                else
-                {
-                    let result = resultData[1];
-                    let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
-                    let syncPlayerName = data.xuid2name(result.syncXuid);
+                let result = resultData[1];
+                let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
+                let syncPlayerName = data.xuid2name(result.syncXuid);
 
-                    let operationStr = result.operation ? result.operation : i18n.tr("command.resultText.list.specificInfo.none");
-                    let syncStatusStr = syncPlayerName ? syncPlayerName : i18n.tr("command.resultText.list.specificInfo.none");
-                    let statusStr = result.isOnline ? i18n.tr("command.resultText.list.specificInfo.online")
-                        : i18n.tr("command.resultText.list.specificInfo.offline");
+                let operationStr = result.operation ? result.operation : i18n.tr("command.resultText.list.specificInfo.none");
+                let syncStatusStr = syncPlayerName ? syncPlayerName : i18n.tr("command.resultText.list.specificInfo.none");
+                let statusStr = result.isOnline ? i18n.tr("command.resultText.list.specificInfo.online")
+                    : i18n.tr("command.resultText.list.specificInfo.offline");
 
-                    out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo", 
-                        posObj.toString(), operationStr, syncStatusStr, statusStr));
-                }
+                out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo", 
+                    posObj.toString(), operationStr, syncStatusStr, statusStr));
             }
         }
         break;
+    }
+
     case "operation":
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
         if(res.optype)
         {
             // short op type
             if(res.optype == "clear")
-                result = FakePlayerManager.clearOperation(res.fpname);
+                result = FakePlayerManager.clearOperation(fpName);
             else
-                result = FakePlayerManager.setOperation(res.fpname, res.optype, res.interval, res.maxtimes);
+                result = FakePlayerManager.setOperation(fpName, res.optype, res.interval, res.maxtimes);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
                 break;
             }  
             if(res.optype == "clear")
-                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.clear", res.fpname));
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.clear", fpName));
             else
-                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.setTo", res.fpname, res.optype));
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.setTo", fpName, res.optype));
         }
         else
         {
             // long op type
-            result = FakePlayerManager.setOperation(res.fpname, res.longoptype, res.interval, res.maxtimes, res.length);
+            result = FakePlayerManager.setOperation(fpName, res.longoptype, res.interval, res.maxtimes, res.length);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.setTo", res.fpname, res.longoptype));
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.operation.setTo", fpName, res.longoptype));
         }
         break;
+    }
     case "walkto":
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
         // logger.debug(res.player);
         if((res.player instanceof Array) && res.player != [])
         {
             let target = res.player[0];
             let data = null;
-            [result, data] = FakePlayerManager.walkToEntity(res.fpname, target);
+            [result, data] = FakePlayerManager.walkToEntity(fpName, target);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
@@ -252,7 +339,7 @@ export function CmdCallback(_cmd, ori, out, res)
                 out.success(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.targetSet", target.name));
             else
             {
-                let fpPos = FakePlayerManager.getPosition(res.fpname)[1];
+                let fpPos = FakePlayerManager.getPosition(fpName)[1];
                 let dimid = fpPos ? fpPos.dimid : target.pos.dimid;
 
                 let lastData = data.path[data.path.length - 1];
@@ -264,7 +351,7 @@ export function CmdCallback(_cmd, ori, out, res)
         {
             let data = null;
             // logger.debug(res.targetpos);
-            [result, data] = FakePlayerManager.walkToPos(res.fpname, res.targetpos);
+            [result, data] = FakePlayerManager.walkToPos(fpName, res.targetpos);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
@@ -274,7 +361,7 @@ export function CmdCallback(_cmd, ori, out, res)
                 out.success(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.targetSet", res.targetpos));
             else
             {
-                let fpPos = FakePlayerManager.getPosition(res.fpname)[1];
+                let fpPos = FakePlayerManager.getPosition(fpName)[1];
                 let dimid = fpPos ? fpPos.dimid : 0;        // if cannot get dimid, guess that is 0
 
                 let lastData = data.path[data.path.length - 1];
@@ -285,125 +372,183 @@ export function CmdCallback(_cmd, ori, out, res)
         else
             out.error(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.invalidTarget"))
         break;
+    }
     case "tp":
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
         // logger.debug(res.player);
         if((res.player instanceof Array) && res.player != [])
         {
             let target = res.player[0];
-            result = FakePlayerManager.teleportToEntity(res.fpname, target);
+            result = FakePlayerManager.teleportToEntity(fpName, target);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.tp.success", res.fpname, target.name));
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.tp.success", fpName, target.name));
         }
         else if (res.targetpos)
         {
-            result = FakePlayerManager.teleportToPos(res.fpname, res.targetpos);
+            result = FakePlayerManager.teleportToPos(fpName, res.targetpos);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] `+ i18n.tr("command.resultText.tp.success", res.fpname, res.targetpos));
+            out.success(`[FakePlayer] `+ i18n.tr("command.resultText.tp.success", fpName, res.targetpos));
         }
         else
             out.error(`[FakePlayer] ` + i18n.tr("command.resultText.walkto.invalidTarget"))
         break;
+    }
     
     case "give":
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
         if(!ori.player)
             out.error("[FakePlayer] " + i18n.tr("command.resultText.give.invalidSource"));
         else
         {
-            result = FakePlayerManager.giveItem(res.fpname, ori.player);
+            result = FakePlayerManager.giveItem(fpName, ori.player);
             if(result != SUCCESS)
             {
                 out.error("[FakePlayer] " + result);
                 break;
             }  
-            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.give.success", res.fpname));
+            out.success(`[FakePlayer] ` + i18n.tr("command.resultText.give.success", fpName));
         }
         break;
+    }
     case "getinventory":
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
         {
-            let data = null;
-            [result, data] = FakePlayerManager.getInventory(res.fpname);
-            if(result != SUCCESS)
-            {
-                out.error("[FakePlayer] " + result);
-                break;
-            }
-            let resStr = `[FakePlayer] ` + i18n.tr("command.resultText.inventory.title", res.fpname) + "\n";
-
-            // hand
-            let item = data.Hand;
-            if(item)
-                resStr += i18n.tr("command.resultText.inventory.mainHand.item", item.name, item.cout) + "\n";
-            else
-                resStr += i18n.tr("command.resultText.inventory.mainHand.empty") + "\n";
-            
-            // offhand
-            item = data.OffHand;
-            if(item)
-                resStr += i18n.tr("command.resultText.inventory.offHand.item", item.name, item.cout) + "\n";
-            else
-                resStr += i18n.tr("command.resultText.inventory.offHand.empty") + "\n";
-            
-            // inventory
-            let inventoryStr = "";
-            for(let i=0; i<data.Inventory.length; ++i)
-            {
-                let item = data.Inventory[i];
-                if(item)
-                {
-                    inventoryStr += `${i}: §6${item.name}§2[${item.count}]§r  `;
-                }
-            }
-            if(inventoryStr == "")
-                resStr += i18n.tr("command.resultText.inventory.inventory.empty") + "\n";
-            else
-                resStr += i18n.tr("command.resultText.inventory.inventory.prefix") + "\n" + inventoryStr + "\n";
-            
-            // armor
-            let armorStr = "";
-            for(let i=0; i<data.Armor.length; ++i)
-            {
-                let item = data.Armor[i];
-                if(item)
-                {
-                    armorStr += `${i}: §6${item.name}§2[${item.count}]§r  `;
-                }
-            }
-            if(armorStr == "")
-                resStr += i18n.tr("command.resultText.inventory.armor.empty") + "\n";
-            else
-                resStr += i18n.tr("command.resultText.inventory.armor.prefix") + "\n" + armorStr + "\n";
-            
-            out.success(resStr);
+            out.error("[FakePlayer] " + result);
             break;
         }
+
+        let data = null;
+        [result, data] = FakePlayerManager.getInventory(fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+        let resStr = `[FakePlayer] ` + i18n.tr("command.resultText.inventory.title", fpName) + "\n";
+
+        // hand
+        let item = data.Hand;
+        if(item)
+            resStr += i18n.tr("command.resultText.inventory.mainHand.item", item.name, item.cout) + "\n";
+        else
+            resStr += i18n.tr("command.resultText.inventory.mainHand.empty") + "\n";
+        
+        // offhand
+        item = data.OffHand;
+        if(item)
+            resStr += i18n.tr("command.resultText.inventory.offHand.item", item.name, item.cout) + "\n";
+        else
+            resStr += i18n.tr("command.resultText.inventory.offHand.empty") + "\n";
+        
+        // inventory
+        let inventoryStr = "";
+        for(let i=0; i<data.Inventory.length; ++i)
+        {
+            let item = data.Inventory[i];
+            if(item)
+            {
+                inventoryStr += `${i}: §6${item.name}§2[${item.count}]§r  `;
+            }
+        }
+        if(inventoryStr == "")
+            resStr += i18n.tr("command.resultText.inventory.inventory.empty") + "\n";
+        else
+            resStr += i18n.tr("command.resultText.inventory.inventory.prefix") + "\n" + inventoryStr + "\n";
+        
+        // armor
+        let armorStr = "";
+        for(let i=0; i<data.Armor.length; ++i)
+        {
+            let item = data.Armor[i];
+            if(item)
+            {
+                armorStr += `${i}: §6${item.name}§2[${item.count}]§r  `;
+            }
+        }
+        if(armorStr == "")
+            resStr += i18n.tr("command.resultText.inventory.armor.empty") + "\n";
+        else
+            resStr += i18n.tr("command.resultText.inventory.armor.prefix") + "\n" + armorStr + "\n";
+        
+        out.success(resStr);
+        break;
+    }
     case "drop":
-        result = FakePlayerManager.dropItem(res.fpname, res.slotid2);
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
+        result = FakePlayerManager.dropItem(fpName, res.slotid2);
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
             break;
         }  
-        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.drop.success", res.fpname));
+        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.drop.success", fpName));
         break;
+    }
     case "dropall":
-        result = FakePlayerManager.dropAllItems(res.fpname);
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
+        result = FakePlayerManager.dropAllItems(fpName);
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
             break;
         }  
-        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.dropAll.success", res.fpname));
+        out.success(`[FakePlayer] ` + i18n.tr("command.resultText.dropAll.success", fpName));
         break;
+    }
     case "setselect":
-        result = FakePlayerManager.setSelectSlot(res.fpname, res.slotid);
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
+        result = FakePlayerManager.setSelectSlot(fpName, res.slotid);
         if(result != SUCCESS)
         {
             out.error("[FakePlayer] " + result);
@@ -411,15 +556,25 @@ export function CmdCallback(_cmd, ori, out, res)
         }  
         out.success(`[FakePlayer] ` + i18n.tr("command.resultText.setselect.success"));
         break;
+    }
     case "sync":
+    {
+        let fpName = res.fpname;
+        result = PermManager.checkOriginPermission(ori, action, fpName);
+        if(result != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result);
+            break;
+        }
+
         if(!ori.player)
             out.error("[FakePlayer] " + i18n.tr("command.resultText.give.invalidSource"));
         else
         {
             if(res.synctype == "start")
-                result = FakePlayerManager.startSync(res.fpname, ori.player);
+                result = FakePlayerManager.startSync(fpName, ori.player);
             else if (res.synctype == "stop")
-                result = FakePlayerManager.stopSync(res.fpname);
+                result = FakePlayerManager.stopSync(fpName);
             else
             {
                 out.error(`[FakePlayer] ` + i18n.tr("command.resultText.sync.unknownAction", res.synctype));
@@ -432,11 +587,12 @@ export function CmdCallback(_cmd, ori, out, res)
                 break;
             }
             if(res.synctype == "start")
-                out.success("[FakePlayer] " + i18n.tr("command.resultText.sync.start", res.fpname));
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.sync.start", fpName));
             else
-                out.success("[FakePlayer] " + i18n.tr("command.resultText.sync.stop", res.fpname));
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.sync.stop", fpName));
         }
         break;
+    }
     
     case "perm":
     {
@@ -445,13 +601,13 @@ export function CmdCallback(_cmd, ori, out, res)
 
         if(res.permtype == "add")
         {
-            let action = res.actionenum;
+            let subAction = res.actionenum;
             let plName = res.plname;
             if(PermManager.hasPermission(executor, "perm", fpName))
             {
-                result = PermManager.addCertainPerm(executor, fpName, plName, action);
+                result = PermManager.addCertainPerm(executor, fpName, plName, subAction);
                 if(result == SUCCESS)
-                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.add", action, plName));
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.add", subAction, plName));
                 else
                     out.error("[FakePlayer] " + result);
             }
@@ -460,13 +616,13 @@ export function CmdCallback(_cmd, ori, out, res)
         }
         else if(res.permtype == "remove")
         {
-            let action = res.actionenum;
+            let subAction = res.actionenum;
             let plName = res.plname;
             if(PermManager.hasPermission(executor, "perm", fpName))
             {
-                result = PermManager.removeCertainPerm(executor, fpName, plName, action);
+                result = PermManager.removeCertainPerm(executor, fpName, plName, subAction);
                 if(result == SUCCESS)
-                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.remove", plName, action));
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.remove", plName, subAction));
                 else
                     out.error("[FakePlayer] " + result);
             }
@@ -528,7 +684,7 @@ export function CmdCallback(_cmd, ori, out, res)
 
     case "settings":
     {
-        if(ori.player)
+        if(isExecutedByPlayer)
         {
             // settings can only execute in console
             out.error("[FakePlayer] " + i18n.tr("permManager.error.onlyConsoleAction"));
@@ -643,13 +799,32 @@ export function CmdCallback(_cmd, ori, out, res)
     }
 
     case "import":
+        if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
+        {
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+            break;
+        }
+
         out.success(`[FakePlayer] Target file: ${res.filepath}. Function not finished.`);
         break;
     case "help":
+        if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
+        {
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+            break;
+        }
+
         result = FakePlayerManager.getHelp()[1];
         out.success(result);
         break;
+
     case "gui":
+        if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))
+        {
+            out.error("[FakePlayer] " + i18n.tr("permManager.error.noAccess"));
+            break;
+        }
+
         if(!ori.player)
             out.error("[FakePlayer] Only players can use gui command");
         else
@@ -657,6 +832,6 @@ export function CmdCallback(_cmd, ori, out, res)
         break;
     
     default:
-        out.error(`[FakePlayer] Unknown action: ${res.action}`);
+        out.error(`[FakePlayer] Unknown action: ${action}`);
     }
 }
