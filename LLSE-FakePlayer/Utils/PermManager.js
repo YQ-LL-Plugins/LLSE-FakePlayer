@@ -58,6 +58,11 @@ export class PermManager
             permConf.init("Perms", {});
     }
 
+    static deleteFpPermConfig(fpName)
+    {
+        return File.delete(_FP_PERMISSION_DIR + `${fpName}.json`);
+    }
+
     static getPlayerOwnFpCount(plName)
     {
         let count = 0;
@@ -66,6 +71,13 @@ export class PermManager
                 ++count;
         });
         return count;
+    }
+
+    static checkPlayerHasSpaceForNewFp(plName)
+    {
+        let maxFpCountLimit = GlobalConf.get("MaxFpCountLimitEach", 3);
+        let currentFpCount = PermManager.getPlayerOwnFpCount(plName);
+        return currentFpCount < maxFpCountLimit;
     }
 
 
@@ -169,9 +181,7 @@ export class PermManager
             {
                 // Check if new owner has space for new fp
                 // (Su can have unlimited numbers of fps)
-                let maxFpCountLimit = GlobalConf.get("MaxFpCountLimitEach", 3);
-                let currentFpCount = PermManager.getPlayerOwnFpCount(newOwnerName);
-                if(currentFpCount > maxFpCountLimit)
+                if(!PermManager.checkPlayerHasSpaceForNewFp(newOwnerName))
                 {
                     // newOwnerName cannot have more fp
                     return i18n.tr("permManager.error.fpCountMaxLimitReached", newOwnerName);
@@ -338,6 +348,8 @@ export class PermManager
                 else
                 {
                     permsData[plName].removeByValue("admin");
+                    if(permsData[plName].length == 0)
+                        delete permsData[plName];
                     permConf.set("Perms", permsData);
                     return SUCCESS;
                 }
@@ -358,6 +370,8 @@ export class PermManager
                     return i18n.tr("permManager.error.permNotHave", plName, action);
                 }
                 permsData[plName].removeByValue(action);
+                if(permsData[plName].length == 0)
+                    delete permsData[plName];
                 permConf.set("Perms", permsData);
                 return SUCCESS;
             }
@@ -482,7 +496,7 @@ export class PermManager
     // return true / false
     static checkPermToCreateNewFp(player)
     {
-        return PermManager.isSu(player) || PermManager.isAllowInUserList(plName);
+        return PermManager.isSu(player) || PermManager.isAllowInUserList(player.realName);
     }
 
     // return PermData / null

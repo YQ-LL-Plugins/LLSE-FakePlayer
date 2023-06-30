@@ -158,8 +158,12 @@ export function CmdCallback(_cmd, ori, out, res)
         }
         else
         {
-            // In default, creator is owner
-            ownerName = ori.player.realName;
+            ownerName = res.ownername;
+            if(!ownerName)
+            {
+                // In default, creator is owner
+                ownerName = ori.player.realName;
+            }
         }
 
         // create
