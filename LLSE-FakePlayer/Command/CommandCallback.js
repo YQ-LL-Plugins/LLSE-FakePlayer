@@ -164,6 +164,15 @@ export function CmdCallback(_cmd, ori, out, res)
                 // In default, creator is owner
                 ownerName = ori.player.realName;
             }
+            else
+            {
+                // Common players cannot create fp for other players
+                if(!PermManager.isSu(ori.player))
+                {
+                    out.error(`[FakePlayer] ` + i18n.tr("command.resultText.create.fail.commonPlayerCreateForOther"));
+                    break;
+                }
+            }
         }
 
         // create
@@ -673,14 +682,72 @@ export function CmdCallback(_cmd, ori, out, res)
                 {
                     // send confirm dialog
                     FpGuiForms.sendAskForm(executor, 
-                        i18n.tr("command.resultText.setowner.ask", fpName, plName),
+                        i18n.tr("command.resultText.perm.setowner.ask", fpName, plName),
                         (executor)=>
                     {
-                        result = PermManager.setOwner(executor, fpName, plName);
-                        if(result == SUCCESS)
-                            out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner", fpName, plName));
+                        if(PermManager.isSu(executor))
+                        {
+                            // if executor is su, set it directly
+                            result = PermManager.setOwner(executor, fpName, plName);
+                            if(result == SUCCESS)
+                            {
+                                let targetPlayer = mc.getPlayer(plName);
+                                if(targetPlayer)
+                                {
+                                    targetPlayer.tell("[FakePlayer] " + 
+                                        i18n.tr("permManager.success.setOwner.received", executor.realName, fpName));
+                                }
+                                out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.success", fpName, plName));
+                            }
+                            else
+                                out.error("[FakePlayer] " + result);
+                        }
                         else
-                            out.error("[FakePlayer] " + result);
+                        {
+                            // if executor is not su, have more check to avoid hack
+                            let targetPlayer = mc.getPlayer(plName);
+                            if(!targetPlayer)
+                            {
+                                out.error("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.notOnline", plName));
+                                return;
+                            }
+                            if(targetPlayer.isSimulatedPlayer())
+                            {
+                                out.error("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.tofp", plName));
+                                return;
+                            }
+                            if(!PermManager.checkPlayerHasSpaceForNewFp(plName))
+                            {
+                                // plName cannot have more fp
+                                out.error("[FakePlayer] " + i18n.tr("permManager.error.fpCountMaxLimitReached", plName));
+                                return;
+                            }
+
+                            // ask the target to confirm transfer
+                            executor.tell("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.waitConfirm", plName));
+                            FpGuiForms.sendAskForm(targetPlayer, i18n.tr("permManager.ask.setOwner.confirm", executor.realName, fpName),
+                                (pl) => {
+                                    // confirmed
+                                    result = PermManager.setOwner(executor, fpName, plName);
+                                    if(result == SUCCESS)
+                                    {
+                                        targetPlayer.tell("[FakePlayer] " + 
+                                            i18n.tr("permManager.success.setOwner.received", executor.realName, fpName));
+                                        out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.success", fpName, plName));
+                                    }
+                                    else
+                                    {
+                                        targetPlayer.tell("[FakePlayer] " + 
+                                            i18n.tr("permManager.fail.setOwner.received", executor.realName, fpName));
+                                        out.error("[FakePlayer] " + result);
+                                    }
+                                },
+                                (pl) => {
+                                    // rejected
+                                    out.error("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.rejected", plName));
+                                    return;
+                                })
+                        }
                     }, (pl)=>
                     {
                         pl.tell("[FakePlayer] " + i18n.tr("command.resultText.action.cancelled"));
@@ -691,10 +758,18 @@ export function CmdCallback(_cmd, ori, out, res)
             }
             else
             {
-                // console execute
+                // console execute, set it directly
                 result = PermManager.setOwner(executor, fpName, plName);
                 if(result == SUCCESS)
-                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner", fpName, plName));
+                {
+                    let targetPlayer = mc.getPlayer(plName);
+                    if(targetPlayer)
+                    {
+                        targetPlayer.tell("[FakePlayer] " + 
+                            i18n.tr("permManager.success.setOwner.received", "BDS Console", fpName));
+                    }
+                    out.success("[FakePlayer] " + i18n.tr("command.resultText.perm.setowner.success", fpName, plName));
+                }
                 else
                     out.error("[FakePlayer] " + result);
             }
