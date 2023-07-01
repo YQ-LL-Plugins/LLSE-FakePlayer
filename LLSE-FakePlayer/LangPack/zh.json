@@ -2,7 +2,7 @@
     "main": {
         "welcome": "LLSE-FakePlayer {0} 已加载。作者：yqs112358",
         "autoreconnect": {
-            "error": "重新连接时出现错误："
+            "error": "重新连接时出现错误: "
         }
     },
     "dimension": {
@@ -87,7 +87,7 @@
             "invalidSourcePlayer": "来源玩家无效",
             "fpFailToTransport": "传送§6{0}§r失败",
             "fpFailToGiveItem": "未能成功将物品给予§6{0}§r",
-            "failToSpaceForNewItem": "为新物品腾出空间失败：{0}",
+            "failToSpaceForNewItem": "为新物品腾出空间失败: {0}",
             "failToRemoveOldItem": "移除§6{0}§r的旧物品失败",
             "failToSetNewItem": "设置§6{0}§r的新物品失败",
             "dropItem": {
@@ -108,12 +108,12 @@
             "online": "§6{0}§r已上线",
             "offline": "§6{0}§r已下线",
             "onlineAll": {
-                "partlySuccess": "有部分假人发生错误：{0}\n这些假人已经成功上线：",
-                "allSuccess": "所有假人上线成功："
+                "partlySuccess": "有部分假人发生错误: {0}\n这些假人已经成功上线: ",
+                "allSuccess": "所有假人上线成功: "
             },
             "offlineAll": {
-                "allSuccess": "所有假人下线成功：",
-                "partlySuccess": "有部分假人发生错误：{0}\n这些假人已经成功下线："
+                "allSuccess": "所有假人下线成功: ",
+                "partlySuccess": "有部分假人发生错误: {0}\n这些假人已经成功下线: "
             },
             "create": {
                 "fail": {
@@ -130,21 +130,21 @@
                 "success": "§6{0}§r已删除"
             },
             "list": {
-                "has": "系统中共有{0}个假人:",
+                "has": "系统中共有{0}个假人: ",
                 "none": "系统中共有0个假人。",
                 "specificInfo": {
                     "model": "- 坐标: {0}\n- 执行操作: {1}\n- 同步玩家: {2}\n- 状态: {3}\n- 所有者: {4}",
                     "none": "无",
                     "online": "§a§l在线§r",
                     "offline": "§a§l离线§r",
-                    "permPrefix": "- 你对此假人拥有的权限："
+                    "permPrefix": "- 你对此假人拥有的权限: "
                 },
-                "own": "你拥有的假人：",
-                "admin": "你有管理权限的假人："
+                "own": "你拥有的假人: ",
+                "admin": "你有管理权限的假人: "
             },
             "operation": {
                 "clear": "§6{0}§r执行操作已清除",
-                "setTo": "§6{0}§r被设置为执行：{1}"
+                "setTo": "§6{0}§r被设置为执行: {1}"
             },
             "walkto": {
                 "targetSet": "目标已设置。正在走向{0}...",
@@ -159,7 +159,7 @@
                 "success": "物品已被给予§6{0}§r"
             },
             "inventory": {
-                "title": "§6{0}§r的物品栏:",
+                "title": "§6{0}§r的物品栏: ",
                 "mainHand": {
                     "item": "§3[主手]§r §6{0}§2[{1}]§r",
                     "empty": "§3[主手]§r 空"
@@ -198,9 +198,9 @@
                 "add": "已成功授予权限{0}给玩家{1}",
                 "remove": "已撤销玩家{0}的权限{1}",
                 "list": {
-                    "title": "§6{0}§r的权限数据：",
-                    "owner": "所有者：",
-                    "player": "玩家{0}拥有权限："
+                    "title": "§6{0}§r的权限数据: ",
+                    "owner": "所有者: ",
+                    "player": "玩家{0}拥有权限: "
                 },
                 "setowner": {
                     "success": "已成功将§6{0}§r的所有权转移给玩家{1}",
@@ -226,11 +226,11 @@
                 "whitelistAllowExist": "玩家{0}已在假人系统白名单中，无法重复添加",
                 "whitelistAllowed": "已将玩家{0}加入到假人系统白名单",
                 "maxFpCountLimit": {
-                    "belowZero": "错误：MaxFpCountLimit设置项的值必须大于等于0",
-                    "set": "已设置每个玩家最大拥有假人数：{0}"
+                    "belowZero": "错误: MaxFpCountLimit设置项的值必须大于等于0",
+                    "set": "已设置每个玩家最大拥有假人数: {0}"
                 },
                 "listsu": {
-                    "title": "假人系统超级管理员列表：",
+                    "title": "假人系统超级管理员列表: ",
                     "none": "尚未设置超级管理员玩家。在控制台执行命令 /fpc settings addsu <玩家名> 来设置超级管理员"
                 },
                 "addsu": "已将玩家{0}设置为超级管理员"
