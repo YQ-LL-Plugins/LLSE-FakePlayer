@@ -295,6 +295,8 @@ export class PermManager
                         return i18n.tr("permManager.error.permAlreadyExists", plName, action);
                     }
                 }
+                else
+                    permsData[plName] = [];
                 permsData[plName].push(action);
                 permConf.set("Perms", permsData);
                 return SUCCESS;
