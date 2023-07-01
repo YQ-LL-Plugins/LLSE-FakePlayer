@@ -315,8 +315,23 @@ export function CmdCallback(_cmd, ori, out, res)
                     : i18n.tr("command.resultText.list.specificInfo.offline");
                 let ownerName = result.ownerName ? result.ownerName : i18n.tr("command.resultText.list.specificInfo.none");
 
-                out.success(`[FakePlayer] §6${fpName}§r:\n` + i18n.tr("command.resultText.list.specificInfo.model", 
-                    posObj.toString(), operationStr, syncStatusStr, statusStr, ownerName));
+                let resultText = i18n.tr("command.resultText.list.specificInfo.model", posObj.toString(), operationStr, 
+                    syncStatusStr, statusStr, ownerName);
+                if(isExecutedByPlayer)
+                {
+                    // if executed by player, show perms he has too
+                    if(!PermManager.isFpOwner(ori.player, fpName) && !PermManager.isSu(ori.player))
+                    {
+                        let permData = PermManager.getFpPermData(fpName);
+                        let personalPerm = permData.Perms[ori.player.realName];
+                        if(personalPerm && personalPerm.length != 0)
+                        {
+                            resultText += "\n" + i18n.tr("command.resultText.list.specificInfo.permPrefix") 
+                                + personalPerm.join(', ');
+                        }
+                    }
+                }
+                out.success(`[FakePlayer] §6${fpName}§r:\n` + resultText);
 
                 if(!result.ownerName)
                 {

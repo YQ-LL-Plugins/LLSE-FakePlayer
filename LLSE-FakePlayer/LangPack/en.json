@@ -136,7 +136,8 @@
                     "model": "- Position: {0}\n- Do Operation: {1}\n- Sync with Player: {2}\n- Status: {3}\n- Owner: {4}",
                     "none": "None",
                     "online": "§a§lOnline§r",
-                    "offline": "§a§lOffline§r"
+                    "offline": "§a§lOffline§r",
+                    "permPrefix": "Perms you have for this fakeplayer: "
                 },
                 "own": "Fakeplayers you own: ",
                 "admin": "Fakeplayers you admin: "
