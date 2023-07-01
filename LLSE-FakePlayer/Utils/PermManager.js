@@ -22,7 +22,7 @@ export class PermManager
 /////////////////////////////////////////////////////////////////////////////////////
 
     static ONLY_CONSOLE_ACTIONS = ["settings", "import"];
-    static NO_PERM_REQUIRED_ACTIONS = ["help", "list", "onlineall", "offlineall", "gui"];
+    static NO_PERM_REQUIRED_ACTIONS = ["help", "list", "onlineall", "offlineall", "gui", "switch"];
     static SPECIAL_PROCESS_ACTIONS = ["create", "remove"];
     static CONSOLE = "CONSOLE_EXECUTES_COMMAND";
 

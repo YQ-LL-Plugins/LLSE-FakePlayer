@@ -52,6 +52,48 @@ export function CmdCallback(_cmd, ori, out, res)
             out.error("[FakePlayer] " + result)
         break;
     }
+    case "switch":
+    {
+        let fpName = res.fpname_all;
+        result = FakePlayerManager.isOnline(fpName);
+        if(result[0] != SUCCESS)
+        {
+            out.error("[FakePlayer] " + result[0]);
+            break;
+        }
+        
+        if(result[1])   // isOnline
+        {
+            // fpc offline
+            result = PermManager.checkOriginPermission(ori, "offline", fpName);
+            if(result != SUCCESS)
+            {
+                out.error("[FakePlayer] " + result);
+                break;
+            }
+            result = FakePlayerManager.offline(fpName);
+            if(result == SUCCESS)
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.offline", fpName));
+            else
+                out.error("[FakePlayer] " + result)
+        }
+        else
+        {
+            // fpc online
+            result = PermManager.checkOriginPermission(ori, "online", fpName);
+            if(result != SUCCESS)
+            {
+                out.error("[FakePlayer] " + result);
+                break;
+            }
+            result = FakePlayerManager.online(fpName);
+            if (result == SUCCESS)
+                out.success(`[FakePlayer] ` + i18n.tr("command.resultText.online", fpName));
+            else
+                out.error("[FakePlayer] " + result);
+        }
+        break;
+    }
     case "onlineall":
     {
         if(isExecutedByPlayer && !PermManager.isAllowInUserList(ori.player.realName))

@@ -22,6 +22,12 @@
 
   `/fpc online / offline <fpname>`
 
+- **假人切换上下线状态**
+
+  `/fpc switch <fpname>`
+
+  此命令有助于简化命令方块操作假人的复杂度
+
 - **假人批量上下线** 
 
   `/fpc onlineall / offlineall`

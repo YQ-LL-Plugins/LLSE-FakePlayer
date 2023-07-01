@@ -38,6 +38,12 @@ export function RegisterCmd()
     fpCmd.mandatory("fpname_online", ParamType.SoftEnum, OnlineFpListSoftEnum.getName(), "fpname_online");
     fpCmd.overload(["OfflineAction", "fpname_online"]);
 
+    // fpc switch <fpname>
+    fpCmd.setEnum("SwitchAction", ["switch"]);
+    fpCmd.mandatory("action", ParamType.Enum, "SwitchAction", "SwitchAction", 1);
+    fpCmd.mandatory("fpname_all", ParamType.SoftEnum, AllFpListSoftEnum.getName(), "fpname_all");
+    fpCmd.overload(["SwitchAction", "fpname_all"]);
+
     // fpc onlineall/offlineall
     fpCmd.setEnum("AllStatusAction", ["onlineall", "offlineall"]);
     fpCmd.mandatory("action", ParamType.Enum, "AllStatusAction", "AllStatusAction", 1);
@@ -55,7 +61,6 @@ export function RegisterCmd()
     // fpc remove <fpname>
     fpCmd.setEnum("RemoveAction", ["remove"]);
     fpCmd.mandatory("action", ParamType.Enum, "RemoveAction", "RemoveAction", 1);
-    fpCmd.mandatory("fpname_all", ParamType.SoftEnum, AllFpListSoftEnum.getName(), "fpname_all");
     fpCmd.overload(["RemoveAction", "fpname_all"]);     // fpname_all created before
 
     // fpc list [fpname]
