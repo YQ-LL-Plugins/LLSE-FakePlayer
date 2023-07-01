@@ -15,9 +15,18 @@ import { PermManager } from "./plugins/LLSE-FakePlayer/Utils/PermManager.js";
 import { ExportFakePlayerAPIs, FakePlayerManager } from "./plugins/LLSE-FakePlayer/FpManager/FakePlayerManager.js";
 import { RegisterCmd, PlayerListSoftEnum } from "./plugins/LLSE-FakePlayer/Command/CommandRegistry.js";
 
+function InitI18n()
+{
+    let lang = GlobalConf.get("Language", "default");
+    if(lang == "default")
+        lang = "";
+    i18n.load(_I18N_DIR, lang);
+}
+
 function main()
 {
-    i18n.load(_I18N_DIR);
+    InitConfigFile();
+    InitI18n();
     InitGlobalVars();
 
     ll.registerPlugin(
@@ -26,9 +35,6 @@ function main()
         /* version */ _VER,
         /* otherInformation */ {"Author": "yqs112358"}
     ); 
-
-    InitConfigFile();
-    ExportFakePlayerAPIs();
 
     logger.setLogLevel(GlobalConf.get("LogLevel", 4));
     FakePlayerManager.loadAllFpData();
@@ -58,6 +64,7 @@ function main()
         }
     });
 
+    ExportFakePlayerAPIs();
     logger.info(i18n.tr("main.welcome", "v" + _VER.join(".")));
 }
 

@@ -232,6 +232,8 @@
     "Version": 2,
     // 输出日志等级，默认为4，一般不用修改
     "LogLevel": 4,
+    // 语言，可选 default（自动）/ zh（简体中文）/ en（英文）
+    "Language": "default",
     // 每个用户允许拥有的假人数量上限（超级管理员玩家不受此限制）
     "MaxFpCountLimitEach": 3,
     // 是否将OP玩家自动视为超级管理员，1为是，0为否

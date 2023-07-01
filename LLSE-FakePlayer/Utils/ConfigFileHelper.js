@@ -8,6 +8,7 @@ export function InitConfigFile()
 {
     GlobalConf = new JsonConfigFile(_CONFIG_PATH);
     GlobalConf.init("Version", 2);      // config file version
+    GlobalConf.init("Language", "default");
     GlobalConf.init("LogLevel", 4);
     GlobalConf.init("MaxFpCountLimitEach", 3);
     GlobalConf.init("OpIsSu", 1);
