@@ -202,7 +202,7 @@
 
 #### 管理员机制
 
-- 假人“所有者”可以通过 `/fpc perm <fpname> add admin <plname>`命令给当前假人设置一些管理员
+- 假人“所有者”可以通过 `/fpc perm <fpname> add admin <plname>`命令给当前假人设置一些管理员。管理员的加入使系统可以实现 **所有者 - 管理员 - 普通用户** 的三级授权管理体制。
 - 可以通过 `/fpc perm <fpname> remove admin <plname>`命令撤销管理员的管理权限
   - 举例：我拥有假人`cxk`，想设置玩家`xiaoheizi`成为此假人的管理员，可以执行以下命令：`/fpc perm cxk add admin xiaoheizi`来完成设置
   - 如果想撤销管理员，执行`/fpc perm cxk remove admin xiaoheizi`即可
