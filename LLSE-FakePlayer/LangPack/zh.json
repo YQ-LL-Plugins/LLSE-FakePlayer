@@ -18,8 +18,8 @@
             "noAccess": "你没有权限执行此操作",
             "alreadyInList": "{0} 已经在 {1} 列表中",
             "notInList": "{0} 不在 {1} 列表中",
-            "alreadyInSuList": "{0} 已在管理员列表中",
-            "notInSuList": "{0} 不在管理员列表中",
+            "alreadyInSuList": "{0} 已在超级管理员玩家列表中",
+            "notInSuList": "{0} 不在超级管理员玩家列表中",
             "permConsoleActionToPlayer": "/fpc {0} 命令只能在服务端控制台执行，无法授权给某一个特定玩家",
             "permAlreadyExists": "玩家{0}已拥有{1}权限，无法重复授权",
             "permNotHave": "玩家{0}未拥有{1}权限，无法撤销",
@@ -135,7 +135,7 @@
                 "specificInfo": {
                     "model": "- 坐标: {0}\n- 执行操作: {1}\n- 同步玩家: {2}\n- 状态: {3}\n- 所有者: {4}",
                     "none": "无",
-                    "online": "在线",
+                    "online": "§a§l在线§r",
                     "offline": "§a§l离线§r"
                 },
                 "own": "你拥有的假人：",
@@ -160,15 +160,16 @@
             "inventory": {
                 "title": "§6{0}§r的物品栏:",
                 "mainHand": {
-                    "item": "§3[主手]§r §6{0}§2[{1}]§r"
+                    "item": "§3[主手]§r §6{0}§2[{1}]§r",
+                    "empty": "§3[主手]§r 空"
                 },
                 "offHand": {
                     "item": "§3[副手]§r §6{0}§2[{1}]§r",
                     "empty": "§3[副手]§r 空"
                 },
                 "inventory": {
-                    "empty": "§3[物品栏]§r 空",
-                    "prefix": "§3[物品栏]§r"
+                    "prefix": "§3[物品栏]§r",
+                    "empty": "§3[物品栏]§r 空"
                 },
                 "armor": {
                     "empty": "§3[盔甲栏]§r 空",

@@ -262,6 +262,11 @@
 
 <br/>
 
+## 国际化与翻译
+
+- 多语言翻译平台位于 [crowdin.com/project/llse-fakeplayer](https://crowdin.com/project/llse-fakeplayer)
+- 欢迎有兴趣帮助进行语言翻译和修正的同学参与贡献
+
 ## Bug跟踪和反馈
 
 - Bug跟踪器位于 [Issues · YQ-LL-Plugins/LLSE-FakePlayer (github.com)](https://github.com/YQ-LL-Plugins/LLSE-FakePlayer/issues)

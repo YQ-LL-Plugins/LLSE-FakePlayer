@@ -495,6 +495,12 @@ export class PermManager
             return i18n.tr("permManager.error.onlyConsoleAction");
         }
 
+        // if fp not found, reject
+        if(!FakePlayerManager.getFpInstance(fpName))
+        {
+            return i18n.tr("fpManager.resultText.fpNoFound", fpName);
+        }
+
         // check if the player have access
         if(PermManager.hasPermission(pl, action, fpName))
             return SUCCESS;

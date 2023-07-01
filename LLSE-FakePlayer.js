@@ -58,7 +58,7 @@ function main()
         }
     });
 
-    logger.info(i18n.tr("main.welcome", _VER));
+    logger.info(i18n.tr("main.welcome", "v" + _VER.join(".")));
 }
 
 main();

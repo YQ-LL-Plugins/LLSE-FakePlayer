@@ -512,14 +512,14 @@ export function CmdCallback(_cmd, ori, out, res)
         // hand
         let item = data.Hand;
         if(item)
-            resStr += i18n.tr("command.resultText.inventory.mainHand.item", item.name, item.cout) + "\n";
+            resStr += i18n.tr("command.resultText.inventory.mainHand.item", item.name, item.count) + "\n";
         else
             resStr += i18n.tr("command.resultText.inventory.mainHand.empty") + "\n";
         
         // offhand
         item = data.OffHand;
         if(item)
-            resStr += i18n.tr("command.resultText.inventory.offHand.item", item.name, item.cout) + "\n";
+            resStr += i18n.tr("command.resultText.inventory.offHand.item", item.name, item.count) + "\n";
         else
             resStr += i18n.tr("command.resultText.inventory.offHand.empty") + "\n";
         

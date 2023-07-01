@@ -16,15 +16,15 @@
         "error": {
             "onlyConsoleAction": "This action can only be executed in server console",
             "noAccess": "You have no permission to do this action",
-            "alreadyInList": "{0} is already in user {1}",
-            "notInList": "{0} is not in user {1}",
-            "alreadyInSuList": "{0} is already in admin list",
-            "notInSuList": "{0} is not in admin list",
+            "alreadyInList": "{0} is already in userlist {1}",
+            "notInList": "{0} is not in userlist {1}",
+            "alreadyInSuList": "{0} is already in super su list",
+            "notInSuList": "{0} is not in super su list",
             "permConsoleActionToPlayer": "Command /fpc {0} can only be executed in BDS console. It cannot be authorized to a specific player",
             "permAlreadyExists": "Player {0} already has {1} permission, cannot be authorized again",
             "permNotHave": "Player {0} does not have {1} permission, cannot revoke",
             "noPermNeeded": "No authorization is required for command /fpc {0}",
-            "playerIsAlreadyAdmin": "Player {0} is already an administrator, and no need to set the operation permission independently",
+            "playerIsAlreadyAdmin": "Player {0} is already an admin and no need to set the operation permission independently",
             "fpCountMaxLimitReached": "Player {0} has reached the maximum limit of owned fakeplayer and cannot have more"
         },
         "warning": {
@@ -40,13 +40,13 @@
                 "received": "Player {0} has transferred ownership of fakeplayer {1} to you"
             },
             "addPerm": {
-                "received": "You have been given {1} permission for fakeplayer {0}"
+                "received": "You have been given {1} permission of fakeplayer {0}"
             },
             "removePerm": {
-                "received": "You have been revoked {1} permission for fakeplayer {0}"
+                "received": "You have been revoked {1} permission of fakeplayer {0}"
             },
             "setsu": {
-                "received": "You have been set as the super user of fakeplayer system"
+                "received": "You have been set as super user of fakeplayer system"
             },
             "removesu": {
                 "received": "You have been revoked super user of fakeplayer system"
@@ -66,7 +66,7 @@
                 "failToRespawn": "Fail to respawn {0}"
             },
             "respawned": "{0} respawned",
-            "failToSaveInventory": "保存 {0} 的物品栏失败"
+            "failToSaveInventory": "Fail to save inventory of {0}"
         },
         "resultText": {
             "fpNoFound": "§6{0}§r no found. Please create it first.",
@@ -139,7 +139,7 @@
                     "offline": "§a§lOffline§r"
                 },
                 "own": "Fakeplayers you own: ",
-                "admin": "Fakeplayers you have admin permission for: "
+                "admin": "Fakeplayers you admin: "
             },
             "operation": {
                 "clear": "§6{0}§r operation cleared",
@@ -160,15 +160,16 @@
             "inventory": {
                 "title": "Inventory of §6{0}§r:",
                 "mainHand": {
-                    "item": "§3[Hand]§r §6{0}§2[{1}]§r"
+                    "item": "§3[Hand]§r §6{0}§2[{1}]§r",
+                    "empty": "§3[Hand]§r Empty"
                 },
                 "offHand": {
                     "item": "§3[Offhand]§r §6{0}§2[{1}]§r",
                     "empty": "§3[Offhand]§r 空"
                 },
                 "inventory": {
-                    "empty": "§3[Inventory]§r 空",
-                    "prefix": "§3[Inventory]§r"
+                    "prefix": "§3[Inventory]§r",
+                    "empty": "§3[Inventory]§r Empty"
                 },
                 "armor": {
                     "empty": "§3[Armor]§r 空",
@@ -193,7 +194,7 @@
                 "stop": "Sync of §6{0}§r stopped."
             },
             "perm": {
-                "add": "Permission {0} have been successfully granted to player {1}",
+                "add": "Permission {0} have been granted to player {1}",
                 "remove": "Player {0}'s permission {1} revoked",
                 "list": {
                     "title": "Permission data for §6{0}§r: ",
@@ -203,11 +204,11 @@
                 "setowner": {
                     "success": "Ownership of §6{0}§r transferred to player {1}",
                     "ask": "Are you sure to transfer ownership of §6{0}§r to player {1}?",
-                    "tofp": "Not allowed to set one fakeplayer as the owner of another fakeplayer",
+                    "tofp": "Cannot set one fakeplayer as the owner of another fakeplayer",
                     "waitConfirm": "Waiting for player {0} to give an acceptance reply...",
                     "notOnline": "Player {0} is not online and cannot transfer ownership to him",
-                    "rejected": "Player {0} has rejected your ownership transfer request",
-                    "toself": "The owner of the fakeplayer {0} is already {1}. It cannot be set repeatedly"
+                    "rejected": "Player {0} rejected your ownership transfer request",
+                    "toself": "The owner of the fakeplayer {0} is already {1}"
                 }
             },
             "action": {
@@ -217,12 +218,12 @@
                 "setsu": "Player {0} has been set as super user",
                 "removesu": "Player {0}'s super user status has been revoked",
                 "blacklistBanned": "Added player {0} to fakeplayer system blacklist",
-                "blacklistBanExist": "Player {0} is already in fakeplayer system blacklist, and can not be banned repeatedly",
+                "blacklistBanExist": "Player {0} is already in fakeplayer system blacklist",
                 "whitelistBanned": "Moved player {0} out of fakeplayer system whitelist",
                 "whitelistBanNotExist": "Player {0} is not in fakeplayer system whitelist and cannot be removed",
                 "blacklistAllowed": "Player {0} has been removed from fakeplayer system blacklist",
                 "blacklistAllowNotExist": "Player {0} is not in fakeplayer system blacklist and cannot be removed",
-                "whitelistAllowExist": "Player {0} is already in fakeplayer system whitelist and cannot be added repeatedly",
+                "whitelistAllowExist": "Player {0} is already in fakeplayer system whitelist",
                 "whitelistAllowed": "Added player {0} to fakeplayer system whitelist",
                 "maxFpCountLimit": {
                     "belowZero": "Error: Value of MaxFpCountLimit must be greater than or equal to 0",
@@ -230,7 +231,7 @@
                 },
                 "listsu": {
                     "title": "FakePlayer system super user list: ",
-                    "none": "Super user player has not been set yet. Execute the command /fpc settings setsu <plname> in BDS console to add super users"
+                    "none": "Super user player has not been set yet. Use the command /fpc settings setsu <plname> in BDS console to add super users"
                 }
             }
         }
