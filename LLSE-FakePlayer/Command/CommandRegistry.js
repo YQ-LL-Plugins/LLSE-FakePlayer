@@ -128,9 +128,9 @@ export function RegisterCmd()
     fpCmd.overload(["PermAction", "fpname", "permsetownertype", "plname"]);
     // fpname and plname created before
 
-    // fpc settings setsu/removesu/ban/allow <plname>
+    // fpc settings addsu/removesu/ban/allow <plname>
     fpCmd.setEnum("SettingsAction", ["settings"]);
-    fpCmd.setEnum("SettingsType", ["setsu", "removesu", "ban", "allow"]);
+    fpCmd.setEnum("SettingsType", ["addsu", "removesu", "ban", "allow"]);
     fpCmd.mandatory("action", ParamType.Enum, "SettingsAction", "SettingsAction", 1);
     fpCmd.mandatory("settingstype", ParamType.Enum, "SettingsType", "SettingsType", 1);
     fpCmd.overload(["SettingsAction", "settingstype", "plname"]);

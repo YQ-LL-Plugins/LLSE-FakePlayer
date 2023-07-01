@@ -45,11 +45,11 @@
             "removePerm": {
                 "received": "You have been revoked {1} permission of fakeplayer {0}"
             },
-            "setsu": {
-                "received": "You have been set as super user of fakeplayer system"
-            },
             "removesu": {
                 "received": "You have been revoked super user of fakeplayer system"
+            },
+            "addsu": {
+                "received": "You have been set as super user of fakeplayer system"
             }
         },
         "fail": {
@@ -215,7 +215,6 @@
                 "cancelled": "Action cancelled"
             },
             "settings": {
-                "setsu": "Player {0} has been set as super user",
                 "removesu": "Player {0}'s super user status has been revoked",
                 "blacklistBanned": "Added player {0} to fakeplayer system blacklist",
                 "blacklistBanExist": "Player {0} is already in fakeplayer system blacklist",
@@ -231,8 +230,9 @@
                 },
                 "listsu": {
                     "title": "FakePlayer system super user list: ",
-                    "none": "Super user player has not been set yet. Use the command /fpc settings setsu <plname> in BDS console to add super users"
-                }
+                    "none": "Super user player has not been set yet. Use the command /fpc settings addsu <plname> in BDS console to add super users"
+                },
+                "addsu": "Player {0} has been set as super user"
             }
         }
     }

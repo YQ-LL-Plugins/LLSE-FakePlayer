@@ -45,11 +45,11 @@
             "removePerm": {
                 "received": "你已被撤销假人{0}的{1}权限"
             },
-            "setsu": {
-                "received": "你已被设置为假人系统的超级管理员"
-            },
             "removesu": {
                 "received": "你已被撤销假人系统的超级管理员身份"
+            },
+            "addsu": {
+                "received": "你已被设置为假人系统的超级管理员"
             }
         },
         "fail": {
@@ -215,7 +215,6 @@
                 "cancelled": "动作已取消"
             },
             "settings": {
-                "setsu": "已将玩家{0}设置为超级管理员",
                 "removesu": "已撤销玩家{0}的超级管理员身份",
                 "blacklistBanned": "已将玩家{0}加入到假人系统黑名单",
                 "blacklistBanExist": "玩家{0}已在假人系统黑名单中，无法重复封禁",
@@ -231,8 +230,9 @@
                 },
                 "listsu": {
                     "title": "假人系统超级管理员列表：",
-                    "none": "尚未设置超级管理员玩家。在控制台执行命令 /fpc settings setsu <玩家名> 来设置超级管理员"
-                }
+                    "none": "尚未设置超级管理员玩家。在控制台执行命令 /fpc settings addsu <玩家名> 来设置超级管理员"
+                },
+                "addsu": "已将玩家{0}设置为超级管理员"
             }
         }
     }

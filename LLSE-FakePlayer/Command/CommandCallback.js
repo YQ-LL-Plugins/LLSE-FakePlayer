@@ -858,17 +858,17 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
-        if(res.settingstype == "setsu")
+        if(res.settingstype == "addsu")
         {
             let plName = res.plname;
             result = PermManager.addSu(plName);
             if(result == SUCCESS)
             {
-                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.setsu", plName));
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.addsu", plName));
                 let targetPlayer = mc.getPlayer(plName);
                 if(targetPlayer)
                 {
-                    targetPlayer.tell("[FakePlayer] " + i18n.tr("permManager.success.setsu.received"));
+                    targetPlayer.tell("[FakePlayer] " + i18n.tr("permManager.success.addsu.received"));
                 }
             }
             else
