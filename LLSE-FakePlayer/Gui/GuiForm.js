@@ -2,7 +2,8 @@ import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 import { BetterSimpleForm, BetterCustomForm } from "../Gui/BetterForms.js";
 import { PermManager } from "../Utils/PermManager.js";
 import { 
-    CalcPosFromViewDirection, IsNumberInt, IsValidDimId, ParsePositionString, EntityGetFeetPos 
+    CalcPosFromViewDirection, IsNumberInt, IsValidDimId, ParsePositionString, 
+    EntityGetFeetPos, GetGameModeName
 } from "../Utils/Utils.js";
 import { 
     _DEFAULT_PLAYER_SELECT_SLOT, _LONG_OPERATIONS_LIST, _SHORT_OPERATIONS_LIST, 
@@ -193,6 +194,7 @@ export class FpGuiForms
         {
             let result = resultData[1];
             let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
+            let gameModeStr = GetGameModeName(result.gameMode);
             let syncPlayerName = data.xuid2name(result.syncXuid);
             let ownerName = result.ownerName;
             if(ownerName == player.realName)
@@ -201,8 +203,9 @@ export class FpGuiForms
             let fm = new BetterSimpleForm("LLSE-FakePlayer 假人信息");
             let contentText = `§6${fpName}§r假人信息：\n`
                 + `- 坐标： ${posObj.toString()}\n`
-                + `- 执行操作： ${result.operation ? result.operation : "None"}\n`
-                + `- 同步玩家： ${syncPlayerName ? syncPlayerName : "None"}\n`
+                + `- 游戏模式： ${gameModeStr}\n`
+                + `- 执行操作： ${result.operation ? result.operation : i18n.tr("command.resultText.list.specificInfo.none")}\n`
+                + `- 同步玩家： ${syncPlayerName ? syncPlayerName : i18n.tr("command.resultText.list.specificInfo.none")}\n`
                 + `- 状态： ${result.isOnline ? "§a§l在线§r" : "§c§l离线§r"}\n`
                 + `- 所有者： ${ownerName}`;
             // Executed by player, show perms he has too

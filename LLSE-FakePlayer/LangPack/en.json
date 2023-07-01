@@ -133,7 +133,7 @@
                 "has": "{0} fakeplayers in all:",
                 "none": "No fakeplayers now.",
                 "specificInfo": {
-                    "model": "- Position: {0}\n- Do Operation: {1}\n- Sync with Player: {2}\n- Status: {3}\n- Owner: {4}",
+                    "model": "- Position: {0}\n- Game Mode: {1}\n- Do Operation: {2}\n- Sync with Player: {3}\n- Status: {4}\n- Owner: {5}",
                     "none": "None",
                     "online": "§a§lOnline§r",
                     "offline": "§a§lOffline§r",
@@ -235,6 +235,15 @@
                 },
                 "addsu": "Player {0} has been set as super user"
             }
+        }
+    },
+    "gameMode": {
+        "name": {
+            "survival": "Survival",
+            "creative": "Creative",
+            "adventure": "Adventure",
+            "default": "Default",
+            "spectator": "Spectator"
         }
     }
 }

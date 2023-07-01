@@ -1,4 +1,4 @@
-import { _VALID_DIMENSION_NAMES } from "../Utils/GlobalVars.js"
+import { _VALID_DIMENSION_NAMES, _VALID_GAMEMODE_NAMES } from "../Utils/GlobalVars.js"
 
 export function CalcPosFromViewDirection(oldPos, nowDirection, distance)
 {
@@ -54,4 +54,13 @@ export function EntityGetFeetPos(entity)
         feetPos.y -= 1.62;
     }
     return feetPos;
+}
+
+export function GetGameModeName(mode)
+{
+    let name = _VALID_GAMEMODE_NAMES[`${mode}`];
+    logger.debug(`${mode} -> ${name}`);
+    if(name == null || name == undefined)
+        name = i18n.tr("gameMode.name.default");
+    return name;
 }

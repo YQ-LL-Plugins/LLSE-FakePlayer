@@ -65,7 +65,7 @@ export class FakePlayerManager
         {
             logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawning", fpName));
             let fp = FakePlayerManager.fpListObj[fpName];
-            if(!fp.offline())
+            if(!fp.offline(false))
                 logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRecreate", fpName));
             else
             {
@@ -102,13 +102,14 @@ export class FakePlayerManager
 /////////////////////////////////////////////////////////////////////////////////////
 
     // return true / false
-    static saveFpData(fpName, updatePos = true)
+    static saveFpData(fpName, updateData = true)
     {
         let fp = FakePlayerManager.fpListObj[fpName];
-        if(updatePos)
+        if(updateData)
         {
             fp.updatePos();
             fp.updateDirection();
+            fp.updateGameMode();
         }
         File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp.serializeFpData(), null, 4));
         return true;
@@ -249,7 +250,6 @@ export class FakePlayerManager
         if(!FakePlayerManager.saveInventoryData(fpName))
             logger.warn(i18n.tr("fpManager.consoleLog.failToSaveInventory", fpName));
 
-        fp.updatePos();
         if(!fp.offline())
             return i18n.tr("fpManager.resultText.offline.fail", fpName);
         FakePlayerManager.saveFpData(fpName, false);
@@ -730,7 +730,7 @@ export class FakePlayerManager
         if(fpName in FakePlayerManager.needTickFpListObj)
             delete FakePlayerManager.needTickFpListObj[fpName];
         FakePlayerManager.saveFpData(fpName);
-        fp.realizeDirection();
+        fp.applyDirection();
         return SUCCESS;
     }
 

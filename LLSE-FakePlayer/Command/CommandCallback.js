@@ -1,7 +1,7 @@
 import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 import { FpGuiForms } from "../Gui/GuiForm.js";
 import { PermManager } from "../Utils/PermManager.js";
-import { CalcPosFromViewDirection, IsValidDimId, EntityGetFeetPos } from "../Utils/Utils.js";
+import { CalcPosFromViewDirection, IsValidDimId, EntityGetFeetPos, GetGameModeName } from "../Utils/Utils.js";
 import { GlobalConf } from "../Utils/ConfigFileHelper.js";
 import { SUCCESS } from "../Utils/GlobalVars.js";
 
@@ -349,6 +349,7 @@ export function CmdCallback(_cmd, ori, out, res)
             {
                 let result = resultData[1];
                 let posObj = new FloatPos(eval(result.pos.x), eval(result.pos.y), eval(result.pos.z), eval(result.pos.dimid));
+                let gameModeStr = GetGameModeName(result.gameMode);
                 let syncPlayerName = data.xuid2name(result.syncXuid);
 
                 let operationStr = result.operation ? result.operation : i18n.tr("command.resultText.list.specificInfo.none");
@@ -359,8 +360,8 @@ export function CmdCallback(_cmd, ori, out, res)
                 if(isExecutedByPlayer && ownerName == ori.player.realName)
                     ownerName = "§6" + ownerName + "§r";
 
-                let resultText = i18n.tr("command.resultText.list.specificInfo.model", posObj.toString(), operationStr, 
-                    syncStatusStr, statusStr, ownerName);
+                let resultText = i18n.tr("command.resultText.list.specificInfo.model", posObj.toString(), gameModeStr, 
+                    operationStr, syncStatusStr, statusStr, ownerName);
                 if(isExecutedByPlayer)
                 {
                     // if executed by player, show perms he has too

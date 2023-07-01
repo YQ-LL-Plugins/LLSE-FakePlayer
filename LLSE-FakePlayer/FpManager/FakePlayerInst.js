@@ -11,6 +11,7 @@ export class FakePlayerInst
     pos = null;
     direction = null;
     isonline = false;
+    gameMode = 5;       // 5 is default gamemode
     operation = "";
     opInterval = 0;
     opMaxTimes = 0;
@@ -224,11 +225,11 @@ export class FakePlayerInst
     {
         return this.direction;
     }
-    setDirection(dir, realizeNow = true)
+    setDirection(dir, applyNow = true)
     {
         this.direction = dir;
-        if(realizeNow)
-            this.realizeDirection();
+        if(applyNow)
+            this.applyDirection();
     }
     updateDirection()
     {
@@ -238,12 +239,38 @@ export class FakePlayerInst
             this.direction = pl.direction.yaw;
         }
     }
-    realizeDirection()
+    applyDirection()
     {
         let pl = this.getPlayer();
         if(pl)
         {
             pl.simulateSetBodyRotation(this.direction);
+        }
+    }
+    getGameMode()
+    {
+        return this.gameMode;
+    }
+    setGameMode(mode, applyNow = true)
+    {
+        this.gameMode = mode;
+        if(applyNow)
+            this.applyGameMode();
+    }
+    updateGameMode()
+    {
+        let pl = this.getPlayer();
+        if(pl)
+        {
+            this.gameMode = pl.gameMode;
+        }
+    }
+    applyGameMode()
+    {
+        let pl = this.getPlayer();
+        if(pl)
+        {
+            pl.setGameMode(this.gameMode);
         }
     }
     isNeedTick()
@@ -267,6 +294,7 @@ export class FakePlayerInst
             '_name': this.name,
             '_pos': this.pos,
             '_direction': this.direction,
+            '_gameMode': this.gameMode,
             '_ownerName': this.ownerName,
             '_isOnline': this.isonline,
             '_operation': this.operation,
@@ -284,7 +312,7 @@ export class FakePlayerInst
         return new FakePlayerInst(
             fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
             fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline,
-            fpData._ownerName, fpData._direction);
+            fpData._ownerName, fpData._direction, fpData._gameMode);
     }
     // return SNBT string of all items
     serializeAllItems()
@@ -334,11 +362,12 @@ export class FakePlayerInst
 /////////////////////////////////////////////////////////////////////////////////////
 
     constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false
-        , ownerName = "", direction = 0)
+        , ownerName = "", direction = 0, gameMode = 5)
     {
         this.name = name;
         this.pos = pos;
         this.direction = direction;
+        this.gameMode = gameMode;
         this.isonline = isonline;
         this.ownerName = ownerName;
 
@@ -355,7 +384,8 @@ export class FakePlayerInst
     getAllInfo()
     {
         return {
-            'name': this.name, 'pos': this.pos, 'direction': this.direction, 'isOnline': this.isonline, 'ownerName': this.ownerName,
+            'name': this.name, 'pos': this.pos, 'direction': this.direction, 'gameMode': this.gameMode,
+            'isOnline': this.isonline, 'ownerName': this.ownerName,
             'operation': this.operation, 'opInterval': this.opInterval, 'opMaxTimes': this.opMaxTimes, 
             'opLength': this.opLength, 'syncXuid': this.syncXuid
         };
@@ -378,7 +408,9 @@ export class FakePlayerInst
         if(!pl.teleport(spawnPos))
             return false;
         // Set direction
-        this.realizeDirection();
+        this.applyDirection();
+        // Set gamemode
+        this.applyGameMode();
 
         // Start operation loop if needed
         if(this.operation != "")
@@ -386,7 +418,7 @@ export class FakePlayerInst
         return true;
     }
     // return true / false
-    offline()
+    offline(updateData = true)
     {
         if(!this.isOnline())
             return true;
@@ -394,6 +426,14 @@ export class FakePlayerInst
         if(!pl)
             return false;
         this.stopOperationLoop();
+        
+        if(updateData)
+        {
+            // update all data
+            this.updatePos();
+            this.updateDirection();
+            this.updateGameMode();
+        }
         let success = pl.simulateDisconnect();
         if(!success)
             return false;
