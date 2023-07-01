@@ -106,7 +106,10 @@ export class FakePlayerManager
     {
         let fp = FakePlayerManager.fpListObj[fpName];
         if(updatePos)
+        {
             fp.updatePos();
+            fp.updateDirection();
+        }
         File.writeTo(_FP_DATA_DIR + `${fpName}.json`, JSON.stringify(fp.serializeFpData(), null, 4));
         return true;
     }
@@ -230,7 +233,6 @@ export class FakePlayerManager
         OfflineFpListSoftEnum.remove(fpName);
         if(!OnlineFpListSoftEnum.exists(fpName))
             OnlineFpListSoftEnum.add(fpName);
-        logger.debug("softenum:", OnlineFpListSoftEnum.getValues());
         return SUCCESS;
     }
 
@@ -255,7 +257,6 @@ export class FakePlayerManager
         OnlineFpListSoftEnum.remove(fpName);
         if(!OfflineFpListSoftEnum.exists(fpName))
             OfflineFpListSoftEnum.add(fpName);
-        logger.debug("softenum:", OnlineFpListSoftEnum.getValues());
         return SUCCESS;
     }
 
@@ -337,7 +338,6 @@ export class FakePlayerManager
         AllFpListSoftEnum.remove(fpName);
         OnlineFpListSoftEnum.remove(fpName);
         OfflineFpListSoftEnum.remove(fpName);
-        logger.debug("softenum:", OnlineFpListSoftEnum.getValues());
         FakePlayerManager.deleteFpData(fpName);
         FakePlayerManager.deleteInventoryData(fpName);
         PermManager.deleteFpPermConfig(fpName);
@@ -730,6 +730,7 @@ export class FakePlayerManager
         if(fpName in FakePlayerManager.needTickFpListObj)
             delete FakePlayerManager.needTickFpListObj[fpName];
         FakePlayerManager.saveFpData(fpName);
+        fp.realizeDirection();
         return SUCCESS;
     }
 

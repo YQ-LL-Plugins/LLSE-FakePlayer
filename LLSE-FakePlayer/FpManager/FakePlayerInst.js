@@ -9,6 +9,7 @@ export class FakePlayerInst
 /////////////////////////////////////////////////////////////////////////////////////
     name = "";
     pos = null;
+    direction = null;
     isonline = false;
     operation = "";
     opInterval = 0;
@@ -160,7 +161,9 @@ export class FakePlayerInst
                 if(!isMoving)
                 {
                     // sync body rotation
-                    pl.simulateSetBodyRotation(targetPlayer.direction.yaw);
+                    let dir = targetPlayer.direction.yaw;
+                    this.setDirection(dir, false);
+                    pl.simulateSetBodyRotation(dir);
                     // sync look at
                     let targetEntity = targetPlayer.getEntityFromViewVector();
                     if(targetEntity)
@@ -217,6 +220,32 @@ export class FakePlayerInst
     {
         this.ownerName = newOwner;
     }
+    getDirection()
+    {
+        return this.direction;
+    }
+    setDirection(dir, realizeNow = true)
+    {
+        this.direction = dir;
+        if(realizeNow)
+            this.realizeDirection();
+    }
+    updateDirection()
+    {
+        let pl = this.getPlayer();
+        if(pl)
+        {
+            this.direction = pl.direction.yaw;
+        }
+    }
+    realizeDirection()
+    {
+        let pl = this.getPlayer();
+        if(pl)
+        {
+            pl.simulateSetBodyRotation(this.direction);
+        }
+    }
     isNeedTick()
     {
         return this.syncXuid != "";
@@ -237,6 +266,7 @@ export class FakePlayerInst
             '_version': 2,      // fpdata version
             '_name': this.name,
             '_pos': this.pos,
+            '_direction': this.direction,
             '_ownerName': this.ownerName,
             '_isOnline': this.isonline,
             '_operation': this.operation,
@@ -253,7 +283,8 @@ export class FakePlayerInst
 
         return new FakePlayerInst(
             fpData._name, fpData._pos, fpData._operation, fpData._opInterval, 
-            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline, fpData._ownerName);
+            fpData._opMaxTimes, fpData._opLength, fpData._syncXuid, fpData._isOnline,
+            fpData._ownerName, fpData._direction);
     }
     // return SNBT string of all items
     serializeAllItems()
@@ -303,10 +334,11 @@ export class FakePlayerInst
 /////////////////////////////////////////////////////////////////////////////////////
 
     constructor(name, pos, operation = "", opInterval = 1000, opMaxTimes = 1, opLength = 1000, syncXuid = "", isonline = false
-        , ownerName = "")
+        , ownerName = "", direction = 0)
     {
         this.name = name;
         this.pos = pos;
+        this.direction = direction;
         this.isonline = isonline;
         this.ownerName = ownerName;
 
@@ -323,7 +355,7 @@ export class FakePlayerInst
     getAllInfo()
     {
         return {
-            'name': this.name, 'pos': this.pos, 'isOnline': this.isonline, 'ownerName': this.ownerName,
+            'name': this.name, 'pos': this.pos, 'direction': this.direction, 'isOnline': this.isonline, 'ownerName': this.ownerName,
             'operation': this.operation, 'opInterval': this.opInterval, 'opMaxTimes': this.opMaxTimes, 
             'opLength': this.opLength, 'syncXuid': this.syncXuid
         };
@@ -345,6 +377,8 @@ export class FakePlayerInst
         // Teleport to target pos again
         if(!pl.teleport(spawnPos))
             return false;
+        // Set direction
+        this.realizeDirection();
 
         // Start operation loop if needed
         if(this.operation != "")
