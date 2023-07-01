@@ -314,6 +314,8 @@ export function CmdCallback(_cmd, ori, out, res)
                 let statusStr = result.isOnline ? i18n.tr("command.resultText.list.specificInfo.online")
                     : i18n.tr("command.resultText.list.specificInfo.offline");
                 let ownerName = result.ownerName ? result.ownerName : i18n.tr("command.resultText.list.specificInfo.none");
+                if(isExecutedByPlayer && ownerName == ori.player.realName)
+                    ownerName = "§6" + ownerName + "§r";
 
                 let resultText = i18n.tr("command.resultText.list.specificInfo.model", posObj.toString(), operationStr, 
                     syncStatusStr, statusStr, ownerName);

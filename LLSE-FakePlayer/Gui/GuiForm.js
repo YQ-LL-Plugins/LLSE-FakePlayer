@@ -196,16 +196,27 @@ export class FpGuiForms
             let syncPlayerName = data.xuid2name(result.syncXuid);
             let ownerName = result.ownerName;
             if(ownerName == player.realName)
-                ownerName = "§6$" + ownerName + "§r";
+                ownerName = "§6" + ownerName + "§r";
 
             let fm = new BetterSimpleForm("LLSE-FakePlayer 假人信息");
-            fm.setContent(`§6${fpName}§r假人信息：\n`
+            let contentText = `§6${fpName}§r假人信息：\n`
                 + `- 坐标： ${posObj.toString()}\n`
                 + `- 执行操作： ${result.operation ? result.operation : "None"}\n`
                 + `- 同步玩家： ${syncPlayerName ? syncPlayerName : "None"}\n`
                 + `- 状态： ${result.isOnline ? "§a§l在线§r" : "§c§l离线§r"}\n`
-                + `- 所有者： ${ownerName}`
-            );
+                + `- 所有者： ${ownerName}`;
+            // Executed by player, show perms he has too
+            if(!PermManager.isFpOwner(player, fpName) && !PermManager.isSu(player))
+            {
+                let permData = PermManager.getFpPermData(fpName);
+                let personalPerm = permData.Perms[player.realName];
+                if(personalPerm && personalPerm.length != 0)
+                {
+                    contentText += "\n- 你对此假人拥有的权限： " + personalPerm.join(', ');
+                }
+            }
+            fm.setContent(contentText);
+
             if(result.isOnline && PermManager.hasPermission(player, "offline", fpName))
             {
                 fm.addButton("下线当前假人", "textures/ui/down_arrow", (pl) => {
@@ -332,6 +343,7 @@ export class FpGuiForms
         {
             FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
                     (pl) => { FpGuiForms.sendOperationMenu(pl); });
+            return;
         }
         let opsArr = _LONG_OPERATIONS_LIST.concat(_SHORT_OPERATIONS_LIST);
 
@@ -408,6 +420,7 @@ export class FpGuiForms
         {
             FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
                     (pl) => { FpGuiForms.sendOperationMenu(pl); });
+            return;
         }
 
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人行走");
@@ -469,6 +482,7 @@ export class FpGuiForms
         {
             FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
                     (pl) => { FpGuiForms.sendOperationMenu(pl); });
+            return;
         }
 
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人行走");
@@ -535,6 +549,7 @@ export class FpGuiForms
         {
             FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
                     (pl) => { FpGuiForms.sendOperationMenu(pl); });
+            return;
         }
 
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人传送");
@@ -578,6 +593,7 @@ export class FpGuiForms
         {
             FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
                     (pl) => { FpGuiForms.sendOperationMenu(pl); });
+            return;
         }
 
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人传送");
@@ -627,6 +643,7 @@ export class FpGuiForms
         {
             FpGuiForms.sendErrorForm(pl, "你尚未拥有可以执行此操作的假人",
                     (pl) => { FpGuiForms.sendOperationMenu(pl); });
+            return;
         }
 
         let fm = new BetterCustomForm("LLSE-FakePlayer 假人玩家同步");
