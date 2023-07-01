@@ -1,4 +1,4 @@
-import { FpListSoftEnum } from "../Command/CommandRegistry.js";
+import { AllFpListSoftEnum, OnlineFpListSoftEnum, OfflineFpListSoftEnum } from "../Command/CommandRegistry.js";
 import { FakePlayerInst } from "../FpManager/FakePlayerInst.js";
 import { CalcPosFromViewDirection, EntityGetFeetPos } from "../Utils/Utils.js";
 import { 
@@ -226,6 +226,11 @@ export class FakePlayerManager
             FakePlayerManager.needTickFpListObj[fpName] = fp;
         FakePlayerManager.saveFpData(fpName, false);
         FakePlayerManager.loadInventoryData(fpName);
+
+        OfflineFpListSoftEnum.remove(fpName);
+        if(!OnlineFpListSoftEnum.exists(fpName))
+            OnlineFpListSoftEnum.add(fpName);
+        logger.debug("softenum:", OnlineFpListSoftEnum.getValues());
         return SUCCESS;
     }
 
@@ -246,6 +251,11 @@ export class FakePlayerManager
         if(!fp.offline())
             return i18n.tr("fpManager.resultText.offline.fail", fpName);
         FakePlayerManager.saveFpData(fpName, false);
+
+        OnlineFpListSoftEnum.remove(fpName);
+        if(!OfflineFpListSoftEnum.exists(fpName))
+            OfflineFpListSoftEnum.add(fpName);
+        logger.debug("softenum:", OnlineFpListSoftEnum.getValues());
         return SUCCESS;
     }
 
@@ -300,7 +310,7 @@ export class FakePlayerManager
 
         let fp = new FakePlayerInst(fpName, {'x':x.toFixed(2), 'y':y.toFixed(2), 'z':z.toFixed(2), 'dimid':dimid});
         FakePlayerManager.fpListObj[fpName] = fp;
-        FpListSoftEnum.add(fpName);
+        AllFpListSoftEnum.add(fpName);
         FakePlayerManager.saveFpData(fpName, false);
 
         let result = PermManager.setOwner(executor, fpName, ownerName);
@@ -324,7 +334,10 @@ export class FakePlayerManager
 
         if(fpName in FakePlayerManager.needTickFpListObj)
             delete FakePlayerManager.needTickFpListObj[fpName];
-        FpListSoftEnum.remove(fpName);
+        AllFpListSoftEnum.remove(fpName);
+        OnlineFpListSoftEnum.remove(fpName);
+        OfflineFpListSoftEnum.remove(fpName);
+        logger.debug("softenum:", OnlineFpListSoftEnum.getValues());
         FakePlayerManager.deleteFpData(fpName);
         FakePlayerManager.deleteInventoryData(fpName);
         PermManager.deleteFpPermConfig(fpName);

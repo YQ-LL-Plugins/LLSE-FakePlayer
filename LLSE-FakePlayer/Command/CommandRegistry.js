@@ -5,7 +5,9 @@ import {
 } from "../Utils/GlobalVars.js";
 import { FakePlayerManager } from "../FpManager/FakePlayerManager.js";
 
-export let FpListSoftEnum = null;
+export let AllFpListSoftEnum = null;
+export let OnlineFpListSoftEnum = null;
+export let OfflineFpListSoftEnum = null;
 export let PlayerListSoftEnum = null;
 
 export function RegisterCmd()
@@ -13,14 +15,28 @@ export function RegisterCmd()
     let fpCmd = mc.newCommand("fpc", "§6LLSE-FakePlayer Control§r", PermType.Any, 0x80);
 
     // create soft enum
-    FpListSoftEnum = new SoftEnumInst(fpCmd, "FakePlayerList", Object.keys(FakePlayerManager.fpListObj));
     PlayerListSoftEnum = new SoftEnumInst(fpCmd, "RealPlayerList", []);
+    AllFpListSoftEnum = new SoftEnumInst(fpCmd, "AllFakePlayerList", []);
+    OnlineFpListSoftEnum = new SoftEnumInst(fpCmd, "OnlineFakePlayerList", []);
+    OfflineFpListSoftEnum = new SoftEnumInst(fpCmd, "OfflineFakePlayerList", []);
+    FakePlayerManager.forEachFp((fpName, fp) => {
+        AllFpListSoftEnum.add(fpName);
+        if(!fp.isOnline())
+            OfflineFpListSoftEnum.add(fpName);
+    });
+    
 
-    // fpc online/offline <fpname>
-    fpCmd.setEnum("StatusAction", ["online", "offline"]);
-    fpCmd.mandatory("action", ParamType.Enum, "StatusAction", "StatusAction", 1);
-    fpCmd.mandatory("fpname", ParamType.SoftEnum, FpListSoftEnum.getName(), "fpname");
-    fpCmd.overload(["StatusAction", "fpname"]);
+    // fpc online <fpname>
+    fpCmd.setEnum("OnlineAction", ["online"]);
+    fpCmd.mandatory("action", ParamType.Enum, "OnlineAction", "OnlineAction", 1);
+    fpCmd.mandatory("fpname_offline", ParamType.SoftEnum, OfflineFpListSoftEnum.getName(), "fpname_offline");
+    fpCmd.overload(["OnlineAction", "fpname_offline"]);
+
+    // fpc offline <fpname>
+    fpCmd.setEnum("OfflineAction", ["offline"]);
+    fpCmd.mandatory("action", ParamType.Enum, "OfflineAction", "OfflineAction", 1);
+    fpCmd.mandatory("fpname_online", ParamType.SoftEnum, OnlineFpListSoftEnum.getName(), "fpname_online");
+    fpCmd.overload(["OfflineAction", "fpname_online"]);
 
     // fpc onlineall/offlineall
     fpCmd.setEnum("AllStatusAction", ["onlineall", "offlineall"]);
@@ -39,13 +55,14 @@ export function RegisterCmd()
     // fpc remove <fpname>
     fpCmd.setEnum("RemoveAction", ["remove"]);
     fpCmd.mandatory("action", ParamType.Enum, "RemoveAction", "RemoveAction", 1);
-    fpCmd.overload(["RemoveAction", "fpname"]);     // fpname created before
+    fpCmd.mandatory("fpname_all", ParamType.SoftEnum, AllFpListSoftEnum.getName(), "fpname_all");
+    fpCmd.overload(["RemoveAction", "fpname_all"]);     // fpname_all created before
 
     // fpc list [fpname]
     fpCmd.setEnum("ListAction", ["list"]);
     fpCmd.mandatory("action", ParamType.Enum, "ListAction", "ListAction", 1);
-    fpCmd.optional("fpname2", ParamType.SoftEnum, FpListSoftEnum.getName(), "fpname2");
-    fpCmd.overload(["ListAction", "fpname2"]);
+    fpCmd.optional("fpname_optional", ParamType.SoftEnum, AllFpListSoftEnum.getName(), "fpname_optional");
+    fpCmd.overload(["ListAction", "fpname_optional"]);
 
     // fpc operation <fpname> attack/interact/clear [interval] [maxtimes] (short operations)
     fpCmd.setEnum("OperationAction", ["operation"]);
@@ -54,54 +71,54 @@ export function RegisterCmd()
     fpCmd.mandatory("optype", ParamType.Enum, "ShortOperationType", "ShortOperationType", 1);
     fpCmd.optional("interval", ParamType.Int);
     fpCmd.optional("maxtimes", ParamType.Int);
-    fpCmd.overload(["OperationAction", "fpname", "ShortOperationType", "interval", "maxtimes"]);
-    // fpname created before
+    fpCmd.overload(["OperationAction", "fpname_online", "ShortOperationType", "interval", "maxtimes"]);
+    // fpname_online created before
 
     // fpc operation <fpname> useitem [length] [interval] [maxtimes] (long operations)
     fpCmd.setEnum("LongOperationType", _LONG_OPERATIONS_LIST);
     fpCmd.mandatory("longoptype", ParamType.Enum, "LongOperationType", "LongOperationType", 1);
     fpCmd.optional("length", ParamType.Int);
-    fpCmd.overload(["OperationAction", "fpname", "LongOperationType", "length", "interval", "maxtimes"]);
-    // OperationAction, fpname, interval, maxtimes created before
+    fpCmd.overload(["OperationAction", "fpname_online", "LongOperationType", "length", "interval", "maxtimes"]);
+    // OperationAction, fpname_online, interval, maxtimes created before
 
     // fpc walkto/tp <fpname> <x> <y> <z>
     fpCmd.setEnum("PositionAction", ["walkto", "tp"]);
     fpCmd.mandatory("action", ParamType.Enum, "PositionAction", "PositionAction", 1);
     fpCmd.mandatory("targetpos", ParamType.Vec3);
-    fpCmd.overload(["PositionAction", "fpname", "targetpos"]);      // fpname created before
+    fpCmd.overload(["PositionAction", "fpname_online", "targetpos"]);      // fpname_online created before
 
     // fpc walkto/tp <fpname> <player>
     fpCmd.mandatory("player", ParamType.Player);
-    fpCmd.overload(["PositionAction", "fpname", "player"]);         // fpname created before
+    fpCmd.overload(["PositionAction", "fpname_online", "player"]);         // fpname_online created before
 
     // fpc give/getinventory <fpname> 
     fpCmd.setEnum("InventoryAction", ["give", "getinventory"]);
     fpCmd.mandatory("action", ParamType.Enum, "InventoryAction", "InventoryAction", 1);
-    fpCmd.overload(["InventoryAction", "fpname"]);      // fpname created before
+    fpCmd.overload(["InventoryAction", "fpname_online"]);      // fpname_online created before
 
     // fpc setselect <fpname> <slotid>
     fpCmd.setEnum("SetSelectAction", ["setselect"]);
     fpCmd.mandatory("action", ParamType.Enum, "SetSelectAction", "SetSelectAction", 1);
     fpCmd.mandatory("slotid", ParamType.Int);
-    fpCmd.overload(["SetSelectAction", "fpname", "slotid"]);          // fpname created before
+    fpCmd.overload(["SetSelectAction", "fpname_online", "slotid"]);          // fpname_online created before
 
     // fpc drop <fpname> [slotid]
     fpCmd.setEnum("DropAction", ["drop"]);
     fpCmd.mandatory("action", ParamType.Enum, "DropAction", "DropAction", 1);
     fpCmd.optional("slotid2", ParamType.Int);
-    fpCmd.overload(["DropAction", "fpname", "slotid2"]);        // fpname created before
+    fpCmd.overload(["DropAction", "fpname_online", "slotid2"]);        // fpname_online created before
 
     // fpc dropall <fpname>
     fpCmd.setEnum("DropAllAction", ["dropall"]);
     fpCmd.mandatory("action", ParamType.Enum, "DropAllAction", "DropAllAction", 1);
-    fpCmd.overload(["DropAllAction", "fpname"]);        // fpname created before
+    fpCmd.overload(["DropAllAction", "fpname_online"]);        // fpname_online created before
 
     // fpc sync <fpname> start/stop
     fpCmd.setEnum("SyncAction", ["sync"]);
     fpCmd.setEnum("SyncType", ["start", "stop"]);
     fpCmd.mandatory("action", ParamType.Enum, "SyncAction", "SyncAction", 1);
     fpCmd.mandatory("synctype", ParamType.Enum, "SyncType", "SyncType", 1);
-    fpCmd.overload(["SyncAction", "fpname", "synctype"]);       // fpname created before
+    fpCmd.overload(["SyncAction", "fpname_online", "synctype"]);       // fpname_online created before
 
     // fpc perm <fpname> add/remove <actionname>/admin <plname>
     fpCmd.setEnum("PermAction", ["perm"]);
@@ -113,20 +130,20 @@ export function RegisterCmd()
     fpCmd.mandatory("permtype", ParamType.Enum, "PermType", "PermType", 1);
     fpCmd.mandatory("actionenum", ParamType.Enum, "ActionEnum", "ActionEnum", 1);
     fpCmd.mandatory("plname", ParamType.SoftEnum, PlayerListSoftEnum.getName(), "plname");
-    fpCmd.overload(["PermAction", "fpname", "permtype", "actionenum", "plname"]);
-    // fpname created before
+    fpCmd.overload(["PermAction", "fpname_all", "permtype", "actionenum", "plname"]);
+    // fpname_all created before
 
     // fpc perm <fpname> list
     fpCmd.setEnum("PermListType", ["list"]);
     fpCmd.mandatory("permlisttype", ParamType.Enum, "PermListType", "PermListType", 1);
-    fpCmd.overload(["PermAction", "fpname", "permlisttype"]);
-    // fpname created before
+    fpCmd.overload(["PermAction", "fpname_all", "permlisttype"]);
+    // fpname_all created before
 
     // fpc perm <fpname> setowner <plname>
     fpCmd.setEnum("PermSetOwnerType", ["setowner"]);
     fpCmd.mandatory("permsetownertype", ParamType.Enum, "PermSetOwnerType", "PermSetOwnerType", 1);
-    fpCmd.overload(["PermAction", "fpname", "permsetownertype", "plname"]);
-    // fpname and plname created before
+    fpCmd.overload(["PermAction", "fpname_all", "permsetownertype", "plname"]);
+    // fpname_all and plname created before
 
     // fpc settings addsu/removesu/ban/allow <plname>
     fpCmd.setEnum("SettingsAction", ["settings"]);

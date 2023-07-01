@@ -17,6 +17,16 @@ export class SoftEnumInst
         return this._cmdObj.removeSoftEnumValues(this._name, [item]);
     }
 
+    getValues()
+    {
+        return this._cmdObj.getSoftEnumValues(this._name);
+    }
+
+    exists(item)
+    {
+        return (item in this.getValues());
+    }
+
     getName()
     {
         return this._name;

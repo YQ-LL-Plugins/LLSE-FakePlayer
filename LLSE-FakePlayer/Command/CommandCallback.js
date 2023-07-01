@@ -22,7 +22,7 @@ export function CmdCallback(_cmd, ori, out, res)
     {
     case "online":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_offline;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -38,7 +38,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "offline":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -196,7 +196,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "remove":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_all;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -241,7 +241,7 @@ export function CmdCallback(_cmd, ori, out, res)
             break;
         }
 
-        let fpName = res.fpname2;
+        let fpName = res.fpname_optional;
         if(!fpName)
         {
             // get namelist of all fps
@@ -349,7 +349,7 @@ export function CmdCallback(_cmd, ori, out, res)
 
     case "operation":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -389,7 +389,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "walkto":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -448,7 +448,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "tp":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -485,7 +485,7 @@ export function CmdCallback(_cmd, ori, out, res)
     
     case "give":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -509,7 +509,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "getinventory":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -575,7 +575,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "drop":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -594,7 +594,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "dropall":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -613,7 +613,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "setselect":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -632,7 +632,7 @@ export function CmdCallback(_cmd, ori, out, res)
     }
     case "sync":
     {
-        let fpName = res.fpname;
+        let fpName = res.fpname_online;
         result = PermManager.checkOriginPermission(ori, action, fpName);
         if(result != SUCCESS)
         {
@@ -670,7 +670,7 @@ export function CmdCallback(_cmd, ori, out, res)
     case "perm":
     {
         let executor = isExecutedByPlayer ? ori.player : PermManager.CONSOLE;
-        let fpName = res.fpname;
+        let fpName = res.fpname_all;
         if(!FakePlayerManager.getFpInstance(fpName))
         {
             out.error("[FakePlayer] " + i18n.tr("fpManager.resultText.fpNoFound", fpName));
