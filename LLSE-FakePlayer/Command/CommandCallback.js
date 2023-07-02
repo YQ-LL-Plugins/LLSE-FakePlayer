@@ -1034,6 +1034,18 @@ export function CmdCallback(_cmd, ori, out, res)
                 out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.maxFpCountLimit.set", value));
             }
         }
+        else if(res.settingsitems == "autoofflinewhenfrequentdeath")
+        {
+            let value = res.value;
+            if(value != 1 && value != 0)
+                out.error("[FakePlayer] " + i18n.tr("command.resultText.settings.autoOfflineWhenFrequentDeath.mustBoolean"));
+            else
+            {
+                GlobalConf.set("AutoOfflineWhenFrequentDeath", value);
+                let text = value ? i18n.tr("command.resultText.settings.enabled") : i18n.tr("command.resultText.settings.disabled");
+                out.success("[FakePlayer] " + i18n.tr("command.resultText.settings.autoOfflineWhenFrequentDeath.set", text));
+            }
+        }
         else
             out.error(`[FakePlayer] ` + i18n.tr("command.resultText.sync.unknownAction", res.settingstype));
         break;

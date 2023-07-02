@@ -163,8 +163,8 @@ export function RegisterCmd()
     fpCmd.mandatory("listsutype", ParamType.Enum, "ListSuType", "ListSuType", 1);
     fpCmd.overload(["SettingsAction", "listsutype"]);
 
-    // fpc settings maxfpcountlimit <limit>
-    fpCmd.setEnum("SettingsItems", ["maxfpcountlimit"]);
+    // fpc settings <settingsitem> <limit>
+    fpCmd.setEnum("SettingsItems", ["maxfpcountlimit", "autoofflinewhenfrequentdeath"]);
     fpCmd.mandatory("settingsitems", ParamType.Enum, "SettingsItems", "SettingsItems", 1);
     fpCmd.mandatory("value", ParamType.Int);
     fpCmd.overload(["SettingsAction", "settingsitems", "value"]);

@@ -6,6 +6,7 @@ import {
     SUCCESS 
 } from "../Utils/GlobalVars.js";
 import { PermManager } from "../Utils/PermManager.js";
+import { GlobalConf } from "../Utils/ConfigFileHelper.js";
 
 export class FakePlayerManager
 {
@@ -61,21 +62,39 @@ export class FakePlayerManager
         if(!player)
             return;
         let fpName = player.realName;
-        if(fpName in FakePlayerManager.fpListObj)
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
+            return;
+        if(!fp.isOnline())
         {
-            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawning", fpName));
-            let fp = FakePlayerManager.fpListObj[fpName];
-            if(!fp.offline(false))
-                logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRecreate", fpName));
-            else
+            // unexpected, just ignore it
+            return;
+        }
+        
+        // Process short-time counter
+        if(GlobalConf.get("AutoOfflineWhenFrequentDeath", 1))
+        {
+            if(fp.plusAndCheckDeathCounter())
             {
-                setTimeout(()=>{
-                    if(!fp.online())
-                        logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRespawn", fpName));
-                    else
-                        logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawned", fpName));
-                }, 500);
+                // Too frequent death, auto offline
+                FakePlayerManager.offline(fpName);
+                mc.broadcast("§e[FakePlayer] " + i18n.tr("fpManager.frequentDeath.autoOffline", fpName, 20) + "§r");
+                logger.warn(i18n.tr("fpManager.frequentDeath.autoOffline", fpName, 20));
+                return;
             }
+        }
+
+        logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawning", fpName));
+        if(!fp.offline(false))
+            logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRecreate", fpName));
+        else
+        {
+            setTimeout(()=>{
+                if(!fp.online())
+                    logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.error.failToRespawn", fpName));
+                else
+                    logger.warn(`[FakePlayer] ` + i18n.tr("fpManager.consoleLog.respawned", fpName));
+            }, 500);
         }
     }
 

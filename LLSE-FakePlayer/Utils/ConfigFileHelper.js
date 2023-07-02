@@ -11,6 +11,7 @@ export function InitConfigFile()
     GlobalConf.init("Language", "default");
     GlobalConf.init("LogLevel", 4);
     GlobalConf.init("MaxFpCountLimitEach", 3);
+    GlobalConf.init("AutoOfflineWhenFrequentDeath", 1);
     GlobalConf.init("OpIsSu", 1);
     GlobalConf.init("SuList", []);
     GlobalConf.init("UserMode", "blacklist");

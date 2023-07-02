@@ -101,6 +101,9 @@
                 "withAnotherFp": "Cannot sync with another fakeplayer"
             },
             "helpText": "§e§l[LLSE-FakePlayer]§r\nA strong fake-player plugin for LiteLoaderBDS\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\n- Author: yqs11235"
+        },
+        "frequentDeath": {
+            "autoOffline": "FakePlayer {0} died too frequently within {1} consecutive seconds. It has been taken offline to avoid interfering with others' normal play"
         }
     },
     "command": {
@@ -233,7 +236,13 @@
                     "title": "FakePlayer system super user list: ",
                     "none": "Super user player has not been set yet. Use the command /fpc settings addsu <plname> in BDS console to add super users"
                 },
-                "addsu": "Player {0} has been set as super user"
+                "addsu": "Player {0} has been set as super user",
+                "autoOfflineWhenFrequentDeath": {
+                    "mustBoolean": "Error: Value of AutoOfflineWhenFrequentDeath must be 1 or 0",
+                    "set": "Auto-offline when frequent death function set: {0}"
+                },
+                "enabled": "Enabled",
+                "disabled": "Disabled"
             }
         }
     },

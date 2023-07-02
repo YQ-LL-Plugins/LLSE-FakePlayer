@@ -101,6 +101,9 @@
                 "withAnotherFp": "无法与另一个假人进行sync同步"
             },
             "helpText": "§e§l[LLSE-FakePlayer]§r\nLiteLoaderBDS平台强大的假人插件\n- GitHub: https://github.com/YQ-LL-Plugins/LLSE-FakePlayer\n- 作者: yqs112358"
+        },
+        "frequentDeath": {
+            "autoOffline": "假人{0}在连续的{1}秒内频繁死亡，已被自动下线，以免干扰其他玩家正常游戏"
         }
     },
     "command": {
@@ -233,7 +236,13 @@
                     "title": "假人系统超级管理员列表: ",
                     "none": "尚未设置超级管理员玩家。在控制台执行命令 /fpc settings addsu <玩家名> 来设置超级管理员"
                 },
-                "addsu": "已将玩家{0}设置为超级管理员"
+                "addsu": "已将玩家{0}设置为超级管理员",
+                "autoOfflineWhenFrequentDeath": {
+                    "mustBoolean": "错误: AutoOfflineWhenFrequentDeath设置项的值必须为1或0",
+                    "set": "已设置假人频繁死亡自动下线: {0}"
+                },
+                "enabled": "启用",
+                "disabled": "禁用"
             }
         }
     },
