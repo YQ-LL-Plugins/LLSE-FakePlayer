@@ -24,7 +24,13 @@ export class PermManager
     static ONLY_CONSOLE_ACTIONS = ["settings", "import"];
     static NO_PERM_REQUIRED_ACTIONS = ["help", "list", "onlineall", "offlineall", "gui", "switch"];
     static SPECIAL_PROCESS_ACTIONS = ["create", "remove"];
-    static CONSOLE = "CONSOLE_EXECUTES_COMMAND";
+
+    // fake CONSOLE player
+    static CONSOLE = {
+        name: "BDS_Console",
+        realName: "BDS_Console",
+        tell: function(msg, type) {}
+    };
 
     static suList = [];
     static userList = [];
@@ -208,9 +214,7 @@ export class PermManager
         if(owner == "")
         {
             // This fp has no matched owner
-            if(player)
-                player.tell(i18n.tr("permManager.warning.fpNoOwner", fpName));
-            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+            return false;
         }
         else
         {
@@ -482,6 +486,14 @@ export class PermManager
     // must sure that fp exists
     static checkOriginPermission(origin, action, fpName)
     {
+        // check fp owner
+        if(FakePlayerManager.getFpInstance(fpName).getOwnerName() == "")
+        {
+            if(origin.player)
+                origin.player.tell(`§e[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName) + "§r");
+            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+        }
+
         let pl = origin.player;
         if(!pl)
         {

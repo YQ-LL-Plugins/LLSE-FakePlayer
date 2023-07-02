@@ -344,7 +344,7 @@ export function CmdCallback(_cmd, ori, out, res)
             // get info of a specific fp
             let resultData = FakePlayerManager.getAllInfo(fpName);
             if(resultData[0] != SUCCESS)
-                out.error(`[FakePlayer] ` + resData[0]);
+                out.error(`[FakePlayer] ` + resultData[0]);
             else
             {
                 let result = resultData[1];
@@ -381,9 +381,8 @@ export function CmdCallback(_cmd, ori, out, res)
                 if(!result.ownerName)
                 {
                     if(isExecutedByPlayer)
-                        ori.player.tell("[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName));
-                    else
-                        logger.warn("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+                        ori.player.tell("§e[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName) + "§r");
+                    logger.warn("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
                 }
             }
         }
@@ -775,9 +774,8 @@ export function CmdCallback(_cmd, ori, out, res)
             {
                 ownerName = i18n.tr("command.resultText.list.specificInfo.none");
                 if(isExecutedByPlayer)
-                    ori.player.tell("[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName));
-                else
-                    logger.warn("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
+                    ori.player.tell("§e[FakePlayer] " + i18n.tr("permManager.warning.fpNoOwner", fpName) + "§r");
+                logger.warn("Warn: " + i18n.tr("permManager.warning.fpNoOwner", fpName));
             }
             resultText += i18n.tr("command.resultText.perm.list.owner") + ownerName;
             for(let plName in permData.Perms)

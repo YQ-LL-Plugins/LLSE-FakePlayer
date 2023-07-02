@@ -28,7 +28,7 @@
             "fpCountMaxLimitReached": "Player {0} has reached the maximum limit of owned fakeplayer and cannot have more"
         },
         "warning": {
-            "fpNoOwner": "§6{0}§r does not yet have an owner. Please use command /fpc perm {0} setowner <plname> to set the owner of this fakeplayer"
+            "fpNoOwner": "FakePlayer {0} does not yet have an owner. Use command /fpc perm {0} setowner <plname> to set his owner"
         },
         "ask": {
             "setOwner": {

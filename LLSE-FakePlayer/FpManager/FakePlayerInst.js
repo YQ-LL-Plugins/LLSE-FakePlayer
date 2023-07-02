@@ -522,7 +522,7 @@ export class FakePlayerInst
     plusAndCheckDeathCounter()
     {
         ++this._deathShortTimeCounter;
-        logger.debug(`${this._name}'s death counter: ${this._deathShortTimeCounter}`);
+        // logger.debug(`${this._name}'s death counter: ${this._deathShortTimeCounter}`);
         if(this._deathShortTimeCounter > 5)
         {
             // Player die more than 5 times in continuous 20s

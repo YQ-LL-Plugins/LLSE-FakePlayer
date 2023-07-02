@@ -170,6 +170,7 @@ export class FakePlayerManager
                     if(!(fpData instanceof Object))
                         return false;
                     FakePlayerManager.fpListObj[fpName] = FakePlayerInst.recoverFpData(fpName, fpData);
+                    FakePlayerManager.saveFpData(fpName, false);
                 }
                 catch(err) { 
                     logger.error(`Error when parsing fakeplayer ${fpName}'s data record: ` + err);

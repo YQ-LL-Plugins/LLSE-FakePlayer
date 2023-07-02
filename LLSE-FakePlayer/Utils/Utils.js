@@ -59,7 +59,7 @@ export function EntityGetFeetPos(entity)
 export function GetGameModeName(mode)
 {
     let name = _VALID_GAMEMODE_NAMES[`${mode}`];
-    logger.debug(`${mode} -> ${name}`);
+    // logger.debug(`${mode} -> ${name}`);
     if(name == null || name == undefined)
         name = i18n.tr("gameMode.name.default");
     return name;

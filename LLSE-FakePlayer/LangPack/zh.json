@@ -28,7 +28,7 @@
             "fpCountMaxLimitReached": "用户{0}拥有的假人数量已经达到上限，无法再拥有更多假人"
         },
         "warning": {
-            "fpNoOwner": "§6{0}§r尚未拥有所有者。请使用 /fpc perm {0} setowner <玩家名> 命令设置此假人的所有者"
+            "fpNoOwner": "假人{0}尚未拥有所有者。请使用 /fpc perm {0} setowner <玩家名> 命令设置此假人的所有者"
         },
         "ask": {
             "setOwner": {
