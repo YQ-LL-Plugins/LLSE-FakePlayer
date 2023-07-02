@@ -437,6 +437,14 @@ export class PermManager
     // must sure that fp exists
     static hasPermission(player, action, fpName)
     {
+        // check fp owner
+        if(FakePlayerManager.getFpInstance(fpName).getOwnerName() == "")
+        {
+            if(player)
+                player.tell(`§e[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName) + "§r");
+            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+        }
+
         if(player == PermManager.CONSOLE)
         {
             // console always have access
@@ -486,17 +494,14 @@ export class PermManager
     // must sure that fp exists
     static checkOriginPermission(origin, action, fpName)
     {
-        // check fp owner
-        if(FakePlayerManager.getFpInstance(fpName).getOwnerName() == "")
-        {
-            if(origin.player)
-                origin.player.tell(`§e[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName) + "§r");
-            logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
-        }
-
         let pl = origin.player;
         if(!pl)
         {
+            // check fp owner
+            if(FakePlayerManager.getFpInstance(fpName).getOwnerName() == "")
+            {
+                logger.warn(`[FakePlayer] ` + i18n.tr("permManager.warning.fpNoOwner", fpName));
+            }
             // not player execute cmd, always pass
             return SUCCESS;
         }
