@@ -26,9 +26,11 @@ export class FakePlayerManager
     // return Player / null
     static getPlayer(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
-            return null;
-        return FakePlayerManager.fpListObj[fpName].getPlayer();
+        FakePlayerManager.forEachFp((name, fp) => {
+            if(name == fpName)
+                return fp.getPlayer();
+        });
+        return null;
     }
 
     // return FpInstance / undefined
@@ -101,16 +103,16 @@ export class FakePlayerManager
     static initialAutoOnline()
     {
         let resultStr = "";
-        for(let fpName in FakePlayerManager.fpListObj)
-        {
-            // if fp is online at shutdown, recover him
-            if(FakePlayerManager.fpListObj[fpName].isOnline())
+
+        // if fp is online at shutdown, recover him
+        FakePlayerManager.forEachFp((fpName, fp) => {
+            if(fp.isOnline())
             {
                 let res = FakePlayerManager.online(fpName, false);
                 if(res != SUCCESS)
                     resultStr += res + "\n";
             }
-        }
+        });
         return resultStr == "" ? SUCCESS : resultStr.substring(0, resultStr.length - 1);
     }
 
@@ -123,7 +125,7 @@ export class FakePlayerManager
     // return true / false
     static saveFpData(fpName, updateData = true)
     {
-        let fp = FakePlayerManager.fpListObj[fpName];
+        let fp = FakePlayerManager.getFpInstance(fpName);
         if(updateData)
         {
             fp.updatePos();
@@ -190,9 +192,9 @@ export class FakePlayerManager
     // return true / false
     static saveInventoryData(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return false;
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.getPlayer())
             return false;
 
@@ -206,9 +208,9 @@ export class FakePlayerManager
     // return true / false
     static loadInventoryData(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return false;
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.getPlayer())
             return false;
 
@@ -237,9 +239,9 @@ export class FakePlayerManager
 
     static online(fpName, failIfOnline = true)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOnline && fp.isOnline())
             return i18n.tr("fpManager.resultText.online.success", fpName);
 
@@ -259,9 +261,9 @@ export class FakePlayerManager
 
     static offline(fpName, failIfOffline = true)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(failIfOffline && !fp.isOnline())
             return i18n.tr("fpManager.resultText.offline.success", fpName);
 
@@ -373,35 +375,35 @@ export class FakePlayerManager
     // return ["fail message", null] / [SUCCESS, {xxx:xxx, ...}]
     static getAllInfo(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
-        let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.getAllInfo()];
     }
 
     // return ["fail message", null] / [SUCCESS, {xxx:xxx, ...}]
     static getPosition(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
-        let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.getPos()];
     }
 
     // return ["fail message", null] / [SUCCESS, true / false]
     static isOnline(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
-        let fp = FakePlayerManager.fpListObj[fpName];
         return [SUCCESS, fp.isOnline()];
     }
 
     static setOperation(fpName, operation, opInterval, opMaxTimes, opLength)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
 
         if(operation == "clear")
         {
@@ -426,19 +428,19 @@ export class FakePlayerManager
 
     static clearOperation(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        FakePlayerManager.fpListObj[fpName].clearOperation();
+        fp.clearOperation();
         return SUCCESS;
     }
 
     // return ["fail reason", null] / [SUCCESS, {isFullPath:Boolean, path:Number[3][]} ]
     static walkToPos(fpName, pos)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
-        
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return [i18n.tr("fpManager.resultText.fpNotOnline", fpName), null];
         let pl = fp.getPlayer();
@@ -466,11 +468,11 @@ export class FakePlayerManager
     {
         if(!entity)
             return [i18n.tr("fpManager.resultText.invalidTargetEntity", fpName), null];
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
+            return [i18n.tr("fpManager.resultText.fpNotOnline", fpName), null];
         let pl = fp.getPlayer();
         if(!pl)
             return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
@@ -493,9 +495,9 @@ export class FakePlayerManager
 
     static teleportToPos(fpName, pos)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
@@ -514,9 +516,9 @@ export class FakePlayerManager
     {
         if(!entity)
             return i18n.tr("fpManager.resultText.invalidTargetEntity", fpName);
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
@@ -536,9 +538,9 @@ export class FakePlayerManager
     {
         if(!player)
             return i18n.tr("fpManager.resultText.invalidSourcePlayer", fpName);
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
@@ -578,11 +580,11 @@ export class FakePlayerManager
     // / ["fail reason", null]
     static getInventory(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return [i18n.tr("fpManager.resultText.fpNoFound", fpName), null];
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
-            return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
+            return [i18n.tr("fpManager.resultText.fpNotOnline", fpName), null];
         let pl = fp.getPlayer();
         if(!pl)
             return [i18n.tr("fpManager.resultText.fpFailToGet", fpName), null];
@@ -622,9 +624,9 @@ export class FakePlayerManager
 
     static setSelectSlot(fpName, slotId)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
@@ -660,9 +662,9 @@ export class FakePlayerManager
 
     static dropItem(fpName, slotId)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
@@ -687,9 +689,9 @@ export class FakePlayerManager
 
     static dropAllItems(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         let pl = fp.getPlayer();
@@ -722,9 +724,9 @@ export class FakePlayerManager
             return i18n.tr("fpManager.resultText.invalidTargetPlayer");
         if(player.isSimulatedPlayer())
             return i18n.tr("fpManager.resultText.sync.withAnotherFp");
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         fp.startSync(player.xuid);
@@ -736,9 +738,9 @@ export class FakePlayerManager
 
     static stopSync(fpName)
     {
-        if(!(fpName in FakePlayerManager.fpListObj))
+        let fp = FakePlayerManager.getFpInstance(fpName);
+        if(!fp)
             return i18n.tr("fpManager.resultText.fpNoFound", fpName);
-        let fp = FakePlayerManager.fpListObj[fpName];
         if(!fp.isOnline())
             return i18n.tr("fpManager.resultText.fpNotOnline", fpName);
         fp.stopSync();
